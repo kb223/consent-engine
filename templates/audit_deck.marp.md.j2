@@ -1,0 +1,175 @@
+---
+marp: true
+theme: default
+paginate: true
+backgroundColor: #ffffff
+color: #0f172a
+header: 'Signal Recovery Audit · KJB'
+footer: '{{ firm_name | default("") }} · {{ result.timestamp | string | truncate(10, True, "") }}'
+style: |
+  section { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 60px 80px; }
+  section.cover { background: #0f172a; color: #e2e8f0; }
+  section.cover h1 { color: #7dd3fc; font-size: 56px; margin-bottom: 8px; }
+  section.cover h2 { color: #cbd5e1; font-size: 24px; font-weight: 400; margin-bottom: 40px; }
+  section.cover .meta { color: #94a3b8; font-size: 16px; }
+  section.dark { background: #0f172a; color: #e2e8f0; }
+  section.dark h1, section.dark h2 { color: #7dd3fc; }
+  section.dark strong { color: #e2e8f0; }
+  h1 { font-size: 36px; color: #0f172a; margin-bottom: 24px; }
+  h2 { font-size: 24px; color: #0ea5e9; font-weight: 600; margin-bottom: 16px; }
+  h3 { font-size: 20px; color: #374151; }
+  p, li { font-size: 18px; line-height: 1.6; color: #334155; }
+  .figure { font-size: 56px; font-weight: 700; color: #0ea5e9; font-family: monospace; margin: 16px 0; }
+  .annual { font-size: 18px; color: #6b7280; margin-bottom: 24px; }
+  .formula { font-size: 14px; color: #6b7280; font-family: monospace; background: #f1f5f9; padding: 12px 16px; border-radius: 6px; border-left: 3px solid #0ea5e9; }
+  .badge-red { display: inline-block; background: #fef2f2; color: #b91c1c; padding: 4px 10px; border-radius: 9999px; font-size: 14px; font-weight: 600; }
+  .badge-green { display: inline-block; background: #f0fdf4; color: #15803d; padding: 4px 10px; border-radius: 9999px; font-size: 14px; font-weight: 600; }
+  .badge-yellow { display: inline-block; background: #fffbeb; color: #92400e; padding: 4px 10px; border-radius: 9999px; font-size: 14px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; margin-top: 12px; }
+  th { text-align: left; padding: 8px 12px; color: #6b7280; border-bottom: 2px solid #e5e7eb; font-weight: 600; }
+  td { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; color: #374151; }
+---
+
+<!-- _class: cover -->
+
+# Signal Recovery Audit
+
+## {{ firm_name | default('Audit prepared for the firm') }}
+
+<div class="meta">
+{{ result.url }} &nbsp;·&nbsp; {{ result.timestamp | string | truncate(10, True, '') }}<br>
+Methodology: {{ methodology_label }}
+</div>
+
+---
+
+<!-- _class: dark -->
+
+# Why this matters for plaintiff PI / mass-tort firms
+
+> *The same kind of synthetic-browser scan a CIPA / VPPA plaintiff would run against your site to source a demand letter — used here defensively, on your side of the table.*
+
+Every pattern flagged in this audit is **dual-purpose:**
+
+- It costs you signed-case revenue (the bid algorithm can't see what it can't measure)
+- It's the same finding a plaintiff's tester would dollarize at **\$5,000 / violation / session** in a CIPA complaint
+
+One audit. Two pains. One fix.
+
+---
+
+# The dollar number
+
+{% if recovery and recovery.has_recovery_opportunity %}
+## Estimated invisible revenue at current ad spend
+
+<div class="figure">\${{ "{:,}".format(recovery.monthly_recoverable_low_usd) }}–\${{ "{:,}".format(recovery.monthly_recoverable_high_usd) }} / month</div>
+
+<div class="annual">≈ \${{ "{:,}".format(recovery.annual_recoverable_usd) }} / year at current spend</div>
+
+<div class="formula">
+Monthly ad spend (\${{ "{:,}".format(recovery.monthly_ad_spend_usd) }}) × consent-denial rate ({{ recovery.consent_loss_rate_pct }}%) × signal gap ({{ recovery.signal_gap_pct }}%) × recapture uplift ({{ recovery.recovery_uplift_pct }}%)
+</div>
+
+{% if not recovery.ad_spend_user_provided %}
+
+*Using ICP-default ad spend. Self-reporting your real number sharpens this estimate.*
+
+{% endif %}
+{% else %}
+## Recovery math
+
+The full audit captures the firm's measurement-infrastructure state. Self-reported ad spend would let us dollarize the recoverable range in the next pass.
+{% endif %}
+
+---
+
+# Top 3 findings
+
+{% if findings_with_violations | length > 0 %}
+{% for finding in findings_with_violations[:3] %}
+## {{ loop.index }}. {{ finding.vendor_name | default(finding.vendor_id) }} <span class="badge-red">leak</span>
+
+{{ finding.observed_summary | default('See full HTML report for network-level evidence.') }}
+
+{% endfor %}
+{% else %}
+## No material signal-recovery patterns at scan time
+
+The full HTML report documents what was tested. Quarterly re-validation recommended.
+{% endif %}
+
+---
+
+{% if vertical == 'legal' and legal_stack %}
+# Signed-Case Signal Chain stitch validation
+
+| Path | Status |
+|---|---|
+| Intake-software form-post UTM persistence | {{ '<span class="badge-green">Passes</span>' if legal_stack.lead_docket_utm_passes else '<span class="badge-red">Strips</span>' }} |
+| Call-tracking to intake-CRM stitch | {{ '<span class="badge-green">Passes</span>' if legal_stack.callrail_meta_passes else '<span class="badge-red">Gap</span>' }} |
+| Signed-retainer event to Meta CAPI / Google enhanced conversions | {{ '<span class="badge-green">Configured</span>' if legal_stack.filevine_event_push else '<span class="badge-red">Missing</span>' }} |
+| Multi-domain consent-state propagation | {{ '<span class="badge-green">Propagates</span>' if legal_stack.multi_domain_consent_propagates else '<span class="badge-yellow">Per-domain</span>' }} |
+
+**The integration gap nobody else fills.** Between your firm's intake software and your ad platforms (Meta CAPI / Google enhanced conversions). Largest single source of recoverable signed-case efficiency.
+
+---
+{% endif %}
+
+# 90-day roadmap (top priorities)
+
+{% if roadmap_items %}
+{% for item in roadmap_items[:5] %}
+## {{ loop.index }}. {{ item.title }}
+*Effort:* {{ item.effort | default('Medium') }} · *Impact:* {{ item.impact | default('High') }}
+{% endfor %}
+{% else %}
+1. **Consent Mode V2 wiring fix.** Propagate gcs / gcd correctly CMP to GTM to Google.
+2. **CAPI completeness.** Consent state, deduplication, hashed PII payload.
+{% if vertical == 'legal' %}
+3. **Intake-software UTM persistence.** Signed-retainer events back to ad platforms.
+4. **Call-tracking to Meta CAPI offline-event.** Call attribution from Meta-sourced clicks.
+{% else %}
+3. **Enhanced Conversions hashed-PII payload validation.**
+4. **sGTM deployment with proper traffic flow.**
+{% endif %}
+5. **Multi-domain consent propagation.** Across your mass-tort microsites.
+{% endif %}
+
+---
+
+<!-- _class: dark -->
+
+# What happens next
+
+## Three paths
+
+1. **Your team or agency executes the roadmap.** Engineering partner of your choice executes the roadmap.
+2. **Plug in a Signal Recovery sprint.** Fixed-bid, 2 to 3 weeks, acceptance test built in.
+3. **Compliance Insurance retainer** post-fix. Weekly re-scan, drift alerts, monthly compliance report.
+
+## Sprint pricing (legal-specific)
+
+| Tier | Price |
+|---|---|
+| Standard PI firm (single-domain site, standard intake software) | **\$15,000 flat** |
+| Multi-state PI or mass-tort (multi-domain or custom intake integration) | **\$25,000 flat** |
+| Enterprise PI franchise (10+ domains, complex intake stack) | **\$40,000 flat** (quote-only) |
+
+**Next step.** 30-minute scoping call. No pitch. Just the math.
+
+---
+
+<!-- _class: cover -->
+
+# Thank you
+
+## Kenneth Buchanan
+### Founder, KJB
+
+<div class="meta">
+kennethjbuchanan.com<br>
+github.com/kb223/gtm-ga4-sync (open-source proof of work)<br><br>
+This deck and the underlying audit are technical observations, not legal advice.<br>
+The firm's General Counsel should evaluate any statutory exposure indicated.
+</div>

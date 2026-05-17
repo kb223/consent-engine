@@ -1,0 +1,326 @@
+[
+  {
+    "name": "NextRoll",
+    "domains": ["adroll.com", "nextroll.com", "d.adroll.com"],
+    "cookie_names": ["__adroll", "__ar_v4", "__adroll_fpc"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Named in National Casual Dining Chain lawsuit (Jan 2026). S3 confirmed firing despite opt-out."
+  },
+  {
+    "name": "The Trade Desk",
+    "domains": ["adsrvr.org", "match.adsrvr.org"],
+    "cookie_names": ["TDID", "TTDOptOut", "TTDOptOutOfDataSale"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Named in National Casual Dining Chain lawsuit. S3 confirmed firing despite opt-out."
+  },
+  {
+    "name": "LiveRamp",
+    "domains": ["liveramp.com", "rlcdn.com", "pippio.com"],
+    "cookie_names": ["_lr_env", "_lr_geo_location"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Named in National Casual Dining Chain lawsuit. Suspected to operate via network requests — requires HAR analysis."
+  },
+  {
+    "name": "PubMatic",
+    "domains": ["pubmatic.com", "ads.pubmatic.com"],
+    "cookie_names": ["KADUSERCOOKIE", "chkChromeExtension"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Named in National Casual Dining Chain lawsuit. Suspected to operate via network requests — requires HAR analysis."
+  },
+  {
+    "name": "Meta",
+    "domains": ["facebook.com", "facebook.net", "connect.facebook.net"],
+    "cookie_names": ["_fbp", "_fbc", "fr"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "_fbp = Facebook Pixel base cookie. CNIL fined Meta 150M EUR (2025)."
+  },
+  {
+    "name": "Google / DoubleClick",
+    "domains": ["doubleclick.net", "googleadservices.com", "googlesyndication.com"],
+    "cookie_names": ["IDE", "DSID", "FLC", "AID", "TAID"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "IDE = DoubleClick targeting cookie. CNIL fined Google 325M EUR (2025)."
+  },
+  {
+    "name": "Microsoft / Bing",
+    "domains": ["bat.bing.com", "clarity.ms", "bingads.com", "bing.com"],
+    "cookie_names": ["MUID", "MR", "_uetsid", "_uetvid", "_clck", "_clsk"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Universal Event Tracking (UET) cookies + Clarity session recording cookies."
+  },
+  {
+    "name": "Pinterest",
+    "domains": ["ct.pinterest.com", "pinterest.com"],
+    "cookie_names": ["_pinterest_ct_ua", "_pin_unauth", "_pinterest_sess"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Pinterest Tag conversion tracking."
+  },
+  {
+    "name": "Google Analytics",
+    "domains": ["analytics.google.com", "google-analytics.com"],
+    "cookie_names": ["_ga", "_ga_", "_gid", "_gat"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "_ga = GA4 client ID. Under Advanced Consent Mode, cookieless pings still fire in G100 state."
+  },
+  {
+    "name": "TikTok",
+    "domains": ["tiktok.com", "analytics.tiktok.com"],
+    "cookie_names": ["_ttp", "_tt_enable_cookie", "tt_chain_token", "ttwid", "odin_tt"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "TikTok Pixel and Events API tracking cookies. Named in multiple CIPA complaints."
+  },
+  {
+    "name": "LinkedIn",
+    "domains": ["linkedin.com", "licdn.com", "snap.licdn.com"],
+    "cookie_names": ["li_sugr", "bcookie", "lidc", "UserMatchHistory", "AnalyticsSyncHistory"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "LinkedIn Insight Tag and CAPI cookies."
+  },
+  {
+    "name": "Snapchat",
+    "domains": ["sc-static.net", "tr.snapchat.com"],
+    "cookie_names": ["_scid", "_scid_r", "sc_at"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Snap Pixel conversion tracking."
+  },
+  {
+    "name": "Twitter/X",
+    "domains": ["ads-twitter.com", "twitter.com", "t.co"],
+    "cookie_names": ["_twclid", "muc_ads", "personalization_id"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Twitter/X conversion tracking pixel."
+  },
+  {
+    "name": "Reddit",
+    "domains": ["reddit.com", "redditmedia.com", "alb.reddit.com"],
+    "cookie_names": ["rdt", "_rdt_uuid"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Reddit conversion pixel and attribution."
+  },
+  {
+    "name": "Criteo",
+    "domains": ["criteo.com", "criteo.net"],
+    "cookie_names": ["cto_bundle", "cto_bidid", "cto_dna_bundle"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Criteo retargeting. Heavy in DTC ecommerce."
+  },
+  {
+    "name": "Klaviyo",
+    "domains": ["klaviyo.com", "a.klaviyo.com"],
+    "cookie_names": ["__kla_id"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Klaviyo email/SMS marketing platform. Common in Shopify DTC."
+  },
+  {
+    "name": "Hotjar",
+    "domains": ["hotjar.com", "hotjar.io"],
+    "cookie_names": ["_hjSessionUser", "_hjSession", "_hjid", "_hjAbsoluteSessionInProgress", "_hjFirstSeen"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Session recording. CIPA wiretap theory applies to session replay tools."
+  },
+  {
+    "name": "FullStory",
+    "domains": ["fullstory.com", "rs.fullstory.com"],
+    "cookie_names": ["_fs_uid", "_fs_ses"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Session recording. CIPA wiretap theory applies."
+  },
+  {
+    "name": "ContentSquare",
+    "domains": ["contentsquare.net", "contentsquare.com"],
+    "cookie_names": ["_cs_c", "_cs_id", "_cs_s", "_cs_mk"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Session recording and experience analytics. CIPA wiretap theory."
+  },
+  {
+    "name": "Attentive",
+    "domains": ["attn.tv", "attentivemobile.com"],
+    "cookie_names": ["__attentive_id", "__attentive_ss_referrer"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "SMS/email marketing. Common in DTC ecommerce."
+  },
+  {
+    "name": "Optimizely",
+    "domains": ["optimizely.com", "logx.optimizely.com"],
+    "cookie_names": ["optimizelyEndUserId", "optimizelyOptOut", "optimizelySegments"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "A/B testing and experimentation platform."
+  },
+  {
+    "name": "Amplitude",
+    "domains": ["amplitude.com", "api.amplitude.com"],
+    "cookie_names": ["AMP_MKTG", "amp_"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Product analytics."
+  },
+  {
+    "name": "Mixpanel",
+    "domains": ["mixpanel.com", "api.mixpanel.com"],
+    "cookie_names": ["mp_", "distinct_id"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Product analytics."
+  },
+  {
+    "name": "Segment",
+    "domains": ["segment.io", "segment.com", "cdn.segment.com"],
+    "cookie_names": ["ajs_anonymous_id", "ajs_user_id"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Customer data platform. Routes data to downstream vendors."
+  },
+  {
+    "name": "LiveIntent",
+    "domains": ["liadm.com", "liad.liadm.com"],
+    "cookie_names": ["lidid"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Identity resolution for email-based advertising."
+  },
+  {
+    "name": "Adform",
+    "domains": ["adform.net", "track.adform.net"],
+    "cookie_names": ["C", "uid", "TPC"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "European DSP. Common on DTC brands with EU ad spend."
+  },
+  {
+    "name": "Amazon Ads",
+    "domains": ["amazon-adsystem.com", "aax.amazon-adsystem.com"],
+    "cookie_names": ["ad-id", "ad-privacy"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Amazon advertising pixel and attribution."
+  },
+  {
+    "name": "ABTasty",
+    "domains": ["abtasty.com", "try.abtasty.com"],
+    "cookie_names": ["ABTasty", "ABTastySession"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "A/B testing and personalization."
+  },
+  {
+    "name": "Taboola",
+    "domains": ["taboola.com", "trc.taboola.com"],
+    "cookie_names": ["t_gid", "taboola_usg"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Native advertising / content recommendation."
+  },
+  {
+    "name": "Outbrain",
+    "domains": ["outbrain.com", "tr.outbrain.com"],
+    "cookie_names": ["obuid"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Native advertising / content recommendation."
+  },
+  {
+    "name": "Yotpo",
+    "domains": ["yotpo.com", "staticw2.yotpo.com"],
+    "cookie_names": ["pixel"],
+    "category": "analytics",
+    "legal_exposure": "low",
+    "onetrust_category": "C0002",
+    "notes": "Reviews and UGC platform. Common on Shopify stores."
+  },
+  {
+    "name": "Trustpilot",
+    "domains": ["trustpilot.com", "widget.trustpilot.com"],
+    "cookie_names": ["tp"],
+    "category": "analytics",
+    "legal_exposure": "low",
+    "onetrust_category": "C0002",
+    "notes": "Review platform widget."
+  },
+  {
+    "name": "Exponea/Bloomreach",
+    "domains": ["exponea.com", "api.exponea.com"],
+    "cookie_names": ["__exponea_etc__", "__exponea_time2__", "xnpe_"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "CDP and marketing automation. Common in ecommerce."
+  },
+  {
+    "name": "Lotame",
+    "domains": ["crwdcntrl.net", "tags.crwdcntrl.net"],
+    "cookie_names": ["_cc_id", "_cc_dc", "_cc_aud"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Data management platform / audience enrichment."
+  },
+  {
+    "name": "Claritas",
+    "domains": ["claritas.com"],
+    "cookie_names": ["_clrts"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Audience segmentation and identity resolution."
+  },
+  {
+    "name": "Bazaarvoice",
+    "domains": ["bazaarvoice.com", "display.ugc.bazaarvoice.com"],
+    "cookie_names": ["BVBRANDID", "BVBRANDSID", "BVImplmain_site"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Ratings and reviews platform."
+  }
+]

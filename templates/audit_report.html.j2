@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ 'Signal Recovery Audit' if report_variant == 'signal' else 'Consent Compliance Audit' }} — {{ result.url }}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: #f8f9fa; color: #1a1a2e; margin: 0; padding: 24px; }
+  .container { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 4px; }
+  h2 { font-size: 1.1rem; font-weight: 600; margin: 0 0 12px; color: #374151; }
+  h3 { font-size: 0.95rem; font-weight: 600; margin: 0 0 8px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
+  p { margin: 0 0 12px; line-height: 1.6; }
+  .meta { font-size: 0.8rem; color: #6b7280; margin-bottom: 24px; }
+  .verdict { border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
+  .verdict.violation { background: #fef2f2; border: 1px solid #fca5a5; }
+  .verdict.clean     { background: #f0fdf4; border: 1px solid #86efac; }
+  .verdict-title { font-size: 1.2rem; font-weight: 700; margin: 0 0 4px; }
+  .verdict.violation .verdict-title { color: #b91c1c; }
+  .verdict.clean     .verdict-title { color: #15803d; }
+  .verdict-sub { font-size: 0.85rem; color: #6b7280; margin: 0; }
+  .exec-summary { background: white; border: 1px solid #e5e7eb; border-radius: 12px;
+                  padding: 20px 24px; margin-bottom: 24px; }
+  .exec-summary p { color: #374151; }
+  .signal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .signal-card { background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; }
+  .signal-label { font-size: 0.7rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .signal-value { font-size: 0.9rem; font-weight: 600; font-family: monospace; color: #111827; }
+  .signal-sub { font-size: 0.75rem; color: #6b7280; margin-top: 2px; }
+  .ssgtm-warning { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px;
+                   padding: 14px 16px; margin-bottom: 24px; }
+  .ssgtm-warning strong { color: #92400e; }
+  .inconclusive-banner { background: #fffbeb; border: 1px solid #fcd34d; border-left: 4px solid #d97706;
+                         border-radius: 10px; padding: 14px 18px; margin-bottom: 24px; color: #78350f; }
+  .inconclusive-banner strong { color: #92400e; }
+  .inconclusive-banner .lbl { display: inline-block; font-size: 0.7rem; font-weight: 700;
+                              text-transform: uppercase; letter-spacing: 0.08em; color: #92400e;
+                              background: #fde68a; padding: 2px 8px; border-radius: 9999px;
+                              margin-right: 8px; }
+  .wiring-broken-banner { background: #fef2f2; border: 1px solid #fca5a5; border-left: 4px solid #b91c1c;
+                          border-radius: 10px; padding: 14px 18px; margin-bottom: 24px; color: #7f1d1d; }
+  .wiring-broken-banner strong { color: #991b1b; }
+  .wiring-broken-banner .lbl { display: inline-block; font-size: 0.7rem; font-weight: 700;
+                               text-transform: uppercase; letter-spacing: 0.08em; color: #991b1b;
+                               background: #fecaca; padding: 2px 8px; border-radius: 9999px;
+                               margin-right: 8px; }
+  .gpc-panel { border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;
+               border: 1px solid #e5e7eb; background: white; }
+  .gpc-panel.respected { border-left: 4px solid #15803d; }
+  .gpc-panel.ignored   { border-left: 4px solid #b91c1c; }
+  .gpc-panel.untested  { border-left: 4px solid #9ca3af; }
+  .gpc-panel h3 { margin: 0 0 10px; font-size: 0.85rem; color: #111827; letter-spacing: 0.06em; }
+  .gpc-panel .tag { display: inline-block; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em;
+                    text-transform: uppercase; padding: 2px 8px; border-radius: 9999px; margin-left: 8px; }
+  .gpc-panel.respected .tag { background: #f0fdf4; color: #15803d; }
+  .gpc-panel.ignored   .tag { background: #fef2f2; color: #b91c1c; }
+  .gpc-panel.untested  .tag { background: #f3f4f6; color: #6b7280; }
+  .gpc-row { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 0; font-size: 0.85rem; color: #374151;
+             border-bottom: 1px solid #f3f4f6; }
+  .gpc-row:last-child { border-bottom: none; }
+  .gpc-row .k { flex: 1 1 200px; color: #6b7280; font-weight: 500; min-width: 0; }
+  .gpc-row .v { flex: 0 0 auto; font-family: monospace; word-break: break-word; min-width: 0; }
+  .gpc-row .v.ok   { color: #15803d; font-weight: 600; }
+  .gpc-row .v.bad  { color: #b91c1c; font-weight: 600; }
+  .section { background: white; border: 1px solid #e5e7eb; border-radius: 12px;
+             overflow: hidden; margin-bottom: 24px; }
+  .section-header { padding: 14px 20px; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { padding: 10px 16px; text-align: left; font-weight: 600; color: #6b7280;
+       background: #f9fafb; border-bottom: 1px solid #e5e7eb; }
+  td { padding: 10px 16px; border-bottom: 1px solid #f3f4f6; color: #374151; font-family: monospace; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f9fafb; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; font-family: sans-serif; }
+  .badge-red    { background: #fef2f2; color: #b91c1c; }
+  .badge-green  { background: #f0fdf4; color: #15803d; }
+  .badge-yellow { background: #fffbeb; color: #92400e; }
+  .badge-gray   { background: #f3f4f6; color: #6b7280; }
+  .empty-state { padding: 20px; text-align: center; color: #9ca3af; font-size: 0.85rem; }
+  .reg-chunk { background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #6366f1; border-radius: 6px; padding: 16px; margin-bottom: 16px; }
+  .reg-source { font-size: 0.7rem; font-weight: 800; color: #4f46e5; text-transform: uppercase;
+                letter-spacing: 0.08em; margin-bottom: 10px; display: flex; align-items: center; }
+  .reg-source::before { content: "§"; margin-right: 6px; font-size: 1rem; color: #818cf8; flex-shrink: 0; }
+  .reg-text { font-size: 0.85rem; color: #374151; line-height: 1.6; word-break: break-word; }
+  .reg-text h1,.reg-text h2,.reg-text h3 { font-size: 0.85rem; font-weight: 700;
+              color: #111827; margin: 10px 0 4px; text-transform: none; letter-spacing: 0; }
+  .reg-text p  { margin: 0 0 8px; }
+  .reg-text ul,.reg-text ol { margin: 0 0 8px; padding-left: 1.4em; }
+  .reg-text li { margin-bottom: 3px; }
+  .reg-text code { background: #f3f4f6; border-radius: 3px; padding: 1px 4px; font-size: 0.8rem; }
+  .reg-text strong { color: #111827; }
+  /* Reg tables: rendered from markdown so we can't wrap each one individually.
+     The outer .reg-text-wrap clips + enables horizontal scroll on narrow screens
+     so wide tables don't break the layout; prose/lists remain fully wrapped. */
+  .reg-text-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .reg-text-wrap::-webkit-scrollbar { height: 8px; }
+  .reg-text-wrap::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+  .reg-text { max-width: 100%; }
+  /* Tables inside reg content use natural width + min column widths so cells don't
+     squish to 2-char shards; the wrapper scrolls horizontally when the table
+     exceeds viewport width. Prose tables (no wrapper) still fit the column. */
+  .reg-text table { border-collapse: collapse; margin: 8px 0 12px; font-family: sans-serif; width: 100%; }
+  .reg-text-wrap .reg-text table { width: auto; min-width: 100%; }
+  .reg-text th { background: #f3f4f6; padding: 6px 10px; text-align: left; font-size: 0.78rem;
+                 font-weight: 600; color: #374151; border: 1px solid #e5e7eb;
+                 white-space: normal; }
+  .reg-text td { padding: 6px 10px; font-size: 0.78rem; font-family: sans-serif;
+                 color: #374151; border: 1px solid #e5e7eb; vertical-align: top;
+                 white-space: normal; }
+  .reg-text-wrap .reg-text th,
+  .reg-text-wrap .reg-text td { min-width: 140px; }
+  .reg-text-wrap .reg-text th:first-child,
+  .reg-text-wrap .reg-text td:first-child { min-width: 110px; }
+  footer { text-align: center; font-size: 0.75rem; color: #9ca3af; margin-top: 32px; padding-top: 16px;
+           border-top: 1px solid #e5e7eb; }
+
+  /* Soft CTA before footer */
+  .next-step { display: flex; align-items: center; justify-content: space-between; gap: 24px;
+               background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+               padding: 20px 24px; margin-top: 32px; }
+  .next-step-eyebrow { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+                       color: #64748b; font-weight: 700; margin-bottom: 6px; }
+  .next-step-title { font-size: 1rem; font-weight: 600; color: #0f172a; line-height: 1.4; }
+  .next-step-sub { font-size: 0.82rem; color: #475569; margin-top: 4px; line-height: 1.5; }
+  .next-step-btn { flex-shrink: 0; display: inline-block; background: #0f172a; color: #fff !important;
+                   text-decoration: none; font-size: 0.85rem; font-weight: 600; padding: 12px 20px;
+                   border-radius: 8px; white-space: nowrap; }
+  .next-step-btn:hover { background: #1e293b; }
+
+  /* Revenue Recovery panel (signal variant) */
+  .recovery-panel {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%);
+    border: 1px solid #86efac;
+    border-left: 4px solid #15803d;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .recovery-head { margin-bottom: 16px; }
+  .recovery-tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #15803d;
+    background: #dcfce7;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    margin-bottom: 8px;
+  }
+  .recovery-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #064e3b;
+    margin: 0;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .recovery-figure { margin-bottom: 18px; }
+  .recovery-range {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #15803d;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+  }
+  .recovery-unit { font-size: 0.9rem; color: #059669; font-weight: 600; }
+  .recovery-annual { font-size: 0.85rem; color: #047857; margin-top: 4px; }
+  .recovery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .recovery-cell {
+    background: rgba(255,255,255,0.7);
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .recovery-cell-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .recovery-cell-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    overflow-wrap: anywhere;
+  }
+  .recovery-cell-sub { font-size: 0.72rem; color: #6b7280; margin-top: 2px; line-height: 1.4; }
+  .recovery-footnote {
+    font-size: 0.75rem;
+    color: #4b5563;
+    line-height: 1.55;
+    margin: 0;
+    padding-top: 12px;
+    border-top: 1px dashed #bbf7d0;
+  }
+
+  /* Exposure panel (compliance variant) — risk framing in amber/red */
+  .exposure-panel {
+    background: linear-gradient(135deg, #fef2f2 0%, #fffbeb 100%);
+    border: 1px solid #fca5a5;
+    border-left: 4px solid #b91c1c;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .exposure-tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #991b1b;
+    background: #fee2e2;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    margin-bottom: 8px;
+  }
+  .exposure-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #7f1d1d;
+    margin: 0 0 16px;
+  }
+  .exposure-range {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #b91c1c;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+  }
+  .exposure-unit { font-size: 0.9rem; color: #991b1b; font-weight: 600; }
+  .exposure-sub { font-size: 0.85rem; color: #7f1d1d; margin-top: 4px; }
+  .exposure-components { margin-top: 18px; border-top: 1px dashed #fca5a5; padding-top: 14px; }
+  .exposure-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #fee2e2;
+    align-items: start;
+  }
+  .exposure-row:last-child { border-bottom: none; }
+  .exposure-row-statute { font-size: 0.82rem; font-weight: 700; color: #111827; }
+  .exposure-row-anchor { font-size: 0.72rem; color: #6b7280; margin-top: 2px; line-height: 1.4; }
+  .exposure-row-amount { font-size: 0.85rem; font-weight: 700; color: #b91c1c; font-family: monospace; white-space: nowrap; }
+  .exposure-footnote {
+    font-size: 0.75rem;
+    color: #4b5563;
+    line-height: 1.55;
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px dashed #fca5a5;
+  }
+
+  /* Responsive table — stacked cards below ~640px so 6-col tables don't collapse */
+  .responsive-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .responsive-table { min-width: 640px; }
+  /* Horizontal-scroll container for timeline-style tables (dense data, wide columns) */
+  .scroll-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .scroll-table-wrap::-webkit-scrollbar { height: 8px; }
+  .scroll-table-wrap::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+  /* Evidence-table is the fallback for any table not yet converted to .responsive-table.
+     It shouldn't overflow its container on mobile — wrap it and allow horizontal scroll. */
+  .evidence-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0; }
+  .evidence-table { min-width: 100%; }
+  /* Long URLs and monospace identifiers should wrap aggressively on mobile */
+  code, .mono { overflow-wrap: anywhere; word-break: break-word; }
+
+  /* Tablet — collapse 4-col signal grid to 2 cols, tighten padding */
+  @media (max-width: 768px) {
+    body { padding: 16px; }
+    h1 { font-size: 1.35rem; }
+    h2 { font-size: 1.05rem; }
+    .verdict { padding: 16px 18px; }
+    .exec-summary { padding: 16px 18px; }
+    .signal-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .gpc-panel { padding: 14px 16px; }
+    .gpc-row { flex-direction: column; gap: 2px; padding: 8px 0; }
+    .gpc-row .k { flex: none; font-size: 0.75rem; }
+    .gpc-row .v { font-size: 0.9rem; }
+    th, td { padding: 8px 10px; font-size: 0.8rem; }
+  }
+
+  /* Phone — stacked card layout for tables, 1-2 col signal grid */
+  @media (max-width: 640px) {
+    .responsive-table-wrap { overflow-x: visible; }
+    .responsive-table { min-width: 0; display: block; }
+    .responsive-table thead { display: none; }
+    .responsive-table tbody, .responsive-table tr { display: block; }
+    .responsive-table tr {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .responsive-table tr:last-child { border-bottom: none; }
+    .responsive-table tr:hover td { background: transparent; }
+    .responsive-table td {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 4px 0;
+      border: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 0.85rem;
+      word-break: break-word;
+    }
+    .responsive-table td::before {
+      content: attr(data-label);
+      color: #9ca3af;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      flex: 0 0 auto;
+      padding-top: 2px;
+    }
+    .responsive-table td > * { text-align: right; }
+    .responsive-table td.cell-vendor {
+      display: block;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 4px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .responsive-table td.cell-vendor::before { display: none; }
+    .responsive-table td.cell-notes {
+      display: block;
+      font-size: 0.8rem;
+      color: #4b5563;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+    .responsive-table td.cell-notes::before {
+      display: block;
+      margin-bottom: 4px;
+    }
+  }
+
+  /* Tablet — recovery grid drops to 2-col so the three stats stay readable */
+  @media (max-width: 768px) {
+    .recovery-panel { padding: 16px 18px; }
+    .recovery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .recovery-range { font-size: 1.75rem; }
+    .exposure-panel { padding: 16px 18px; }
+    .exposure-range { font-size: 1.75rem; }
+  }
+
+  @media (max-width: 640px) {
+    .recovery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .recovery-range { font-size: 1.55rem; line-height: 1.15; }
+    .recovery-unit { font-size: 0.8rem; display: block; margin-top: 2px; }
+    .recovery-footnote { font-size: 0.72rem; }
+    .section-header h2 { font-size: 0.98rem; line-height: 1.35; }
+    /* Wrapped sub-labels in the section header (e.g. pixel-evidence) shouldn't force horizontal scroll */
+    .section-header h2 span { display: block; margin-left: 0 !important; margin-top: 4px; }
+    /* Reg source header breaks nicely on long titles */
+    .reg-source { flex-wrap: wrap; gap: 4px; }
+    /* Exposure panel — stack amount under statute label at phone widths */
+    .exposure-range { font-size: 1.55rem; line-height: 1.15; }
+    .exposure-unit { font-size: 0.8rem; display: block; margin-top: 2px; }
+    .exposure-footnote { font-size: 0.72rem; }
+    .exposure-row { grid-template-columns: 1fr; gap: 4px; }
+    .exposure-row-amount { font-size: 0.92rem; }
+    .exposure-title { font-size: 0.88rem; line-height: 1.35; }
+    .next-step { flex-direction: column; align-items: flex-start; gap: 14px; padding: 18px 20px; }
+    .next-step-btn { width: 100%; text-align: center; }
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 12px; }
+    .container { padding: 0; }
+    h1 { font-size: 1.2rem; }
+    .signal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .signal-card { padding: 10px 12px; }
+    .signal-label { font-size: 0.65rem; }
+    .signal-value { font-size: 0.82rem; word-break: break-word; }
+    .signal-sub { font-size: 0.7rem; }
+    .verdict-title { font-size: 1.05rem; }
+    .section-header { padding: 12px 14px; }
+    .reg-chunk { padding: 12px 14px; }
+    .recovery-panel { padding: 14px 16px; }
+    .recovery-grid { grid-template-columns: 1fr; }
+    .recovery-range { font-size: 1.4rem; }
+    .recovery-cell-value { font-size: 1rem; }
+    .exposure-panel { padding: 14px 16px; }
+    .exposure-range { font-size: 1.4rem; }
+    .exposure-row-statute { font-size: 0.78rem; }
+    .exposure-row-anchor { font-size: 0.68rem; }
+    .exposure-row-amount { font-size: 0.88rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>{{ 'Signal Recovery Audit' if report_variant == 'signal' else 'Consent Compliance Audit' }}</h1>
+  <p class="meta">{{ result.url }} &nbsp;·&nbsp; {{ result.timestamp | string | truncate(19, True, '') }} UTC &nbsp;·&nbsp; {{ methodology_label }}</p>
+
+  <!-- SECTION A — EXECUTIVE SUMMARY -->
+
+  {% set has_violation = findings_with_violations | length > 0 %}
+  {% set _methodology_str = result.methodology.value if result.methodology is not string else result.methodology %}
+  {% set is_inconclusive = _methodology_str == 's3_inconclusive_unknown_cmp' %}
+  {% set is_wiring_broken = _methodology_str == 's3_consent_wiring_broken' %}
+  <div class="verdict {{ 'violation' if has_violation else 'clean' }}">
+    <p class="verdict-title">
+      {% if report_variant == 'signal' %}
+        {{ 'Signal Gap Detected' if has_violation else 'AI-Ready Measurement Stack' }}
+      {% else %}
+        {{ 'Consent Violation Detected' if has_violation else 'No Consent Violations Detected' }}
+      {% endif %}
+    </p>
+    <p class="verdict-sub">
+      {% if report_variant == 'signal' %}
+        {{ findings_with_violations | length }} vendor{{ 's' if findings_with_violations | length != 1 else '' }} leaking post-consent signal &nbsp;·&nbsp;
+        {{ result.findings | length }} vendor{{ 's' if result.findings | length != 1 else '' }} analyzed &nbsp;·&nbsp;
+        {{ result.methodology }}
+      {% else %}
+        {{ findings_with_violations | length }} confirmed violation{{ 's' if findings_with_violations | length != 1 else '' }} &nbsp;·&nbsp;
+        {{ result.findings | length }} vendor{{ 's' if result.findings | length != 1 else '' }} analyzed &nbsp;·&nbsp;
+        {{ result.methodology }}
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="exec-summary">
+    <h2>Executive Summary</h2>
+    <p>{{ executive_summary }}</p>
+  </div>
+
+  {# === PLAINTIFF-PI VERTICAL CALLOUT (set vertical == 'legal' in template context) === #}
+  {% if vertical == 'legal' %}
+  <div class="exec-summary" style="background:#0f172a;color:#e2e8f0;border:none;">
+    <h2 style="color:#7dd3fc;">Why this matters for plaintiff PI / mass-tort firms</h2>
+    <p style="color:#cbd5e1;">
+      The same kind of synthetic-browser scan a CIPA / VPPA / state-wiretap plaintiff would run against your site to source a demand letter — used here defensively, before they do. Every pattern flagged below is dual-purpose: <strong>it costs you signed-case revenue</strong> (because the bid algorithm can't see what it can't measure) <strong>and it's the same finding a plaintiff's tester would dollarize at \$5,000/violation/session.</strong>
+    </p>
+    {% if firm_name %}
+    <p style="color:#94a3b8;font-size:0.85rem;margin-top:8px;">
+      Audit prepared for <strong style="color:#e2e8f0;">{{ firm_name }}</strong>. Findings are technical observations, not legal advice. Consult counsel on any statutory exposure flagged.
+    </p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if report_variant == 'signal' and recovery and recovery.has_recovery_opportunity %}
+  <!-- REVENUE RECOVERY ESTIMATE (signal variant only) -->
+  <div class="recovery-panel">
+    <div class="recovery-head">
+      <span class="recovery-tag">Recoverable Ad Revenue</span>
+      <h3 class="recovery-title">Estimated scale unlock from fixing this stack</h3>
+    </div>
+    <div class="recovery-figure">
+      <div class="recovery-range">
+        ${{ "{:,}".format(recovery.monthly_recoverable_low_usd) }}–${{ "{:,}".format(recovery.monthly_recoverable_high_usd) }}
+        <span class="recovery-unit">/ month</span>
+      </div>
+      <div class="recovery-annual">
+        ≈ ${{ "{:,}".format(recovery.annual_recoverable_usd) }} / year at current spend
+      </div>
+    </div>
+    <div class="recovery-grid">
+      <div class="recovery-cell">
+        <div class="recovery-cell-label">Monthly ad spend</div>
+        <div class="recovery-cell-value">${{ "{:,}".format(recovery.monthly_ad_spend_usd) }}</div>
+        <div class="recovery-cell-sub">{{ 'self-reported' if recovery.ad_spend_user_provided else 'ICP default — override with real spend' }}</div>
+      </div>
+      <div class="recovery-cell">
+        <div class="recovery-cell-label">Signal gap</div>
+        <div class="recovery-cell-value">{{ recovery.signal_gap_pct }}%</div>
+        <div class="recovery-cell-sub">of consent-denied traffic leaking</div>
+      </div>
+      <div class="recovery-cell">
+        <div class="recovery-cell-label">Recovery uplift</div>
+        <div class="recovery-cell-value">{{ recovery.recovery_uplift_pct }}%</div>
+        <div class="recovery-cell-sub">typical server-side recapture</div>
+      </div>
+    </div>
+    <p class="recovery-footnote">
+      Formula: monthly ad spend × {{ recovery.consent_loss_rate_pct }}% CA consent-denial rate × {{ recovery.signal_gap_pct }}% signal gap × {{ recovery.recovery_uplift_pct }}% recapture.
+      Re-run with a self-reported ad spend for a sharper estimate. Recovery is realized by routing post-consent signal
+      through server-side GTM → Meta CAPI, Google Enhanced Conversions, and TikTok Events API.
+    </p>
+  </div>
+  {% endif %}
+
+  {# === PLAINTIFF LEGAL-STACK STITCH VALIDATION (vertical == 'legal') === #}
+  {% if vertical == 'legal' and legal_stack %}
+  <div class="section">
+    <div class="section-header">
+      <h2>Plaintiff Legal-Stack Stitch Validation <span style="font-size:0.75rem;font-weight:400;color:#6b7280;margin-left:8px;">Lead Docket · Filevine · CallRail · CallTrackingMetrics</span></h2>
+    </div>
+    <div style="padding:14px 20px 6px;font-size:0.82rem;color:#374151;line-height:1.6;">
+      Does the firm's intake stack stitch UTMs from form submit → signed-case event → ad-platform conversion API? Tested four paths with synthetic data. The integration gap between case-management software (Lead Docket / Filevine / Litify) and ad platforms (Meta CAPI / Google Enhanced Conversions) is the gap nobody else is filling — and it's the largest single source of "invisible signed-case" revenue loss.
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Path</th>
+          <th>Status</th>
+          <th>Observed</th>
+          <th>Impact</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Lead Docket form-post UTM persistence</td>
+          <td>{% if legal_stack.lead_docket_utm_passes %}<span class="badge badge-green">Passes</span>{% else %}<span class="badge badge-red">Strips</span>{% endif %}</td>
+          <td>{{ legal_stack.lead_docket_observed | default('utm_source / utm_campaign captured at form post: ' + ('YES' if legal_stack.lead_docket_utm_passes else 'NO'), true) }}</td>
+          <td>{% if legal_stack.lead_docket_utm_passes %}Signed-case-by-channel report is reliable.{% else %}Signed-case-by-channel report systematically undercounts paid search.{% endif %}</td>
+        </tr>
+        <tr>
+          <td>CallRail DNI → Meta CAPI offline-event</td>
+          <td>{% if legal_stack.callrail_meta_passes %}<span class="badge badge-green">Passes</span>{% else %}<span class="badge badge-red">Gap</span>{% endif %}</td>
+          <td>{{ legal_stack.callrail_meta_observed | default('CallRail offline-event integration with Meta CAPI: ' + ('configured' if legal_stack.callrail_meta_passes else 'NOT configured / partial'), true) }}</td>
+          <td>{% if legal_stack.callrail_meta_passes %}Calls attribute back to Meta-sourced ad clicks.{% else %}Calls from Meta ads attribute as "direct" — Meta starts reducing bids on Google's customer.{% endif %}</td>
+        </tr>
+        <tr>
+          <td>Filevine signed-case event → ad platforms</td>
+          <td>{% if legal_stack.filevine_event_push %}<span class="badge badge-green">Configured</span>{% else %}<span class="badge badge-red">Missing</span>{% endif %}</td>
+          <td>{{ legal_stack.filevine_event_observed | default('Server-side push of signed-case event to Meta CAPI / Google Enhanced Conversions: ' + ('configured' if legal_stack.filevine_event_push else 'NOT configured'), true) }}</td>
+          <td>{% if legal_stack.filevine_event_push %}Bidding optimizes on signed-case value, not lead count.{% else %}Bidding optimizes on cheap-leads, not signed cases — typical 30–60% ROAS lift available.{% endif %}</td>
+        </tr>
+        <tr>
+          <td>Multi-domain consent-state propagation</td>
+          <td>{% if legal_stack.multi_domain_consent_propagates %}<span class="badge badge-green">Propagates</span>{% else %}<span class="badge badge-yellow">Per-domain</span>{% endif %}</td>
+          <td>{{ legal_stack.multi_domain_observed | default('Mass-tort microsites tested: ' + (legal_stack.multi_domain_count|default('1')|string) + ' domain(s)', true) }}</td>
+          <td>{% if legal_stack.multi_domain_consent_propagates %}Consent flows across mass-tort microsites.{% else %}Each microsite resets the consent state — high-value mass-tort traffic is in the worst signal-loss zone.{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if report_variant == 'compliance' and exposure and exposure.has_exposure %}
+  <!-- STATUTORY + CLASS-ACTION EXPOSURE (compliance variant only) -->
+  <div class="exposure-panel">
+    <span class="exposure-tag">Estimated Exposure</span>
+    <h3 class="exposure-title">Statutory + class-action exposure from observed violations</h3>
+    <div class="exposure-range">
+      ${{ "{:,}".format(exposure.total_exposure_low_usd) }}–${{ "{:,}".format(exposure.total_exposure_high_usd) }}
+      <span class="exposure-unit">range</span>
+    </div>
+    <div class="exposure-sub">Grounded in settled case outcomes — additive across statutes that apply to this scan.</div>
+    <div class="exposure-components">
+      {% for c in exposure.components %}
+      <div class="exposure-row">
+        <div>
+          <div class="exposure-row-statute">{{ c.statute }}</div>
+          <div class="exposure-row-anchor">{{ c.anchor }}</div>
+        </div>
+        <div class="exposure-row-amount">
+          {% if c.low_usd or c.high_usd %}
+          ${{ "{:,}".format(c.low_usd) }}–${{ "{:,}".format(c.high_usd) }}
+          {% else %}—{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="exposure-footnote">
+      Directional estimate — actual liability scales with class size and intentionality findings.
+      Anchored to published settlements (see Regulatory Basis below).
+    </p>
+  </div>
+  {% endif %}
+
+  {% if is_inconclusive %}
+  <div class="inconclusive-banner">
+    <p style="margin: 0 0 4px;">
+      <span class="lbl">Methodology: Inconclusive</span>
+      <strong>CMP not recognized — further investigation required.</strong>
+    </p>
+    <p style="margin: 0; font-size: 0.85rem;">
+      Consent cookies were injected but a denied Google Consent Mode signal was not observed{% if not result.detected_cmp %}; the consent platform could not be identified{% endif %}. Treat findings as indicative, not legally defensible.
+    </p>
+  </div>
+  {% endif %}
+
+  {% if is_wiring_broken %}
+  <div class="wiring-broken-banner">
+    <p style="margin: 0 0 4px;">
+      <span class="lbl">Methodology: Consent Wiring Broken</span>
+      <strong>Tags fire regardless of the CMP's stored consent state.</strong>
+    </p>
+    <p style="margin: 0; font-size: 0.85rem;">
+      {% if result.detected_cmp %}{{ result.detected_cmp }} was detected{% else %}A CMP was detected{% endif %} and denial was injected, but GCM beacons kept firing with <code>GCS=G111</code> (all granted). Findings are legally defensible.
+    </p>
+  </div>
+  {% endif %}
+
+  <!-- GPC SIGNAL TEST -->
+  {% if result.gpc_tested %}
+    {% if result.gpc_signal_respected %}
+      {% set _gpc_class = 'respected' %}
+      {% set _gpc_tag = 'Respected' %}
+    {% elif result.gpc_signal_respected == False %}
+      {% set _gpc_class = 'ignored' %}
+      {% set _gpc_tag = 'Ignored' %}
+    {% else %}
+      {% set _gpc_class = 'untested' %}
+      {% set _gpc_tag = 'Inconclusive' %}
+    {% endif %}
+  <div class="gpc-panel {{ _gpc_class }}">
+    <h3>GPC Signal Test <span class="tag">{{ _gpc_tag }}</span></h3>
+    <div class="gpc-row">
+      <div class="k">Sec-GPC: 1 header sent on all requests</div>
+      <div class="v {% if result.gpc_header_sent %}ok{% else %}bad{% endif %}">
+        {{ 'YES' if result.gpc_header_sent else 'NO' }}
+      </div>
+    </div>
+    <div class="gpc-row">
+      <div class="k">navigator.globalPrivacyControl = true</div>
+      <div class="v {% if result.gpc_navigator_api_set %}ok{% else %}bad{% endif %}">
+        {{ 'YES' if result.gpc_navigator_api_set else 'NO' }}
+      </div>
+    </div>
+    <div class="gpc-row">
+      <div class="k">Site honored GPC signal</div>
+      {% if result.gpc_signal_respected %}
+      <div class="v ok">YES — tracking pixels stopped firing when GPC was asserted</div>
+      {% elif result.gpc_signal_respected == False %}
+      <div class="v bad">
+        NO — {{ result.gpc_vendors_after_signal }} vendor pixel{{ 's' if result.gpc_vendors_after_signal != 1 else '' }}
+        fired tracking after GPC was asserted
+      </div>
+      {% else %}
+      <div class="v">Inconclusive</div>
+      {% endif %}
+    </div>
+    <div class="gpc-row">
+      <div class="k">Baseline pixel firings (S3 opt-out)</div>
+      <div class="v">{{ result.gpc_pixel_count_baseline }}</div>
+    </div>
+    <div class="gpc-row">
+      <div class="k">Pixel firings under GPC</div>
+      <div class="v {% if result.gpc_pixel_count_with_gpc == 0 %}ok{% else %}bad{% endif %}">
+        {{ result.gpc_pixel_count_with_gpc }}
+      </div>
+    </div>
+    <p style="margin: 10px 0 0; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
+      Under CCPA/CPRA, GPC is a legally binding opt-out signal. California's CPPA has stated
+      GPC non-compliance is enforceable without prior notice.
+    </p>
+  </div>
+  {% endif %}
+
+  <div class="signal-grid">
+    <div class="signal-card">
+      <div class="signal-label">GCS Signal</div>
+      <div class="signal-value">{{ result.gcs_value.raw if result.gcs_value else 'None' }}</div>
+      <div class="signal-sub">
+        {% if result.gcs_value %}
+          Advanced Consent Mode active
+        {% else %}
+          No consent mode detected
+        {% endif %}
+      </div>
+    </div>
+    <div class="signal-card">
+      <div class="signal-label">GTM Container</div>
+      <div class="signal-value">{{ result.gtm_container_id or 'Not detected' }}</div>
+      <div class="signal-sub">{{ result.gtm_extraction_method }}</div>
+    </div>
+    {% if result.cmp_interaction_method %}
+    <div class="signal-card">
+      <div class="signal-label">CMP Interaction</div>
+      <div class="signal-value">
+        {% if result.cmp_interaction_method == 'cookie_injection' %}
+          Cookie injection ({{ result.detected_cmp or 'OneTrust' }})
+        {% elif result.cmp_interaction_method and result.cmp_interaction_method.startswith('injection:') %}
+          Cookie injection ({{ result.cmp_interaction_method[10:] }})
+        {% elif result.cmp_interaction_method == 'banner_click' %}
+          Banner click &mdash; GCS confirmed
+        {% elif result.cmp_interaction_method == 'banner_click_inconclusive' %}
+          Banner click &mdash; inconclusive
+        {% elif result.cmp_interaction_method == 'banner_click_failed' %}
+          Banner click failed &mdash; manual review
+        {% elif result.cmp_interaction_method == 'banner_click_reverted' %}
+          Click reverted on reload &mdash; manual review
+        {% else %}
+          {{ result.cmp_interaction_method }}
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+    {% if result.detected_jurisdiction %}
+    <div class="signal-card">
+      <div class="signal-label">Jurisdiction</div>
+      {% set jur_labels = {
+        "EU": "European Union (GDPR / TCF)",
+        "US": "United States (CCPA / State Laws)",
+        "CA": "Canada (PIPEDA / Provincial)"
+      } %}
+      <div class="signal-value">
+        {{ jur_labels.get(result.detected_jurisdiction, result.detected_jurisdiction) }}
+      </div>
+      <div class="signal-sub">auto-detected</div>
+    </div>
+    {% endif %}
+    <div class="signal-card">
+      <div class="signal-label">Server-Side GTM</div>
+      <div class="signal-value">{{ 'Detected' if result.ssgtm_detected else 'Not detected' }}</div>
+      <div class="signal-sub">{{ result.ssgtm_domain or '&mdash;' }}</div>
+    </div>
+    <div class="signal-card">
+      <div class="signal-label">GPC Tested</div>
+      <div class="signal-value">{{ 'Yes' if result.gpc_tested else 'No' }}</div>
+      <div class="signal-sub">Sec-GPC: 1 header</div>
+    </div>
+    {% if result.detected_cmp %}
+    <div class="signal-card">
+      <div class="signal-label">CMP Detected</div>
+      <div class="signal-value">{{ result.detected_cmp }}</div>
+      <div class="signal-sub">{{ (result.cmp_detection_confidence|capitalize) ~ ' confidence' if result.cmp_detection_confidence else 'Auto-detected' }}</div>
+    </div>
+    {% endif %}
+    {% if result.bot_detection_encountered %}
+    <div class="signal-card">
+      <div class="signal-label">Detection</div>
+      <div class="signal-value" style="color: #b91c1c;">Bot Shield</div>
+      <div class="signal-sub">WAF/Cloudflare challenged scan</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if result.ssgtm_detected %}
+  <div class="ssgtm-warning">
+    <strong>Server-Side GTM Detected ({{ result.ssgtm_domain }})</strong><br>
+    Client-side consent enforcement scripts cannot block server-to-server calls.
+    GPC (Sec-GPC: 1) headers are not forwarded to server-side containers.
+    Server-side data collection may occur regardless of client consent state.
+  </div>
+  {% endif %}
+
+  <!-- SECTION B — TECHNICAL EVIDENCE -->
+
+  <div class="section">
+    <div class="section-header">
+      <h2>Vendor Tracking Findings</h2>
+    </div>
+    {% if result.findings %}
+    <div class="responsive-table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Signal / Cookie</th>
+            <th>Category</th>
+            <th>Legal Risk</th>
+            <th>Status</th>
+            <th>Observation</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for finding in result.findings %}
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">{{ finding.vendor.name }}</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>{{ finding.cookies_observed | join(', ') or '—' }}</span></td>
+            <td data-label="Category"><span>{{ finding.vendor.category | capitalize }}</span></td>
+            <td data-label="Legal Risk">
+              {% if finding.vendor.legal_exposure == 'high' %}
+                <span class="badge badge-red">High</span>
+              {% elif finding.vendor.legal_exposure == 'medium' %}
+                <span class="badge badge-yellow">Medium</span>
+              {% else %}
+                <span class="badge badge-gray">{{ finding.vendor.legal_exposure | capitalize }}</span>
+              {% endif %}
+            </td>
+            <td data-label="Status">
+              {% if finding.status == 'confirmed_violation' %}
+                <span class="badge badge-red">Violation</span>
+              {% elif finding.status == 'likely_violation' %}
+                <span class="badge badge-yellow">Likely</span>
+              {% elif finding.status == 'acm_cookieless_ping' %}
+                <span class="badge badge-green">ACM Ping</span>
+              {% else %}
+                <span class="badge badge-green">Passed</span>
+              {% endif %}
+            </td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">{{ finding.notes or '&mdash;' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">No significant tracking vendors detected during this scan.</div>
+    {% endif %}
+  </div>
+
+  {% if result.gcs_value %}
+  <div class="section">
+    <div class="section-header">
+      <h2>Consent Signal Breakdown</h2>
+    </div>
+    <div class="responsive-table-wrap">
+    <table class="responsive-table">
+      <thead>
+        <tr>
+          <th>Parameter</th><th>Value</th><th>ad_storage</th><th>analytics_storage</th><th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="cell-vendor" data-label="Parameter">GCS</td>
+          <td data-label="Value"><code>{{ result.gcs_value.raw }}</code></td>
+          <td data-label="ad_storage"><span>{{ result.gcs_value.ad_storage }}</span></td>
+          <td data-label="analytics_storage"><span>{{ result.gcs_value.analytics_storage }}</span></td>
+          <td class="cell-notes" data-label="Notes">
+            {% if result.gcs_value.ad_storage == 'denied' and result.gcs_value.analytics_storage == 'denied' %}
+              Google tags may fire cookieless modeling pings (ACM)
+            {% elif result.gcs_value.ad_storage == 'granted' and result.gcs_value.analytics_storage == 'granted' %}
+              Full consent granted — all signals active
+            {% else %}
+              Partial consent
+            {% endif %}
+          </td>
+        </tr>
+        {% if result.gcd_raw %}
+        <tr>
+          <td class="cell-vendor" data-label="Parameter">GCD</td>
+          <td data-label="Value"><code>{{ result.gcd_raw }}</code></td>
+          <td colspan="2" data-label="Detail"><span>Consent detail (V2 signal)</span></td>
+          <td class="cell-notes" data-label="Notes" style="font-family: sans-serif; font-size: 11px;">
+            {# GCD letter decode: denied=p/q/m/u, granted=v/r/t/n #}
+            {% set _denied = ['p','q','m','u'] %}
+            {% set _granted = ['v','r','t','n'] %}
+            {% set _has_denied = result.gcd_raw | select('in', _denied) | list | length > 0 %}
+            {% set _has_granted = result.gcd_raw | select('in', _granted) | list | length > 0 %}
+            {% if _has_denied and not _has_granted %}
+              All consent types denied (default + update)
+            {% elif _has_granted and not _has_denied %}
+              All consent types granted
+            {% elif _has_denied and _has_granted %}
+              Mixed: partial consent (denied + granted letters present)
+            {% else %}
+              Unknown state
+            {% endif %}
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.tag_consent_map %}
+  <div class="section">
+    <div class="section-header">
+      <h2>Tag Consent Map</h2>
+    </div>
+    <div class="responsive-table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>Tag Name</th>
+            <th>Type</th>
+            <th>Google Tag</th>
+            <th>Consent Types</th>
+            <th>Requirement</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tag in result.tag_consent_map %}
+          <tr {% if tag.requirement == "missing" %}class="violation-row"{% endif %}>
+            <td class="cell-vendor" data-label="Tag Name">{{ tag.tag_name }}</td>
+            <td data-label="Type"><code>{{ tag.tag_type }}</code></td>
+            <td data-label="Google Tag"><span>{{ "Yes" if tag.is_google_tag else "No" }}</span></td>
+            <td data-label="Consent Types"><span>{{ tag.consent_types | join(", ") if tag.consent_types else "—" }}</span></td>
+            <td data-label="Requirement">
+              {% if tag.requirement == "missing" %}
+                <span class="badge badge-red">MISSING — violation</span>
+              {% elif tag.requirement == "required" %}
+                <span class="badge badge-green">Required</span>
+              {% elif tag.requirement == "optional" %}
+                <span class="badge badge-yellow">Optional</span>
+              {% else %}
+                <span class="badge badge-gray">ACM managed</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.gcs_timeline %}
+  <div class="section">
+    <div class="section-header">
+      <h2>GCS Timeline</h2>
+    </div>
+    <div class="scroll-table-wrap">
+    <table class="evidence-table" style="min-width: 860px;">
+      <thead>
+        <tr>
+          <th style="white-space:nowrap;">Time (ms)</th>
+          <th>GCS</th>
+          <th style="white-space:nowrap;">ad_storage</th>
+          <th style="white-space:nowrap;">analytics_storage</th>
+          <th>GCD</th>
+          <th style="min-width:320px;">URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for hit in result.gcs_timeline %}
+        <tr>
+          <td style="white-space:nowrap;">{{ "%.0f"|format(hit.timestamp_ms) }}</td>
+          <td>
+            <code style="{% if hit.gcs_value.ad_storage == 'denied' %}color:#b91c1c;{% else %}color:#15803d;{% endif %}">
+              {{ hit.gcs_value.raw }}
+            </code>
+          </td>
+          <td>
+            <span style="color:{% if hit.gcs_value.ad_storage == 'denied' %}#b91c1c{% else %}#15803d{% endif %};">
+              {{ hit.gcs_value.ad_storage }}
+            </span>
+          </td>
+          <td>
+            <span style="color:{% if hit.gcs_value.analytics_storage == 'denied' %}#b91c1c{% else %}#15803d{% endif %};">
+              {{ hit.gcs_value.analytics_storage }}
+            </span>
+          </td>
+          <td style="white-space:nowrap;">{{ hit.gcd_raw or "—" }}</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            {{ hit.url }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- SECTION C — PIXEL ENDPOINT EVIDENCE -->
+
+  {% if result.pixel_firings %}
+  <div class="section">
+    <div class="section-header">
+      <h2>Pixel Endpoint Evidence <span style="font-size:0.75rem;font-weight:400;color:#6b7280;margin-left:8px;">network-level — plaintiff methodology</span></h2>
+    </div>
+    <div style="padding: 10px 16px 4px; font-size:0.78rem; color:#6b7280; line-height:1.5;">
+      Pixel endpoints observed in network traffic after consent denial. The same evidentiary pattern that demand-letter plaintiffs (Swigart, Vivek Shah, et al.) source from auto-scans of business websites in CIPA/CCPA class actions — surfaced here defensively, on your side of the table.
+    </div>
+    <div class="responsive-table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Category</th>
+            <th>Exposure</th>
+            <th>Endpoint Matched</th>
+            <th>Full URL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pf in result.pixel_firings %}
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">{{ pf.vendor_name }}</td>
+            <td data-label="Category"><span>{{ pf.category | replace('_', ' ') | capitalize }}</span></td>
+            <td data-label="Exposure">
+              {% if pf.legal_exposure == 'high' %}
+                <span class="badge badge-red">High</span>
+              {% else %}
+                <span class="badge badge-yellow">Medium</span>
+              {% endif %}
+            </td>
+            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">{{ pf.matched_pattern }}</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
+              {{ pf.url[:120] }}{% if pf.url|length > 120 %}…{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- REGULATORY BASIS -->
+
+  {% if wiki_pages %}
+  <div class="section">
+    <div class="section-header">
+      <h2>Regulatory Basis</h2>
+    </div>
+    <div style="padding: 16px 20px;">
+      {% for page in wiki_pages %}
+      <div class="reg-chunk">
+        <div class="reg-source">{{ page.title }}</div>
+        <div class="reg-text-wrap">
+          <div class="reg-text">{{ page.content | reg_excerpt | markdown }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- SECTION D — MANUAL VALIDATION -->
+
+  {% if validation_steps %}
+  <div class="section">
+    <div class="section-header">
+      <h2>Manual Validation Checklist</h2>
+    </div>
+    <div style="padding: 10px 16px 4px; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
+      Reproduce each finding in a browser to confirm audit accuracy. All steps assume incognito mode with a California VPN or geolocation override.
+    </div>
+    <div style="padding: 8px 20px 16px;">
+      {% for step in validation_steps %}
+      <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;">
+        <div style="font-size: 0.82rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
+          {{ loop.index }}. {{ step.title }}
+        </div>
+        <div style="font-size: 0.8rem; color: #374151; line-height: 1.5; margin-bottom: 6px;">
+          <strong>Check:</strong> {{ step.what }}
+        </div>
+        <div style="font-size: 0.78rem; color: #4b5563; line-height: 1.5; margin-bottom: 6px;">
+          <strong>Steps:</strong> {{ step.how }}
+        </div>
+        <div style="font-size: 0.78rem; color: #374151; line-height: 1.5; background: #fff; border-radius: 4px; padding: 8px 10px; border: 1px solid #e5e7eb;">
+          <strong>Expected:</strong> {{ step.expect }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="next-step">
+    <div class="next-step-copy">
+      <div class="next-step-eyebrow">Next step</div>
+      <div class="next-step-title">
+        {% if report_variant == 'signal' %}
+          Want a deeper look at how this stack could be re-platformed?
+        {% else %}
+          Want help turning these findings into a remediation plan?
+        {% endif %}
+      </div>
+      <div class="next-step-sub">30 minutes, no pitch — walk the findings with Kenneth and scope what a fix looks like.</div>
+    </div>
+    <a class="next-step-btn" href="https://kennethjbuchanan.com/scoping-call/">Book a Scoping Call &rarr;</a>
+  </div>
+
+  <footer>
+    Generated by Consent Compliance Agent &nbsp;·&nbsp; Audit ID: {{ result.audit_id }}
+  </footer>
+
+</div>
+</body>
+</html>
