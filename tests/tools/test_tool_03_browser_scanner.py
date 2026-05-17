@@ -3,10 +3,10 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
-from consent_agent.models.audit_request import ConsentState
-from consent_agent.models.audit_result import GTMExtractionMethod, MethodologyFlag
-from consent_agent.models.scan_result import CookieSnapshot, ScanResult
-from consent_agent.tools.tool_03_browser_scanner import (
+from consent_engine.models.audit_request import ConsentState
+from consent_engine.models.audit_result import GTMExtractionMethod, MethodologyFlag
+from consent_engine.models.scan_result import CookieSnapshot, ScanResult
+from consent_engine.tools.tool_03_browser_scanner import (
     build_onetrust_consent_cookie,
     extract_gcd_from_url,
     extract_gcs_from_url,
@@ -227,7 +227,7 @@ def test_build_opted_in_cookie_has_granted_groups() -> None:
 
 async def test_s1_scan_returns_scan_result(local_server: str) -> None:
     """S1 baseline: fresh context, no consent interaction, cookies collected."""
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s1
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s1
 
     result = await _scan_s1(f"{local_server}/basic")
 
@@ -239,7 +239,7 @@ async def test_s1_scan_returns_scan_result(local_server: str) -> None:
 
 async def test_s1_scan_collects_cookies(local_server: str) -> None:
     """S1 scan captures cookies set by JavaScript during page load."""
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s1
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s1
 
     result = await _scan_s1(f"{local_server}/basic")
 
@@ -249,7 +249,7 @@ async def test_s1_scan_collects_cookies(local_server: str) -> None:
 
 
 async def test_s1_scan_timestamp_is_set(local_server: str) -> None:
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s1
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s1
 
     result = await _scan_s1(f"{local_server}/basic")
     assert result.timestamp is not None
@@ -259,7 +259,7 @@ async def test_s1_scan_timestamp_is_set(local_server: str) -> None:
 
 
 async def test_s3_opted_out_scan_returns_correct_methodology(local_server: str) -> None:
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     result = await _scan_s3(f"{local_server}/basic", opted_out=True)
 
@@ -272,7 +272,7 @@ async def test_s3_opted_out_scan_returns_correct_methodology(local_server: str) 
 
 
 async def test_s3_opted_in_scan_returns_correct_consent_state(local_server: str) -> None:
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     result = await _scan_s3(f"{local_server}/basic", opted_out=False)
 
@@ -282,7 +282,7 @@ async def test_s3_opted_in_scan_returns_correct_consent_state(local_server: str)
 
 async def test_s3_opted_out_injects_optanon_cookie(local_server: str) -> None:
     """OptanonConsent cookie is visible to the page as a pre-set cookie."""
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     result = await _scan_s3(f"{local_server}/basic", opted_out=True)
 
@@ -292,7 +292,7 @@ async def test_s3_opted_out_injects_optanon_cookie(local_server: str) -> None:
 
 async def test_s3_opted_out_collects_page_cookies(local_server: str) -> None:
     """Page cookies (including JS-set ones) are still collected in S3."""
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     result = await _scan_s3(f"{local_server}/basic", opted_out=True)
 
@@ -304,7 +304,7 @@ async def test_s3_opted_out_collects_page_cookies(local_server: str) -> None:
 
 
 async def test_gpc_scan_sets_gpc_header_sent(local_server: str) -> None:
-    from consent_agent.tools.tool_03_browser_scanner import _scan_gpc
+    from consent_engine.tools.tool_03_browser_scanner import _scan_gpc
 
     result = await _scan_gpc(f"{local_server}/basic")
 
@@ -314,7 +314,7 @@ async def test_gpc_scan_sets_gpc_header_sent(local_server: str) -> None:
 
 
 async def test_gpc_scan_still_collects_cookies(local_server: str) -> None:
-    from consent_agent.tools.tool_03_browser_scanner import _scan_gpc
+    from consent_engine.tools.tool_03_browser_scanner import _scan_gpc
 
     result = await _scan_gpc(f"{local_server}/basic")
 
@@ -327,8 +327,8 @@ async def test_gpc_scan_still_collects_cookies(local_server: str) -> None:
 
 async def test_gtm_extraction_fallback_to_window_object(local_server: str) -> None:
     """Fallback: window.google_tag_manager is evaluated when gtm.js not intercepted."""
-    from consent_agent.models.audit_result import GTMExtractionMethod
-    from consent_agent.tools.tool_03_browser_scanner import _extract_gtm_from_page
+    from consent_engine.models.audit_result import GTMExtractionMethod
+    from consent_engine.tools.tool_03_browser_scanner import _extract_gtm_from_page
     from playwright.async_api import async_playwright
 
     async with async_playwright() as pw:
@@ -349,8 +349,8 @@ async def test_gtm_extraction_fallback_to_window_object(local_server: str) -> No
 
 async def test_gtm_extraction_html_regex_fallback(local_server: str) -> None:
     """Last resort: GTM ID extracted from page HTML when window object is absent."""
-    from consent_agent.models.audit_result import GTMExtractionMethod
-    from consent_agent.tools.tool_03_browser_scanner import _extract_gtm_from_page
+    from consent_engine.models.audit_result import GTMExtractionMethod
+    from consent_engine.tools.tool_03_browser_scanner import _extract_gtm_from_page
     from playwright.async_api import async_playwright
 
     async with async_playwright() as pw:
@@ -446,7 +446,7 @@ def test_scan_result_cmp_interaction_method_accepts_string() -> None:
 
 async def test_s3_uses_cookie_injection_when_no_banner(local_server: str) -> None:
     """S3 primary path: no banner present -> cmp_interaction_method = cookie_injection."""
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     result = await _scan_s3(f"{local_server}/basic", opted_out=True)
 
@@ -457,7 +457,7 @@ async def test_s3_falls_back_to_banner_click_when_banner_present(
     local_server: str,
 ) -> None:
     """S3 fallback: non-OneTrust banner detected -> clean context -> banner click."""
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     result = await _scan_s3(f"{local_server}/banner-single", opted_out=True)
 
@@ -475,7 +475,7 @@ async def test_s3_banner_click_confirmed_when_gcs_denied_beacon_fires(
     local_server: str,
 ) -> None:
     """S3 fallback: GCS=G1-- beacon fires after decline click -> banner_click confirmed."""
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     result = await _scan_s3(f"{local_server}/banner-with-gcs", opted_out=True)
 
@@ -488,7 +488,7 @@ async def test_s3_banner_click_confirmed_when_gcs_denied_beacon_fires(
 @pytest.mark.asyncio
 async def test_s1_scan_captures_custom_gtm_loader(local_server: str) -> None:
     """Track 2: custom loader URL (no 'gtm.js' in path) captured via body fingerprint."""
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s1
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s1
 
     result = await _scan_s1(f"{local_server}/custom-loader-page")
 
@@ -502,7 +502,7 @@ async def test_s1_scan_records_har_file(local_server: str) -> None:
     """Tool 3 records a HAR file during the scan; har_path is set on ScanResult."""
     import os
 
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s1
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s1
 
     result = await _scan_s1(f"{local_server}/basic")
 
@@ -516,7 +516,7 @@ async def test_s3_scan_records_har_file(local_server: str) -> None:
     """S3 scan writes HAR file; har_path is set."""
     import os
 
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     result = await _scan_s3(f"{local_server}/basic", opted_out=True)
 
@@ -530,7 +530,7 @@ async def test_har_file_is_valid_json(local_server: str) -> None:
     import json
     from pathlib import Path
 
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s1
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s1
 
     result = await _scan_s1(f"{local_server}/basic")
     assert result.har_path is not None
@@ -542,7 +542,7 @@ async def test_har_file_is_valid_json(local_server: str) -> None:
 
 async def test_stealth_chrome_runtime_present(local_server: str) -> None:
     """Headless browser must expose window.chrome.runtime to pass bot detection."""
-    from consent_agent.tools.tool_03_browser_scanner import (
+    from consent_engine.tools.tool_03_browser_scanner import (
         _STEALTH_INIT_SCRIPT,
         _STEALTH_LAUNCH_ARGS,
         _STEALTH_UA,
@@ -579,7 +579,7 @@ async def test_stealth_chrome_runtime_present(local_server: str) -> None:
 
 async def test_s3_known_cmp_with_denied_gcs_marks_s3_definitive(local_server: str) -> None:
     """Known CMP + observed denied GCS beacon = methodology S3 (definitive)."""
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     result = await _scan_s3(f"{local_server}/cmp-onetrust-denied", opted_out=True)
 
@@ -591,7 +591,7 @@ async def test_s3_known_cmp_with_denied_gcs_marks_s3_definitive(local_server: st
 
 async def test_s3_unknown_cmp_with_no_gcs_marks_inconclusive(local_server: str) -> None:
     """Unknown CMP + GCS never changes to denied = INCONCLUSIVE_UNKNOWN_CMP."""
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     result = await _scan_s3(f"{local_server}/basic", opted_out=True)
 
@@ -610,7 +610,7 @@ async def test_s3_known_cmp_with_no_denied_gcs_marks_wiring_broken(
     still don't observe a denied GCS signal, that's definitive evidence the
     site's tag wiring is broken — tags fire before or regardless of CMP state.
     """
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     # /cmp-cookieyes exposes window.CookieYes (known CMP, and cmp_injector
     # HAS a plan for CookieYes) but does not emit a denied GCS beacon.
@@ -629,8 +629,8 @@ async def test_s3_cmp_detected_injection_plan_exists_but_gcs_granted_marks_wirin
     This is the Quince / Casper scenario: CMP recognised, denial injected
     correctly, but Consent Mode beacons keep firing GCS=G111.
     """
-    from consent_agent.tools.cmp_injector import has_plan_for
-    from consent_agent.tools.tool_03_browser_scanner import _scan_s3
+    from consent_engine.tools.cmp_injector import has_plan_for
+    from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
     # Sanity: confirm CookieYes is in the "has plan" set so this test actually
     # exercises the wiring-broken branch rather than inconclusive fall-through.
@@ -643,7 +643,7 @@ async def test_s3_cmp_detected_injection_plan_exists_but_gcs_granted_marks_wirin
 
 
 async def test_stealth_webdriver_hidden(local_server: str) -> None:
-    from consent_agent.tools.tool_03_browser_scanner import (
+    from consent_engine.tools.tool_03_browser_scanner import (
         _STEALTH_INIT_SCRIPT,
         _STEALTH_LAUNCH_ARGS,
         _STEALTH_UA,
