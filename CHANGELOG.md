@@ -3,6 +3,21 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.2] — 2026-05-17 — Playwright auto-install
+
+### Fixed
+- `consent-engine audit <url>` crashed with `BrowserType.launch:
+  Executable doesn't exist…` on first run because Playwright's Chromium
+  binaries ship separately from the Python wheel. Now auto-downloads
+  on first audit (~140 MB, one-time, user-level cache shared across
+  uvx environments).
+
+### Added
+- `consent_engine.audit.ensure_chromium_installed()` — idempotent
+  helper that detects whether Playwright Chromium is already cached
+  and shells out to `python -m playwright install chromium` if not.
+  Called at the top of `run_audit()`.
+
 ## [0.1.1] — 2026-05-17 — CLI bug fix
 
 ### Fixed

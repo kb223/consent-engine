@@ -11,8 +11,11 @@ plain Python.
 from __future__ import annotations
 
 import asyncio
+import subprocess
+import sys
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
 
 from consent_engine.models.audit_result import (
     AuditResult,
@@ -48,6 +51,40 @@ class AuditBundle:
     deck_marp_md: str
 
 
+def ensure_chromium_installed() -> None:
+    """Download the Playwright Chromium browser if it isn't on disk yet.
+
+    Playwright ships the browser binaries separately from the Python package,
+    so a freshly installed `consent-engine` will hit
+    `BrowserType.launch: Executable doesn't exist…` on the first audit.
+    This shells out to `playwright install chromium` (idempotent, ~140 MB
+    one-time download into ~/Library/Caches/ms-playwright/) so the user
+    never has to.
+    """
+    cache_dir = Path.home() / "Library/Caches/ms-playwright"
+    # Heuristic: any chromium folder under the cache means Playwright has
+    # downloaded at least one Chromium build. Cheaper than launching the
+    # browser to test.
+    if cache_dir.exists() and any(cache_dir.glob("chromium*")):
+        return
+
+    print(
+        "Chromium not installed. Downloading (~140 MB, one-time)…",
+        file=sys.stderr,
+        flush=True,
+    )
+    res = subprocess.run(
+        [sys.executable, "-m", "playwright", "install", "chromium"],
+        capture_output=False,
+        check=False,
+    )
+    if res.returncode != 0:
+        raise RuntimeError(
+            "Failed to install Chromium. Run manually:\n"
+            "  python -m playwright install chromium"
+        )
+
+
 async def run_audit(url: str, *, jurisdiction: str | None = None) -> AuditBundle:
     """Run a full forensic consent-compliance audit and return an `AuditBundle`.
 
@@ -62,6 +99,9 @@ async def run_audit(url: str, *, jurisdiction: str | None = None) -> AuditBundle
         and the Marp slide deck.
     """
     audit_id = str(uuid.uuid4())
+
+    # 0. First-run setup: download Chromium binaries if they aren't cached.
+    ensure_chromium_installed()
 
     # 1. Scan (S3 forensic methodology — consent pre-set to "reject all").
     scan, _ = await scan_page_fast(url=url, opted_out=True)
