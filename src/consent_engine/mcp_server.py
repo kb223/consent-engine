@@ -106,29 +106,26 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
 
 async def _audit_url(url: str) -> list[TextContent]:
     # Lazy import — avoids pulling Playwright at MCP server start
-    from consent_engine.tools.tool_02_violation_classifier import classify
-    from consent_engine.tools.tool_03_browser_scanner import scan_page
-    from consent_engine.tools.tool_08_report_generator import generate_executive_summary
+    from consent_engine.audit import run_audit
 
-    scan = await scan_page(url=url)
-    audit = classify(scan)
-    audit_dir = Path("./out") / audit.audit_id
+    bundle = await run_audit(url=url)
+    audit_dir = Path("./out") / bundle.audit_id
     audit_dir.mkdir(parents=True, exist_ok=True)
     (audit_dir / "audit_result.json").write_text(
-        json.dumps(audit.model_dump(mode="json"), indent=2, default=str)
+        json.dumps(bundle.audit_result.model_dump(mode="json"), indent=2, default=str)
     )
     with (audit_dir / "evidence.jsonl").open("w") as f:
-        for req in scan.network_requests:
+        for req in bundle.scan_result.network_requests:
             f.write(json.dumps(req.model_dump(mode="json"), default=str) + "\n")
-    summary = generate_executive_summary(audit)
+    (audit_dir / "report.html").write_text(bundle.report_html)
+    (audit_dir / "deck.marp.md").write_text(bundle.deck_marp_md)
     return [TextContent(
         type="text",
         text=(
-            f"Audit complete: {audit.audit_id}\n"
+            f"Audit complete: {bundle.audit_id}\n"
             f"  URL: {url}\n"
-            f"  Violations: {len(audit.violations)}\n"
-            f"  Warnings: {len(audit.warnings)}\n\n"
-            f"Summary:\n{summary}"
+            f"  Findings: {len(bundle.audit_result.findings)} vendor finding(s)\n\n"
+            f"Summary:\n{bundle.executive_summary}"
         ),
     )]
 

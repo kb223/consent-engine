@@ -3,6 +3,26 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1] — 2026-05-17 — CLI bug fix
+
+### Fixed
+- `consent-engine audit <url>` crashed with `ImportError: cannot import
+  name 'classify'` because the CLI was calling a fictional top-level
+  classify() function instead of orchestrating the eight tools properly.
+  Same bug in the MCP server and the FastAPI surface.
+
+### Added
+- `consent_engine.audit.run_audit(url) -> AuditBundle` — single entry point
+  that owns the full pipeline (scan → per-vendor classify → sSGTM detect →
+  pixel detect → jurisdiction detect → GTM parse → HAR analyze → assemble
+  AuditResult → wiki retrieve → LLM exec summary → HTML report + Marp deck)
+- `consent_engine.audit.run_audit_sync()` for callers outside an event loop
+- `executive_summary.md` written alongside the other bundle artifacts
+
+### Changed
+- CLI, MCP server, and FastAPI surface now all call `run_audit()` instead
+  of their three (broken) inlined orchestrations. Single source of truth.
+
 ## [0.1.0] — 2026-05-16 — initial public release
 
 ### Added

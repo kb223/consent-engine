@@ -43,33 +43,29 @@ async def audit(req: AuditRequest) -> dict:
     For long-running jobs swap this for an async job-queue (BackgroundTasks
     or a real queue like Celery/Arq).
     """
-    from consent_engine.tools.tool_02_violation_classifier import classify
-    from consent_engine.tools.tool_03_browser_scanner import scan_page
-    from consent_engine.tools.tool_08_report_generator import generate_report
+    from consent_engine.audit import run_audit
 
     try:
-        scan = await scan_page(url=str(req.url))
+        bundle = await run_audit(url=str(req.url))
     except Exception as e:                                       # noqa: BLE001
-        raise HTTPException(status_code=502, detail=f"scan failed: {e}") from e
+        raise HTTPException(status_code=502, detail=f"audit failed: {e}") from e
 
-    audit_result = classify(scan)
-
-    out_dir = Path("./out") / audit_result.audit_id
+    out_dir = Path("./out") / bundle.audit_id
     out_dir.mkdir(parents=True, exist_ok=True)
     with (out_dir / "evidence.jsonl").open("w") as f:
-        for r in scan.network_requests:
+        for r in bundle.scan_result.network_requests:
             f.write(json.dumps(r.model_dump(mode="json"), default=str) + "\n")
-    report_html, deck_md = generate_report(audit_result)
-    (out_dir / "report.html").write_text(report_html)
-    (out_dir / "deck.marp.md").write_text(deck_md)
+    (out_dir / "report.html").write_text(bundle.report_html)
+    (out_dir / "deck.marp.md").write_text(bundle.deck_marp_md)
     (out_dir / "audit_result.json").write_text(
-        json.dumps(audit_result.model_dump(mode="json"), indent=2, default=str)
+        json.dumps(bundle.audit_result.model_dump(mode="json"), indent=2, default=str)
     )
+    (out_dir / "executive_summary.md").write_text(bundle.executive_summary)
 
     return {
-        "audit_id": audit_result.audit_id,
+        "audit_id": bundle.audit_id,
         "bundle": str(out_dir),
-        "result": audit_result.model_dump(mode="json"),
+        "result": bundle.audit_result.model_dump(mode="json"),
     }
 
 
