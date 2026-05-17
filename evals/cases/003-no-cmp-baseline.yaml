@@ -1,0 +1,14 @@
+name: "example.com (no CMP, no third-party tracking) — negative control"
+url: "https://example.com/"
+methodology: "S3"
+notes: |
+  IANA's example.com serves a static HTML page with zero third-party
+  resources. Use this as the negative control — if the engine reports any
+  violation here, something is wrong in the classifier (false positive).
+
+  Stable URL, stable content, ideal regression test.
+expected:
+  has_definitive_findings: false
+  violations_count: 0
+  cmp_detected: null
+  consent_state: "OPTED_OUT"

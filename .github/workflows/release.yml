@@ -1,0 +1,87 @@
+name: Release
+
+# Publishes consent-engine to PyPI on every pushed tag matching v*.
+# Uses PyPI Trusted Publishing — no API token needed; auth is via GitHub
+# OIDC. One-time setup on PyPI: https://docs.pypi.org/trusted-publishers/
+#
+# To release:
+#   1. Bump version in src/consent_engine/__init__.py + pyproject.toml
+#   2. Update CHANGELOG.md
+#   3. git tag v0.1.0 && git push --tags
+#   4. This workflow builds, attests, and publishes the wheel + sdist
+#   5. A GitHub Release is created from the tag automatically
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write       # to create the GitHub Release
+  id-token: write       # PyPI Trusted Publishing OIDC
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Build wheel + sdist
+        run: uv build
+
+      - name: Show artifacts
+        run: ls -la dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/consent-engine
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish via Trusted Publisher
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # No `password:` — OIDC handles auth.
+
+  github-release:
+    name: Create GitHub Release
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create release + attach artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "consent-engine ${GITHUB_REF_NAME}" \
+            --notes-from-tag \
+            --verify-tag \
+            dist/*.whl \
+            dist/*.tar.gz

@@ -1,0 +1,21 @@
+name: "OneTrust marketing site (Fred Pike's MeasureSummit demo target)"
+url: "https://www.onetrust.com/"
+methodology: "S3"
+notes: |
+  Fred Pike ran his own audit on the OneTrust marketing site at MeasureSummit
+  May 2026 — found two vendors firing post-reject including Sixth Sense
+  (B2B ABM tracker that uses IP intelligence + behavioral fingerprinting).
+
+  Even a CMP vendor's own marketing site failed its own audit. That makes
+  this site a perfect golden case: the expected outcome is "definitive
+  violations found" with high confidence.
+
+  Re-baseline whenever OneTrust updates their consent posture so this case
+  stays accurate.
+expected:
+  has_definitive_findings: true
+  consent_state: "OPTED_OUT"
+  cmp_detected: "onetrust"
+  # Don't assert exact violation count — OneTrust's site changes frequently.
+  # The signal we care about is "at least one definitive violation under S3"
+  violations_count_at_least: 1

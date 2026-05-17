@@ -1,0 +1,13 @@
+name: "Cresta marketing site (B2B AI CX SaaS)"
+url: "https://cresta.com/"
+methodology: "S3"
+notes: |
+  B2B SaaS marketing sites tend to have HubSpot + LinkedIn Insight + Meta
+  Pixel + an analytics vendor, all gated by the CMP. Useful breadth case
+  for the lookups.
+
+  Re-baseline if Cresta's tracking stack changes.
+expected:
+  has_definitive_findings: false
+  consent_state: "OPTED_OUT"
+  violations_count_at_most: 2

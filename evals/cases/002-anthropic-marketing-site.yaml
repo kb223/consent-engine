@@ -1,0 +1,15 @@
+name: "Anthropic marketing site (AI lab with thoughtful privacy posture)"
+url: "https://www.anthropic.com/"
+methodology: "S3"
+notes: |
+  Anthropic publishes Constitutional AI papers and runs a careful privacy
+  program; their marketing site is a reasonable "should mostly pass"
+  reference. Currently uses a CMP with restrained third-party loading.
+
+  Re-baseline if their stack changes.
+expected:
+  has_definitive_findings: false
+  consent_state: "OPTED_OUT"
+  # CMP detection is best-effort here — Anthropic uses a custom CMP layer.
+  # Accept either onetrust-style or null.
+  violations_count_at_most: 1

@@ -59,17 +59,22 @@ and a roll-up that goes into the README badge.
 - **Latency p95**: < 30s per audit.
 - **Cost p95**: < $0.10 per audit (LLM tokens for executive summary).
 
-## Cases on the roadmap
+## Seeded cases
 
-- [ ] 001 — OneTrust + Advanced Consent Mode, clean SaaS marketing site
-- [ ] 002 — Meta Pixel firing post-reject (the lawsuit scenario)
-- [ ] 003 — Server-side GTM bypass (architectural gap)
-- [ ] 004 — Multiple CMPs on the same page (rare but disruptive)
-- [ ] 005 — Consent Mode set to Basic (cookies blocked entirely)
-- [ ] 006 — Page with no CMP at all (Tier-1 finding)
-- [ ] 007 — GPC respected
-- [ ] 008 — GPC ignored
-- [ ] 009 — Healthcare URL with Meta Pixel (HIPAA-adjacent)
-- [ ] 010 — Video-page tracking (VPPA)
-- [ ] 011 — Out-of-GTM pixel (hard-coded `<head>` script)
-- [ ] 012 — AI-browser request (`Sec-GPC: 1`, Arc / Comet / Perplexity UA)
+- [x] 001 — OneTrust marketing site (definitive violations expected; Fred Pike's MeasureSummit demo)
+- [x] 002 — Anthropic marketing site (should mostly pass)
+- [x] 003 — example.com (negative control, must report zero violations)
+- [x] 004 — Cresta marketing site (B2B SaaS breadth case)
+
+## On the roadmap (add as you encounter them)
+
+- [ ] 005 — Meta Pixel firing post-reject (the lawsuit scenario)
+- [ ] 006 — Server-side GTM bypass (architectural gap)
+- [ ] 007 — Multiple CMPs on the same page (rare but disruptive)
+- [ ] 008 — Consent Mode set to Basic (cookies blocked entirely)
+- [ ] 009 — Page with no CMP at all (Tier-1 finding)
+- [ ] 010 — GPC respected vs ignored (paired case)
+- [ ] 011 — Healthcare URL with Meta Pixel (HIPAA-adjacent)
+- [ ] 012 — Video-page tracking (VPPA)
+- [ ] 013 — Out-of-GTM pixel (hard-coded `<head>` script)
+- [ ] 014 — AI-browser request (`Sec-GPC: 1`, Arc / Comet / Perplexity UA)
