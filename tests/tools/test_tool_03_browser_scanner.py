@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
+
 from consent_engine.models.audit_request import ConsentState
 from consent_engine.models.audit_result import GTMExtractionMethod, MethodologyFlag
 from consent_engine.models.scan_result import CookieSnapshot, ScanResult
@@ -327,9 +328,10 @@ async def test_gpc_scan_still_collects_cookies(local_server: str) -> None:
 
 async def test_gtm_extraction_fallback_to_window_object(local_server: str) -> None:
     """Fallback: window.google_tag_manager is evaluated when gtm.js not intercepted."""
+    from playwright.async_api import async_playwright
+
     from consent_engine.models.audit_result import GTMExtractionMethod
     from consent_engine.tools.tool_03_browser_scanner import _extract_gtm_from_page
-    from playwright.async_api import async_playwright
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
@@ -349,9 +351,10 @@ async def test_gtm_extraction_fallback_to_window_object(local_server: str) -> No
 
 async def test_gtm_extraction_html_regex_fallback(local_server: str) -> None:
     """Last resort: GTM ID extracted from page HTML when window object is absent."""
+    from playwright.async_api import async_playwright
+
     from consent_engine.models.audit_result import GTMExtractionMethod
     from consent_engine.tools.tool_03_browser_scanner import _extract_gtm_from_page
-    from playwright.async_api import async_playwright
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
@@ -542,12 +545,13 @@ async def test_har_file_is_valid_json(local_server: str) -> None:
 
 async def test_stealth_chrome_runtime_present(local_server: str) -> None:
     """Headless browser must expose window.chrome.runtime to pass bot detection."""
+    from playwright.async_api import async_playwright
+
     from consent_engine.tools.tool_03_browser_scanner import (
         _STEALTH_INIT_SCRIPT,
         _STEALTH_LAUNCH_ARGS,
         _STEALTH_UA,
     )
-    from playwright.async_api import async_playwright
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True, args=_STEALTH_LAUNCH_ARGS)
@@ -643,12 +647,13 @@ async def test_s3_cmp_detected_injection_plan_exists_but_gcs_granted_marks_wirin
 
 
 async def test_stealth_webdriver_hidden(local_server: str) -> None:
+    from playwright.async_api import async_playwright
+
     from consent_engine.tools.tool_03_browser_scanner import (
         _STEALTH_INIT_SCRIPT,
         _STEALTH_LAUNCH_ARGS,
         _STEALTH_UA,
     )
-    from playwright.async_api import async_playwright
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True, args=_STEALTH_LAUNCH_ARGS)
