@@ -1183,7 +1183,11 @@ def generate_marp_slides(
         else "None detected",
         _SVG_CROSS if pixel_violations else _SVG_CHECK,
     )
-    _gcs_code = f"<code style='background:#1f2937;padding:2px 6px;border-radius:3px;font-size:0.9em;'>{gcs_state}</code>"
+    _gcs_code = (
+        f"<code style='background:#faf8f2;color:#14182b;border:1px solid #e7e3d8;"
+        f"padding:2px 8px;border-radius:3px;font-size:0.9em;"
+        f"font-family:\"SF Mono\",Menlo,monospace;font-weight:600;'>{gcs_state}</code>"
+    )
     if _gcs_full_denial:
         _gcs_display = f"{_gcs_code} — ACM implemented correctly (cookieless pings only)"
         _gcs_icon = _SVG_CHECK
@@ -1445,21 +1449,21 @@ def generate_marp_slides(
         )
 
         _gpc_footer = (
-            '<div style="margin-top:14px;background:#ffffff;border-radius:8px;padding:12px 16px;'
+            '<div style="margin-top:10px;background:#faf8f2;border-radius:6px;padding:10px 14px;'
             f'border-left:3px solid {_gpc_verdict_color};">'
-            '<div style="font-size:0.68em;color:#9ca3af;line-height:1.6;">'
-            "Under CCPA/CPRA, GPC (Global Privacy Control) is a legally binding opt-out signal. "
+            '<div style="font-size:0.62em;color:#6b7794;line-height:1.5;">'
+            "Under CCPA/CPRA, GPC is a legally binding opt-out signal. "
             "California's CPPA has stated GPC non-compliance is enforceable without prior notice."
             "</div></div>"
         )
 
         _gpc_slide_md = (
             "---\n\n"
+            "<!-- _class: compact -->\n\n"
             "### GPC COMPLIANCE TEST\n\n"
             f"# GPC Compliance {_gpc_tag_html}\n\n"
-            '<p style="font-size:0.75em;color:#9ca3af;margin-bottom:4px;">'
-            "Global Privacy Control signal test — Sec-GPC: 1 HTTP header plus "
-            "navigator.globalPrivacyControl = true injected on every request.</p>"
+            '<p style="font-size:0.72em;color:#6b7794;margin:0 0 10px;line-height:1.5;">'
+            "Sec-GPC: 1 header + navigator.globalPrivacyControl asserted on every request.</p>"
             f"{_gpc_rows}"
             f"{_gpc_footer}\n"
         )
@@ -1714,6 +1718,10 @@ style: |
     font-size: 0.82em; font-family: 'SF Mono', Menlo, monospace;
   }}
   section.lead {{ display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }}
+  section.compact {{ padding: 56px 96px 56px; }}
+  section.compact h1 {{ font-size: 2.1em; margin-bottom: 8px; }}
+  section.compact h2 {{ font-size: 1em; margin-bottom: 18px; }}
+  section.compact p {{ font-size: 0.78em; }}
   section.cover {{ padding: 110px 96px; background: var(--bg); }}
   section.cover h1 {{
     font-size: 3.2em; border-left: 3px solid var(--a);
@@ -1843,11 +1851,11 @@ style: |
 
 ---
 
-### {_closing_kicker}
+### PREPARED BY
 
 # Kenneth Buchanan
 
-## Consent Compliance Intelligence
+## kennethjbuchanan.com
 
 <div style="display:flex;gap:10px;margin-top:28px;">
   <div style="flex:1;background:var(--s);border-radius:10px;padding:20px;border-top:2px solid var(--a);">

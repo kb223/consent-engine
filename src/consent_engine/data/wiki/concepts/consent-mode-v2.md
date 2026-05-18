@@ -168,3 +168,26 @@ consent, but the fix paths differ and the report copy reflects that.
 - It does **not** mean GCS=G100 is itself a "clean pass." See the
   *Regulatory Gray Area* section above on EU/Quebec exposure from any
   pre-consent network request.
+
+### Session-continuity (consent revocation) — separate methodology
+
+Two distinct cookie-behavior questions exist under ACM with denied consent:
+
+1. **Fresh-context denied — "should cookies be SET?"**
+   *Answer per Google: no.* Tested by this scanner via the S3 methodology
+   (fresh browser context, denial pre-injected, page loaded). `_ga` + GCS=G100
+   here = the cookie-suppression layer of ACM is broken.
+
+2. **Session-continuity withdrawal — "should previously-granted cookies be CLEARED when the user revokes?"**
+   *Answer per Google:* (a) **Not read** — "existing first-party advertising
+   cookies won't be read" once `ad_storage` is denied. (b) **Deleted** if and
+   only if `ads_data_redaction=true` is set on the page — "Google Ads will
+   delete the stored information." Without `ads_data_redaction`, prior cookies
+   persist on disk but are not used.
+
+The current scanner tests question #1 only (fresh-context S3). Question #2
+requires a session-continuity scan mode — granted → revoked mid-session —
+that has not been built yet. Per the project's `concepts/consent-mode-v2.md`,
+this distinction is recorded so buyers can interpret the scope correctly:
+this audit confirms compliant cookie-write behavior under denied consent at
+page load, not compliant cookie-clearance behavior on consent withdrawal.

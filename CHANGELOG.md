@@ -3,6 +3,41 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.2] — 2026-05-18 — deck polish + session-continuity methodology note
+
+### Fixed
+- **Slide 3 "Findings at a Glance" — G100 GCS code chip legibility.**
+  The chip was rendering with a leftover `#1f2937` (dark navy) inline
+  background from the old dark theme, making the text unreadable on the
+  new cream background. Swapped to the light-theme treatment:
+  `#faf8f2` background, `#14182b` text, `#e7e3d8` border. Now matches the
+  rest of the inline `<code>` styling.
+- **Slide 7 "GPC Compliance" — content cut off at the bottom.** The slide
+  had standard 88px bottom padding plus a verbose description paragraph
+  and a wide CCPA/CPRA enforceability footer that pushed past the slide
+  bounds. Added a `.compact` section class (56px padding, smaller H1/H2)
+  + trimmed the verbose description ("Sec-GPC: 1 header +
+  navigator.globalPrivacyControl asserted on every request" replaces the
+  longer prior paragraph) + compressed the footer. Slide now fits.
+- **Closing slide — duplicate "Consent Compliance Intelligence" line.**
+  The `_closing_kicker` was already saying "CONSENT COMPLIANCE
+  INTELLIGENCE" above the H1, and the H2 right below was repeating
+  "Consent Compliance Intelligence." Replaced the kicker with
+  "PREPARED BY" and the H2 with the contact URL
+  (`kennethjbuchanan.com`).
+
+### Added
+- **Wiki update — session-continuity methodology note.** The
+  `concepts/consent-mode-v2.md` page now distinguishes the two cookie-
+  behavior questions under ACM:
+  1. *Fresh-context denied — should cookies be SET?* No (per Google).
+     The scanner tests this via S3.
+  2. *Session-continuity withdrawal — should previously-granted cookies
+     be CLEARED on revoke?* Per Google: not read by default, deleted
+     only if `ads_data_redaction=true`. The scanner does NOT currently
+     test this — recording the scope gap so buyers can interpret findings
+     correctly.
+
 ## [0.3.1] — 2026-05-18 — ACM rule re-verified against Google official docs
 
 ### Changed
