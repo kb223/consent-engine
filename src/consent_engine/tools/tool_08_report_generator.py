@@ -1022,9 +1022,9 @@ def generate_marp_slides(
     # Pre-compute law items HTML (avoids backslash-in-f-string issues)
     _law_item_style = (
         "display:flex;gap:12px;align-items:flex-start;padding:10px 0;"
-        "border-bottom:1px solid #1f2937;font-size:0.75em;"
+        "border-bottom:1px solid #e7e3d8;font-size:0.75em;"
     )
-    _law_label_style = "color:#4b5563;font-weight:600;font-family:'Outfit';min-width:10px;"
+    _law_label_style = "color:#4b5563;font-weight:600;font-family:'Inter';min-width:10px;"
     _law_text_style = "color:#9ca3af;font-weight:200;line-height:1.6;"
     _law_items_html_parts = []
     for _law_line in law_content.strip().splitlines():
@@ -1042,7 +1042,7 @@ def generate_marp_slides(
     _action_color = "#ef4444" if violations else "#22c55e"
     _action_label = "Immediate" if violations else "Ongoing"
     _action_panel_style = f"flex:1;background:var(--s);border-radius:10px;padding:20px;border-top:3px solid {_action_color};"
-    _action_hdr_style = f"font-family:'Outfit';font-weight:600;font-size:0.62em;color:{_action_color};text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px;"
+    _action_hdr_style = f"font-family:'Inter';font-weight:600;font-size:0.62em;color:{_action_color};text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px;"
 
     # ── HTML component builders ──────────────────────────────────────────────
     # SVG check / X / dash / warning icons (inline, render with --html flag)
@@ -1053,7 +1053,7 @@ def generate_marp_slides(
 
     def _tag(label: str, color: str, bg_alpha: str = "12") -> str:
         return (
-            f"<span style=\"font-family:'Outfit';font-weight:600;font-size:0.55em;"
+            f"<span style=\"font-family:'Inter';font-weight:600;font-size:0.55em;"
             f"letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;"
             f"border-radius:4px;background:{color}{bg_alpha};color:{color};"
             f'border:1px solid {color}22;">{label}</span>'
@@ -1061,11 +1061,11 @@ def generate_marp_slides(
 
     def _metric_card(label: str, value: str, sub: str, accent: str) -> str:
         return (
-            f'<div style="flex:1;background:#111927;border-radius:10px;padding:20px;'
+            f'<div style="flex:1;background:#ffffff;border-radius:10px;padding:20px;'
             f'border-top:3px solid {accent};">'
             f'<div style="color:#4b5563;font-size:0.58em;text-transform:uppercase;'
-            f"letter-spacing:0.15em;margin-bottom:6px;font-family:'Outfit';font-weight:600;\">{label}</div>"
-            f"<div style=\"font-family:'Outfit';font-weight:800;font-size:2.1em;color:{accent};"
+            f"letter-spacing:0.15em;margin-bottom:6px;font-family:'Inter';font-weight:600;\">{label}</div>"
+            f"<div style=\"font-family:'Inter';font-weight:800;font-size:2.1em;color:{accent};"
             f'line-height:1;margin-bottom:4px;">{value}</div>'
             f'<div style="color:#6b7280;font-size:0.65em;font-weight:200;">{sub}</div>'
             f"</div>"
@@ -1074,7 +1074,7 @@ def generate_marp_slides(
     def _findings_row(label: str, value: str, icon: str) -> str:
         return (
             f'<div style="display:flex;align-items:center;padding:11px 0;'
-            f'border-bottom:1px solid #1f2937;font-size:0.75em;">'
+            f'border-bottom:1px solid #e7e3d8;font-size:0.75em;">'
             f'<div style="flex:2.5;color:#6b7280;font-weight:200;">{label}</div>'
             f'<div style="flex:3;color:#d1d5db;font-weight:400;">{value}</div>'
             f'<div style="flex:0 0 28px;text-align:center;">{icon}</div>'
@@ -1093,12 +1093,12 @@ def generate_marp_slides(
             else exposure.upper()
         )
         return (
-            f'<div style="flex:1;min-width:160px;background:#111927;border-radius:10px;'
+            f'<div style="flex:1;min-width:160px;background:#ffffff;border-radius:10px;'
             f'padding:16px;border-left:3px solid {e_color};">'
-            f"<div style=\"font-family:'Outfit';font-weight:600;font-size:0.82em;"
-            f'color:#f9fafb;margin-bottom:6px;">{name}</div>'
+            f"<div style=\"font-family:'Inter';font-weight:600;font-size:0.82em;"
+            f'color:#14182b;margin-bottom:6px;">{name}</div>'
             f'<div style="color:#4b5563;font-size:0.62em;margin-bottom:10px;'
-            f"font-family:'Outfit';\">{cookies}</div>"
+            f"font-family:'Inter';\">{cookies}</div>"
             f"{_tag(e_label, e_color)}"
             f"</div>"
         )
@@ -1107,7 +1107,7 @@ def generate_marp_slides(
         e_color = "#ef4444" if exposure == "high" else "#f59e0b"
         return (
             f'<div style="display:flex;align-items:center;padding:10px 0;'
-            f'border-bottom:1px solid #1f2937;font-size:0.73em;">'
+            f'border-bottom:1px solid #e7e3d8;font-size:0.73em;">'
             f'<div style="flex:2;color:#d1d5db;font-weight:400;font-family:\'Outfit\';font-weight:600;">{vendor}</div>'
             f'<div style="flex:3;color:#4b5563;font-family:\'SF Mono\',monospace;font-size:0.9em;">{pattern}</div>'
             f'<div style="flex:1.5;">{_tag(category.replace("_"," "), e_color)}</div>'
@@ -1269,9 +1269,9 @@ def generate_marp_slides(
     _acm_block = ""
     if pixel_acm_pings:
         _acm_block = (
-            '<div style="margin-top:12px;background:#111927;border-radius:8px;padding:12px 16px;'
+            '<div style="margin-top:12px;background:#ffffff;border-radius:8px;padding:12px 16px;'
             'border-left:3px solid #22c55e;">'
-            "<div style=\"font-family:'Outfit';font-weight:600;font-size:0.62em;color:#22c55e;"
+            "<div style=\"font-family:'Inter';font-weight:600;font-size:0.62em;color:#22c55e;"
             'text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Observation — Expected ACM Behavior</div>'
             '<div style="font-size:0.68em;color:#6b7280;line-height:1.6;">'
         )
@@ -1357,11 +1357,11 @@ def generate_marp_slides(
         _exposure_html += '<div style="display:flex;gap:8px;margin-top:8px;">'
         for label, optouts, statutory, s_low, s_high in _scenarios:
             _exposure_html += (
-                f'<div style="flex:1;background:#111927;border-radius:10px;padding:12px 16px;'
+                f'<div style="flex:1;background:#ffffff;border-radius:10px;padding:12px 16px;'
                 f'border-top:3px solid #ef4444;">'
                 f'<div style="color:#4b5563;font-size:0.58em;text-transform:uppercase;'
-                f"letter-spacing:0.15em;margin-bottom:4px;font-family:'Outfit';font-weight:600;\">{label}</div>"
-                f"<div style=\"font-family:'Outfit';font-weight:800;font-size:1.5em;color:#ef4444;"
+                f"letter-spacing:0.15em;margin-bottom:4px;font-family:'Inter';font-weight:600;\">{label}</div>"
+                f"<div style=\"font-family:'Inter';font-weight:800;font-size:1.5em;color:#ef4444;"
                 f'line-height:1.1;margin-bottom:3px;white-space:nowrap;">'
                 f"{_fmt(s_low)}–{_fmt(s_high)}</div>"
                 f'<div style="color:#6b7280;font-size:0.6em;font-weight:200;line-height:1.4;">'
@@ -1372,7 +1372,7 @@ def generate_marp_slides(
 
         # Benchmarks footnote — matches existing panel style
         _exposure_html += (
-            '<div style="margin-top:8px;background:#111927;border-radius:8px;padding:8px 14px;'
+            '<div style="margin-top:8px;background:#ffffff;border-radius:8px;padding:8px 14px;'
             'border-left:3px solid #374151;">'
             '<div style="font-size:0.6em;color:#4b5563;line-height:1.5;">'
             "Realistic settlement range calibrated to precedent: "
@@ -1437,7 +1437,7 @@ def generate_marp_slides(
         _gpc_rows += "</div>"
 
         _gpc_tag_html = (
-            f"<span style=\"font-family:'Outfit';font-weight:600;font-size:0.45em;"
+            f"<span style=\"font-family:'Inter';font-weight:600;font-size:0.45em;"
             f"letter-spacing:0.14em;text-transform:uppercase;padding:4px 12px;"
             f"border-radius:4px;background:{_gpc_verdict_color}22;color:{_gpc_verdict_color};"
             f'border:1px solid {_gpc_verdict_color}44;vertical-align:middle;margin-left:14px;">'
@@ -1445,7 +1445,7 @@ def generate_marp_slides(
         )
 
         _gpc_footer = (
-            '<div style="margin-top:14px;background:#111927;border-radius:8px;padding:12px 16px;'
+            '<div style="margin-top:14px;background:#ffffff;border-radius:8px;padding:12px 16px;'
             f'border-left:3px solid {_gpc_verdict_color};">'
             '<div style="font-size:0.68em;color:#9ca3af;line-height:1.6;">'
             "Under CCPA/CPRA, GPC (Global Privacy Control) is a legally binding opt-out signal. "
@@ -1468,7 +1468,7 @@ def generate_marp_slides(
     _imm = []
     for f in violations[:3]:
         _imm.append(
-            f"Disable <strong style='color:#f9fafb'>{f.vendor.name}</strong> tag in GTM until consent logic is verified"
+            f"Disable <strong style='color:#14182b'>{f.vendor.name}</strong> tag in GTM until consent logic is verified"
         )
     if audit_result.ssgtm_detected:
         _imm.append("Audit SSGTM container for consent signal passthrough enforcement")
@@ -1496,7 +1496,7 @@ def generate_marp_slides(
     def _action_item(text: str) -> str:
         return (
             f'<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;'
-            f'border-bottom:1px solid #1f2937;font-size:0.73em;">'
+            f'border-bottom:1px solid #e7e3d8;font-size:0.73em;">'
             f'<div style="flex:0 0 20px;margin-top:2px;">'
             f'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3d6abb" stroke-width="2">'
             f'<polyline points="9 18 15 12 9 6"/></svg></div>'
@@ -1514,7 +1514,7 @@ def generate_marp_slides(
     _actions_30d_panel = (
         (
             '<div style="flex:1;background:var(--s);border-radius:10px;padding:20px;border-top:3px solid #3d6abb;">'
-            "<div style=\"font-family:'Outfit';font-weight:600;font-size:0.62em;color:#3d6abb;text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px;\">Within 30 Days</div>"
+            "<div style=\"font-family:'Inter';font-weight:600;font-size:0.62em;color:#3d6abb;text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px;\">Within 30 Days</div>"
             + _actions_30d_html
             + "</div>"
         )
@@ -1562,10 +1562,10 @@ def generate_marp_slides(
         in (MethodologyFlag.S3, MethodologyFlag.S3_CONSENT_WIRING_BROKEN)
         else "Baseline Scan"
     )
-    _label_style = "color:#4b5563;font-size:0.42em;font-family:'Outfit';font-weight:600;text-transform:uppercase;letter-spacing:0.14em;margin-bottom:4px;"
-    _value_style = "font-family:'Outfit';font-weight:500;font-size:0.6em;color:#9ca3af;"
+    _label_style = "color:#4b5563;font-size:0.42em;font-family:'Inter';font-weight:600;text-transform:uppercase;letter-spacing:0.14em;margin-bottom:4px;"
+    _value_style = "font-family:'Inter';font-weight:500;font-size:0.6em;color:#9ca3af;"
     _audit_id_style = (
-        "font-family:'Outfit';font-weight:500;font-size:0.48em;color:#9ca3af;letter-spacing:0.02em;"
+        "font-family:'Inter';font-weight:500;font-size:0.48em;color:#9ca3af;letter-spacing:0.02em;"
     )
     # Brand selector — "rsc" uses KJB logo + name; "kjb" uses just Kenneth Buchanan (unbranded)
     if brand == "kjb":
@@ -1583,13 +1583,13 @@ def generate_marp_slides(
         _closing_kicker = "ROSE SKY CONSULTING INC."
     _rsc_brand_html = (
         '<div style="position:absolute;bottom:50px;left:72px;right:72px;">'
-        '<div style="border-top:1px solid #1f2937;padding-top:18px;'
+        '<div style="border-top:1px solid #e7e3d8;padding-top:18px;'
         'display:flex;justify-content:space-between;align-items:center;">'
         # Left: brand logo + name (KJB) or plain name
         f'<div style="display:flex;align-items:center;gap:14px;">'
         f"{_brand_logo_html}"
-        f"<div><div style=\"font-family:'Outfit';font-weight:700;font-size:0.65em;color:#f9fafb;line-height:1.2;\">{_brand_primary}</div>"
-        f"<div style=\"font-family:'Outfit';font-weight:400;font-size:0.46em;color:#4b5563;margin-top:3px;\">Consent Compliance Intelligence</div></div>"
+        f"<div><div style=\"font-family:'Inter';font-weight:700;font-size:0.65em;color:#14182b;line-height:1.2;\">{_brand_primary}</div>"
+        f"<div style=\"font-family:'Inter';font-weight:400;font-size:0.46em;color:#4b5563;margin-top:3px;\">Consent Compliance Intelligence</div></div>"
         "</div>"
         # Right: metadata columns — each left-aligned so label sits directly above value
         '<div style="display:flex;gap:36px;align-items:flex-start;">'
@@ -1609,7 +1609,7 @@ def generate_marp_slides(
             "### COOKIE EVIDENCE" + _nl + _nl
             + "# Confirmed Violations" + _nl + _nl
             + _vendor_cards_html + _nl + _nl
-            + '<div style="margin-top:16px;background:#1a0a0a;border-radius:10px;'
+            + '<div style="margin-top:16px;background:#fbe8e2;border-radius:10px;'
               'padding:14px 18px;border-left:4px solid #ef4444;font-size:0.72em;'
               'color:#9ca3af;line-height:1.7;">'
               "<strong style=\"color:#ef4444;\">CCPA exposure:</strong> "
@@ -1634,25 +1634,30 @@ style: |
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
 
   :root {{
-    /* KJB locked palette + Anthropic-style accents */
+    /* LIGHT theme — warm cream, Anthropic-style, KJB accents */
+    --bg:    #f6f4ee;          /* warm cream */
+    --s:     #ffffff;          /* surface */
+    --s2:    #faf8f2;           /* alt surface */
+    --b:     #e7e3d8;          /* border */
+    --b2:    #d8d2c2;          /* strong border */
+    --t:     #14182b;          /* headline near-black */
+    --body:  #1f2944;          /* body near-navy */
+    --m:     #6b7794;          /* muted */
     --a:     #3d6abb;          /* KJB blue accent */
-    --bg:    #2b3954;          /* KJB navy background */
-    --s:     #345187;          /* KJB divider / elevated surface */
-    --b:     rgba(232,237,245,0.12); /* hairline divider */
-    --m:     #9aa7c4;          /* muted */
-    --t:     #ffffff;          /* headline white */
-    --body:  #e8edf5;          /* body off-white */
-    --label: #9aa7c4;
-    --g:     #86efac;
-    --r:     #fca5a5;
-    --y:     #fcd34d;
+    --navy:  #2b3954;          /* KJB navy — section markers */
+    --g:     #2f7a4f;          /* green */
+    --gs:    #e4f1e6;          /* green-soft */
+    --r:     #b34d4d;          /* red */
+    --rs:    #fbe8e2;          /* red-soft */
+    --y:     #a06913;          /* amber */
+    --ys:    #f5ebd2;          /* amber-soft */
   }}
   section {{
     background: var(--bg); color: var(--body);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-weight: 300;
+    font-weight: 400;
     padding: 72px 96px 88px; line-height: 1.55;
-    letter-spacing: -0.005em;
+    letter-spacing: -0.003em;
     box-sizing: border-box;
   }}
   section > * {{ max-width: 100%; }}
@@ -1661,12 +1666,12 @@ style: |
     padding: 14px 96px 18px;
     background: var(--bg); position: absolute; bottom: 0; left: 0; right: 0;
     border-top: 1px solid var(--b);
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
   }}
   h1 {{
     font-family: 'Source Serif 4', Georgia, serif;
     font-weight: 500;
-    font-size: 2.8em;
+    font-size: 2.6em;
     color: var(--t);
     letter-spacing: -0.022em;
     line-height: 1.12;
@@ -1675,23 +1680,23 @@ style: |
   h2 {{
     font-family: 'Source Serif 4', Georgia, serif;
     font-weight: 400;
-    font-size: 1.2em;
-    color: var(--body);
-    margin: 0 0 28px;
+    font-size: 1.15em;
+    color: var(--m);
+    margin: 0 0 26px;
     letter-spacing: 0;
   }}
   h3 {{
     font-family: 'Inter', sans-serif;
     font-weight: 600;
-    font-size: 0.62em;
+    font-size: 0.6em;
     color: var(--a);
     text-transform: uppercase;
     letter-spacing: 0.14em;
     margin: 0 0 10px;
   }}
   strong {{ color: var(--t); font-weight: 600; }}
-  p {{ color: var(--body); font-size: 0.86em; line-height: 1.65; margin: 0 0 10px; }}
-  li {{ color: var(--body); font-size: 0.86em; line-height: 1.65; margin-bottom: 6px; }}
+  p {{ color: var(--body); font-size: 0.84em; line-height: 1.65; margin: 0 0 10px; }}
+  li {{ color: var(--body); font-size: 0.84em; line-height: 1.65; margin-bottom: 6px; }}
   blockquote {{
     margin: 22px 0 28px;
     padding-left: 22px;
@@ -1704,19 +1709,31 @@ style: |
   }}
   a {{ color: var(--a); text-decoration: none; border-bottom: 1px solid var(--a); }}
   code {{
-    background: rgba(255,255,255,0.06); color: #c4d4f5;
-    padding: 1px 6px; border-radius: 3px;
-    font-size: 0.84em; font-family: 'SF Mono', Menlo, monospace;
+    background: var(--s2); color: var(--t);
+    padding: 1px 6px; border-radius: 3px; border: 1px solid var(--b);
+    font-size: 0.82em; font-family: 'SF Mono', Menlo, monospace;
   }}
   section.lead {{ display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }}
-  section.cover {{ padding: 110px 96px; }}
+  section.cover {{ padding: 110px 96px; background: var(--bg); }}
   section.cover h1 {{
-    font-size: 3.6em; border-left: 3px solid var(--a);
-    padding-left: 28px; margin-bottom: 18px;
+    font-size: 3.2em; border-left: 3px solid var(--a);
+    padding-left: 28px; margin-bottom: 16px; color: var(--t);
   }}
   section.cover h2 {{
-    font-size: 1.1em; padding-left: 31px;
-    color: var(--body); margin: 0 0 56px;
+    font-size: 1.05em; padding-left: 31px;
+    color: var(--m); margin: 0 0 48px;
+  }}
+  section.cover .brand-mark {{
+    position: absolute; top: 56px; right: 96px;
+    width: 64px; height: 64px; display: flex;
+    align-items: center; justify-content: center;
+    background: var(--s); border: 1px solid var(--b);
+    border-radius: 8px; padding: 8px;
+    box-shadow: 0 1px 2px rgba(20,24,43,0.04);
+  }}
+  section.cover .brand-mark img {{
+    max-width: 100%; max-height: 100%; object-fit: contain;
+    display: block;
   }}
   section::after {{
     font-family: 'Inter', sans-serif; font-size: 0.54em;
@@ -1726,7 +1743,7 @@ style: |
   th {{
     text-align: left; padding: 12px 18px 12px 0;
     color: var(--m); font-weight: 500;
-    font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em;
+    font-size: 0.74em; text-transform: uppercase; letter-spacing: 0.12em;
     border-bottom: 1px solid var(--b);
   }}
   td {{
@@ -1741,7 +1758,7 @@ style: |
     border-radius: 3px; display: inline-block;
   }}
   details {{
-    background: rgba(255,255,255,0.04); border: 1px solid var(--b);
+    background: var(--s); border: 1px solid var(--b);
     border-radius: 5px; padding: 14px 18px; margin-top: 8px;
   }}
   details summary {{ color: var(--a); font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.78em; cursor: pointer; }}
@@ -1834,15 +1851,15 @@ style: |
 
 <div style="display:flex;gap:10px;margin-top:28px;">
   <div style="flex:1;background:var(--s);border-radius:10px;padding:20px;border-top:2px solid var(--a);">
-    <div style="font-family:'Outfit';font-weight:600;font-size:0.62em;color:var(--a);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:10px;">Forensic Auditing</div>
+    <div style="font-family:'Inter';font-weight:600;font-size:0.62em;color:var(--a);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:10px;">Forensic Auditing</div>
     <div style="font-size:0.72em;color:#6b7280;line-height:1.8;">Post-denial traffic analysis<br>GPC signal testing<br>SSGTM detection</div>
   </div>
   <div style="flex:1;background:var(--s);border-radius:10px;padding:20px;border-top:2px solid var(--a);">
-    <div style="font-family:'Outfit';font-weight:600;font-size:0.62em;color:var(--a);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:10px;">Regulatory Intelligence</div>
+    <div style="font-family:'Inter';font-weight:600;font-size:0.62em;color:var(--a);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:10px;">Regulatory Intelligence</div>
     <div style="font-size:0.72em;color:#6b7280;line-height:1.8;">Live US &amp; EU enforcement data<br>Fine exposure modeling<br>Case precedent library</div>
   </div>
   <div style="flex:1;background:var(--s);border-radius:10px;padding:20px;border-top:2px solid var(--a);">
-    <div style="font-family:'Outfit';font-weight:600;font-size:0.62em;color:var(--a);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:10px;">Remediation Advisory</div>
+    <div style="font-family:'Inter';font-weight:600;font-size:0.62em;color:var(--a);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:10px;">Remediation Advisory</div>
     <div style="font-size:0.72em;color:#6b7280;line-height:1.8;">CMP configuration<br>Consent Mode V2<br>GTM consent architecture</div>
   </div>
 </div>

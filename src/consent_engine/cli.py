@@ -1,17 +1,17 @@
 """consent-engine CLI.
 
 Usage:
-    consent-engine audit <url> [--with-gpc] [--variant signal|compliance]
+    consent-engine audit <url> [--variant signal|compliance]
                                [--monthly-ad-spend N] [--firm-name "Acme LLC"]
                                [--output-dir DIR]
     consent-engine render-deck <audit_id> [--output-dir DIR]
     consent-engine chat <audit_id>
     consent-engine version
 
-The `--with-gpc` flag runs a second scan with Sec-GPC: 1 asserted and
-compares pixel-firing counts. Populates the GPC compliance section of
-the HTML report so you can see whether the site honored the legally
-binding opt-out signal under CCPA/CPRA.
+Every audit runs two passes: primary S3 opt-out (consent denied via cookie
+injection) + GPC (Sec-GPC: 1 header + navigator.globalPrivacyControl). The
+pair lets the report distinguish CMP-honored opt-outs from CCPA/CPRA-
+non-compliant sites that ignore the browser-level GPC signal.
 
 `--variant signal --monthly-ad-spend N` activates the recoverable-revenue
 math block (signal recovery framing for the CMO buyer). `--firm-name`
@@ -50,19 +50,14 @@ def _audit_command(args: argparse.Namespace) -> int:
     out_dir = Path(args.output_dir or "./out")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    with_gpc = bool(getattr(args, "with_gpc", False))
     firm_name = getattr(args, "firm_name", None)
     variant = getattr(args, "variant", "compliance")
     monthly_ad_spend = getattr(args, "monthly_ad_spend", None)
-    print(
-        f"Scanning {url} ({'two-pass S3 + GPC' if with_gpc else 'S3 opt-out'}, "
-        f"~{'60s' if with_gpc else '30s'})…",
-        flush=True,
-    )
+    print(f"Scanning {url} (two-pass S3 + GPC, ~60s)…", flush=True)
     bundle = asyncio.run(
         run_audit(
             url,
-            with_gpc=with_gpc,
+            with_gpc=True,
             firm_name=firm_name,
             report_variant=variant,
             monthly_ad_spend_usd=monthly_ad_spend,
@@ -197,7 +192,7 @@ def main(argv: list[str] | None = None) -> int:
     p_audit.add_argument(
         "--with-gpc",
         action="store_true",
-        help="Run a second scan with Sec-GPC: 1 asserted and compare pixel-firing counts.",
+        help="[deprecated, always on] kept for backward compatibility.",
     )
     p_audit.add_argument(
         "--firm-name",

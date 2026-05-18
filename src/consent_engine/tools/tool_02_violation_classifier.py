@@ -100,21 +100,32 @@ def classify_finding(
 
     if is_google_acm_vendor(vendor):
         if gcs_denied:
-            # GCS=G100: Google should be sending cookieless modeling pings only.
+            # GCS=G100 means cookieless pings ARE firing correctly. The question
+            # is whether cookies were ALSO set — which they should not be under
+            # correctly configured Advanced Consent Mode (per Google's docs and
+            # data/wiki/concepts/consent-mode-v2.md: "no cookies set" on denied).
             if not has_ga_tracking_cookies(all_scan_cookies):
                 # No _ga / _gid cookies → pure cookieless ping → ACM compliant.
                 gcd_note = f" GCD={gcd_raw}" if gcd_raw else ""
                 return (
                     ViolationStatus.ACM_COMPLIANT,
-                    f"GCS=G100 — Google firing cookieless modeling ping "
-                    f"(Advanced Consent Mode compliant).{gcd_note}",
+                    f"GCS=G100 — cookieless modeling pings firing without _ga/_ga_<id> "
+                    f"cookies. Advanced Consent Mode behaving as designed.{gcd_note}",
                 )
             else:
-                # _ga cookies present despite GCS=G100 → ACM misconfigured.
+                # _ga cookies present despite GCS=G100 → ACM cookie-suppression
+                # layer is broken. This is a real config issue but with a
+                # narrower fix path than a non-Google vendor firing.
                 return (
                     ViolationStatus.CONFIRMED,
-                    "GCS=G100 but _ga cookies were set — "
-                    "Advanced Consent Mode misconfigured; full tracking active.",
+                    f"ACM misconfiguration. GCS=G100 means cookieless pings are "
+                    f"firing correctly, but _ga/_ga_<id> cookies were ALSO set on "
+                    f"this fresh-context session. Per Google's docs, denied "
+                    f"analytics_storage should suppress both. Fix path: GA4 admin "
+                    f"-> Consent Mode = Advanced, and verify the GA4 Configuration "
+                    f"tag in GTM has all four storage signals (ad_storage, "
+                    f"analytics_storage, ad_user_data, ad_personalization) wired "
+                    f"as Additional Consent Settings.",
                 )
 
         elif gcs_granted:
@@ -132,7 +143,9 @@ def classify_finding(
             # No GCS at all → no consent mode configured.
             return (
                 ViolationStatus.CONFIRMED,
-                f"{vendor.name} firing without any consent mode signal (no GCS detected).",
+                f"{vendor.name} fired in opted-out state with no GCS parameter "
+                f"in any request. Consent Mode is not configured — neither Basic "
+                f"nor Advanced. The tag has no signal to act on.",
             )
 
     else:
@@ -141,6 +154,8 @@ def classify_finding(
         gcs_note = f" (GCS={gcs_value.raw})" if gcs_value else " (no consent mode)"
         return (
             ViolationStatus.CONFIRMED,
-            f"{vendor.name} fired tracking tag in opted-out consent state{gcs_note}. "
-            "Advanced Consent Mode does not cover non-Google vendors.",
+            f"{vendor.name} fired tracking in opted-out consent state{gcs_note}. "
+            f"Advanced Consent Mode does not apply to non-Google vendors — they "
+            f"must be fully blocked when consent is denied, not converted to "
+            f"cookieless pings. Tag needs a consent gate in GTM or removal.",
         )

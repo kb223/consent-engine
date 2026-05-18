@@ -11,11 +11,16 @@ plain Python.
 from __future__ import annotations
 
 import asyncio
+import base64
+import re
 import subprocess
 import sys
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urljoin, urlparse
+
+import httpx
 
 from consent_engine.models.audit_result import (
     AuditResult,
@@ -86,6 +91,82 @@ def ensure_chromium_installed() -> None:
         )
 
 
+def _grab_brand_logo(url: str, page_html: str) -> str | None:
+    """Return a ``data:image/...;base64,...`` URL for the site's brand logo.
+
+    Multi-source fallback. Tries each candidate until one fetches successfully:
+
+    1. ``<link rel="apple-touch-icon">`` (180x180 PNG, highest-quality brand mark)
+    2. ``<link rel="apple-touch-icon-precomposed">``
+    3. ``<link rel="icon">`` (largest sized variant wins)
+    4. ``<meta property="og:image">`` (hero image — site brand)
+    5. Google's favicon service (``s2/favicons?domain=X&sz=128``) — always returns
+
+    Returns None only if every candidate including Google's service fails.
+    Embeds as a ``data:`` URL so the resulting Marp deck is fully self-contained
+    (no runtime fetch needed when rendering deck.html).
+    """
+    parsed = urlparse(url)
+    domain_root = f"{parsed.scheme}://{parsed.netloc}"
+    candidates: list[str] = []
+
+    for tag_match in re.finditer(
+        r'<link[^>]+rel=["\'](?:apple-touch-icon|apple-touch-icon-precomposed)["\'][^>]+href=["\']([^"\']+)["\']',
+        page_html or "",
+        re.IGNORECASE,
+    ):
+        candidates.append(tag_match.group(1))
+
+    icon_tags = list(
+        re.finditer(
+            r'<link[^>]+rel=["\'](?:icon|shortcut icon)["\'][^>]*>',
+            page_html or "",
+            re.IGNORECASE,
+        )
+    )
+    sized: list[tuple[int, str]] = []
+    for tag_match in icon_tags:
+        tag = tag_match.group(0)
+        href_m = re.search(r'href=["\']([^"\']+)["\']', tag)
+        if not href_m:
+            continue
+        size_m = re.search(r'sizes=["\'](\d+)', tag)
+        size = int(size_m.group(1)) if size_m else 16
+        sized.append((size, href_m.group(1)))
+    for _, href in sorted(sized, reverse=True):
+        candidates.append(href)
+
+    og_m = re.search(
+        r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
+        page_html or "",
+        re.IGNORECASE,
+    )
+    if og_m:
+        candidates.append(og_m.group(1))
+
+    candidates.append(f"https://www.google.com/s2/favicons?domain={parsed.netloc}&sz=128")
+
+    with httpx.Client(timeout=5.0, follow_redirects=True) as client:
+        for raw in candidates:
+            try:
+                absolute = (
+                    raw if raw.startswith(("http://", "https://", "data:")) else urljoin(domain_root, raw)
+                )
+                if absolute.startswith("data:"):
+                    return absolute
+                r = client.get(absolute, headers={"User-Agent": "consent-engine/0.3 (+brand-logo)"})
+                if r.status_code != 200 or not r.content:
+                    continue
+                mime = (r.headers.get("content-type", "image/png").split(";")[0] or "image/png").strip()
+                if not mime.startswith("image/"):
+                    continue
+                b64 = base64.b64encode(r.content).decode("ascii")
+                return f"data:{mime};base64,{b64}"
+            except Exception:  # noqa: BLE001
+                continue
+    return None
+
+
 def _derive_action_items(
     audit_result: AuditResult, scan: ScanResult
 ) -> tuple[list[str], list[str]]:
@@ -116,11 +197,16 @@ def _derive_action_items(
             )
         elif vendor_name == "Google Analytics":
             remediation.append(
-                f"<strong>Google Analytics ({cookies})</strong> wrote full tracking cookies despite "
-                f"GCS={gcs_raw}. Advanced Consent Mode is misconfigured. In GTM, open the GA4 "
-                "Configuration tag and set Additional Consent Settings to require "
-                "<code>analytics_storage</code>. In GA4 admin, confirm Consent Mode is set to "
-                "<em>Advanced</em> (not Basic) so cookieless modeling pings replace the full cookies."
+                f"<strong>Google Analytics ({cookies})</strong> — ACM partial: cookieless "
+                f"pings ARE firing correctly (GCS={gcs_raw} present in network), but "
+                f"<code>_ga</code> / <code>_ga_&lt;id&gt;</code> cookies were ALSO set on this "
+                "fresh-context session. Per Google's docs, denied <code>analytics_storage</code> "
+                "should suppress both cookies and identifiers. The cookieless-ping layer is "
+                "working; the cookie-suppression layer is not. Fix: in GA4 admin, confirm "
+                "Consent Mode is set to <em>Advanced</em>. In GTM, open the GA4 Configuration "
+                "tag and verify Additional Consent Settings require all four storage signals "
+                "(<code>ad_storage</code>, <code>analytics_storage</code>, "
+                "<code>ad_user_data</code>, <code>ad_personalization</code>)."
             )
         elif vendor_name in ("Google", "Google / DoubleClick"):
             remediation.append(
@@ -202,7 +288,7 @@ async def run_audit(
     url: str,
     *,
     jurisdiction: str | None = None,
-    with_gpc: bool = False,
+    with_gpc: bool = True,
     firm_name: str | None = None,
     report_variant: str = "compliance",
     monthly_ad_spend_usd: int | None = None,
@@ -355,7 +441,12 @@ async def run_audit(
     # 7. LLM executive summary (the only non-deterministic step).
     exec_summary = await generate_executive_summary(audit_result, wiki_pages)
 
-    # 8. HTML report + Marp slide deck.
+    # 8. Brand logo extraction — best-effort fetch of the site's apple-touch-icon
+    #    / favicon / og:image / Google s2 fallback. Embedded as data: URL so the
+    #    deck stays self-contained.
+    brand_logo_data_url = _grab_brand_logo(url, scan.page_html or "")
+
+    # 9. HTML report + Marp slide deck.
     report_html = await generate_report(
         audit_result,
         wiki_pages,
@@ -368,6 +459,7 @@ async def run_audit(
         audit_result,
         exec_summary,
         brand="kjb",
+        site_image_url=brand_logo_data_url,
         firm_name=firm_name,
         report_variant=report_variant,  # type: ignore[arg-type]
         estimated_monthly_ad_spend_usd=monthly_ad_spend_usd,

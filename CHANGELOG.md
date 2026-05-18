@@ -3,6 +3,43 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.0] — 2026-05-18 — light-theme deck, GPC always, brand-logo grab, ACM clarity
+
+### Changed
+- **Marp deck switched to a light theme.** Replaced the navy dark scheme with
+  a warm-cream (`#f6f4ee`) background, near-black headlines (`#14182b`),
+  KJB blue (`#3d6abb`) accents, and KJB navy (`#2b3954`) for section markers.
+  Same Source Serif 4 + Inter typography. All inline marp styles updated in
+  the same pass (`color:#f9fafb` → `color:#14182b`, `background:#111927` →
+  `background:#ffffff`, `'Outfit'` / `'Raleway'` → `'Inter'`, dark borders →
+  light borders) so embedded HTML chunks render legibly on the new bg.
+- **GPC tested in every audit.** Removed the `--with-gpc` opt-in flag.
+  Every `consent-engine audit` run now does the two-pass S3 + GPC scan and
+  populates the GPC compliance panel. The flag is kept as a no-op for
+  backward-compat with v0.2.x callers.
+- **ACM classifier copy refined.** When `_ga` / `_ga_<id>` cookies are
+  observed alongside GCS=G100, the finding is still `confirmed_violation`,
+  but the note + remediation copy now clarify the actual mechanic: the
+  cookieless-ping layer of Advanced Consent Mode IS working (GCS=G100 means
+  pings carry no client identifier), but the cookie-suppression layer is
+  broken — per Google's docs and the project's own
+  [consent-mode-v2 wiki page](src/consent_engine/data/wiki/concepts/consent-mode-v2.md),
+  denied `analytics_storage` should suppress both pings AND cookies. New
+  remediation language calls out the fix path: GA4 admin → Consent Mode =
+  Advanced + GTM GA4 Configuration tag's Additional Consent Settings cover
+  all four storage signals.
+
+### Added
+- **Brand-logo auto-grab.** `_grab_brand_logo()` in `audit.py` fetches the
+  customer's brand mark for the deck cover slide via a five-source
+  cascade: (1) `<link rel="apple-touch-icon">`, (2)
+  `<link rel="apple-touch-icon-precomposed">`, (3) `<link rel="icon">`
+  largest-sized variant, (4) `<meta property="og:image">`, (5) Google's
+  `s2/favicons?domain=X&sz=128` service as last-resort guaranteed return.
+  Embedded as a `data:` URL so the rendered deck.html is fully self-
+  contained (no runtime fetch needed). "Fool-proof" because Google's
+  favicon service always returns something for any domain.
+
 ## [0.2.1] — 2026-05-17 — Truyo detection, deck restyle (for real), CI gate, sales flags
 
 ### Fixed
