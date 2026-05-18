@@ -118,14 +118,14 @@ def classify_finding(
                 # narrower fix path than a non-Google vendor firing.
                 return (
                     ViolationStatus.CONFIRMED,
-                    f"ACM misconfiguration. GCS=G100 means cookieless pings are "
-                    f"firing correctly, but _ga/_ga_<id> cookies were ALSO set on "
-                    f"this fresh-context session. Per Google's docs, denied "
-                    f"analytics_storage should suppress both. Fix path: GA4 admin "
-                    f"-> Consent Mode = Advanced, and verify the GA4 Configuration "
-                    f"tag in GTM has all four storage signals (ad_storage, "
-                    f"analytics_storage, ad_user_data, ad_personalization) wired "
-                    f"as Additional Consent Settings.",
+                    "ACM misconfiguration. GCS=G100 means cookieless pings are "
+                    "firing correctly, but _ga/_ga_<id> cookies were ALSO set on "
+                    "this fresh-context session. Per Google's docs, denied "
+                    "analytics_storage should suppress both. Fix path: GA4 admin "
+                    "-> Consent Mode = Advanced, and verify the GA4 Configuration "
+                    "tag in GTM has all four storage signals (ad_storage, "
+                    "analytics_storage, ad_user_data, ad_personalization) wired "
+                    "as Additional Consent Settings.",
                 )
 
         elif gcs_granted:

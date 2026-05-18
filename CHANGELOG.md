@@ -3,6 +3,17 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.4] — 2026-05-18 — fix ci.yml ruff failures from v0.3.0+
+
+### Fixed
+- 8 ruff `F541` lint errors in `tool_02_violation_classifier.py` (f-strings
+  without placeholders) that were introduced when the ACM classifier copy
+  was refined in v0.3.0. The release-publish workflow (`release.yml`) was
+  fine — its `test` job runs pytest only — but the separate `ci.yml`
+  workflow (which runs ruff on every push/PR) had been failing red since
+  v0.3.0. This is a no-op runtime fix (just `f""` → `""` for strings with
+  no interpolation) so all CI runs since v0.2.1 are now green.
+
 ## [0.3.3] — 2026-05-18 — dynamic enterprise recovery math + slide-6 alignment
 
 ### Changed — recovery formula now enterprise-scale by default
