@@ -85,13 +85,134 @@ def ensure_chromium_installed() -> None:
         )
 
 
-async def run_audit(url: str, *, jurisdiction: str | None = None) -> AuditBundle:
+def _derive_action_items(
+    audit_result: AuditResult, scan: ScanResult
+) -> tuple[list[str], list[str]]:
+    """Translate findings + scan signals into actionable remediation + open gaps.
+
+    Returns (remediation, open_gaps). Both are HTML-safe strings (rendered with
+    `| safe`) so we can use <code> spans + <strong> for vocabulary that buyers
+    recognize from their GTM container UI.
+    """
+    remediation: list[str] = []
+    open_gaps: list[str] = []
+
+    # Per-finding remediation — vendor-specific where useful, generic otherwise.
+    for finding in audit_result.findings:
+        if finding.status != "confirmed_violation":
+            continue
+        vendor_name = finding.vendor.name
+        cookies = ", ".join(f"<code>{c}</code>" for c in finding.cookies_observed)
+        gcs_raw = audit_result.gcs_value.raw if audit_result.gcs_value else "none"
+
+        if vendor_name == "Meta":
+            remediation.append(
+                f"<strong>Meta Pixel ({cookies})</strong> fired despite GCS={gcs_raw}. "
+                "In GTM, open the Meta/Facebook Pixel tag and set its consent settings to require "
+                "<code>ad_storage</code>, <code>analytics_storage</code>, <code>ad_user_data</code>, "
+                "and <code>ad_personalization</code>. Verify the reject-all path in the CMP banner "
+                "maps to those four denied signals."
+            )
+        elif vendor_name == "Google Analytics":
+            remediation.append(
+                f"<strong>Google Analytics ({cookies})</strong> wrote full tracking cookies despite "
+                f"GCS={gcs_raw}. Advanced Consent Mode is misconfigured. In GTM, open the GA4 "
+                "Configuration tag and set Additional Consent Settings to require "
+                "<code>analytics_storage</code>. In GA4 admin, confirm Consent Mode is set to "
+                "<em>Advanced</em> (not Basic) so cookieless modeling pings replace the full cookies."
+            )
+        elif vendor_name in ("Google", "Google / DoubleClick"):
+            remediation.append(
+                f"<strong>Google Ads ({cookies})</strong> conversion linker fired despite opted-out. "
+                "In GTM, open the Google Ads / Conversion Linker tag and enable "
+                "<code>ads_data_redaction</code>. Confirm Additional Consent Settings require "
+                "<code>ad_storage</code> + <code>ad_user_data</code> + <code>ad_personalization</code>."
+            )
+        elif vendor_name == "Dynatrace":
+            remediation.append(
+                f"<strong>Dynatrace RUM ({cookies})</strong> is firing without consent. Either "
+                "(a) gate the Dynatrace tag in GTM behind <code>functional_storage = granted</code>, "
+                "or (b) call <code>dtrum.disable()</code> on page load when consent is denied."
+            )
+        elif vendor_name == "Dynamic Yield":
+            remediation.append(
+                f"<strong>Dynamic Yield ({cookies})</strong> personalization is firing without "
+                "consent. In GTM, gate the Dynamic Yield script tag behind "
+                "<code>functional_storage = granted</code> or load it via "
+                "<code>DY.recommendationContext</code> only after the CMP accepts."
+            )
+        else:
+            remediation.append(
+                f"<strong>{vendor_name} ({cookies})</strong> fired tracking despite GCS={gcs_raw}. "
+                "Verify the tag has consent settings configured in your tag manager and that the "
+                "CMP reject-all path maps to denied consent for the appropriate storage categories."
+            )
+
+    # Open gaps — items that need a human eye, not an auto-fix.
+    cmp_cookies = {"OptanonConsent", "OptanonAlertBoxClosed", "OneTrust"}
+    has_cmp_cookies = any(c.name in cmp_cookies for c in scan.cookies)
+    if has_cmp_cookies and not audit_result.detected_cmp:
+        open_gaps.append(
+            "OneTrust cookies (<code>OptanonConsent</code>) were observed but the OneTrust JS API "
+            "was not detected during the scan window. The CMP is likely loading asynchronously "
+            "past the networkidle threshold. Manually verify by inspecting "
+            "<code>window.OneTrust</code> in browser DevTools, then consider re-scanning with a "
+            "longer wait."
+        )
+
+    requires_investigation = [
+        f for f in audit_result.findings if f.status == "requires_investigation"
+    ]
+    if requires_investigation:
+        vendors = ", ".join(f.vendor.name for f in requires_investigation)
+        open_gaps.append(
+            f"GCS=G111 observed on the opted-out scan for: {vendors}. The active CMP may be "
+            "overriding our cookie-injection opt-out. Re-run with banner-click methodology to "
+            "distinguish broken consent wiring from a stubborn CMP."
+        )
+
+    if audit_result.ssgtm_detected:
+        open_gaps.append(
+            f"<strong>Server-side GTM</strong> detected at <code>{audit_result.ssgtm_domain}</code>. "
+            "Client-side consent enforcement scripts cannot block server-to-server calls, and the "
+            "GPC (<code>Sec-GPC: 1</code>) header is not forwarded to server-side containers. "
+            "Audit the sGTM container directly and verify every server tag has explicit consent "
+            "gating."
+        )
+
+    if (
+        audit_result.gpc_tested
+        and audit_result.gpc_signal_respected is False
+        and audit_result.gpc_vendors_after_signal > 0
+    ):
+        open_gaps.append(
+            f"<strong>GPC signal not respected.</strong> "
+            f"{audit_result.gpc_vendors_after_signal} tracking pixel"
+            f"{'s' if audit_result.gpc_vendors_after_signal != 1 else ''} fired after "
+            "<code>Sec-GPC: 1</code> was asserted. Under CCPA/CPRA this is enforceable "
+            "non-compliance — California's CPPA has stated GPC violations are enforceable without "
+            "prior notice."
+        )
+
+    return remediation, open_gaps
+
+
+async def run_audit(
+    url: str,
+    *,
+    jurisdiction: str | None = None,
+    with_gpc: bool = False,
+) -> AuditBundle:
     """Run a full forensic consent-compliance audit and return an `AuditBundle`.
 
     Args:
         url: The URL to audit.
         jurisdiction: Optional override (e.g., "EU", "US", "CA"). Auto-detected
             from the page HTML when omitted.
+        with_gpc: When True, runs a second scan with the `Sec-GPC: 1` header
+            asserted and compares pixel-firing counts. Populates gpc_* fields
+            on the AuditResult so the report can show a clear pass/fail on
+            whether the site respected the Global Privacy Control opt-out.
 
     Returns:
         AuditBundle — structured AuditResult, raw ScanResult (network log +
@@ -103,8 +224,16 @@ async def run_audit(url: str, *, jurisdiction: str | None = None) -> AuditBundle
     # 0. First-run setup: download Chromium binaries if they aren't cached.
     ensure_chromium_installed()
 
-    # 1. Scan (S3 forensic methodology — consent pre-set to "reject all").
+    # 1. Primary S3 scan — consent pre-set to "reject all".
     scan, _ = await scan_page_fast(url=url, opted_out=True)
+
+    # 1b. Optional GPC scan — same flow but with Sec-GPC: 1 header on every
+    #     request + navigator.globalPrivacyControl injected. Compared against
+    #     the primary scan to verify whether the site honors the legally
+    #     binding opt-out signal under CCPA/CPRA.
+    gpc_scan: ScanResult | None = None
+    if with_gpc:
+        gpc_scan, _ = await scan_page_fast(url=url, opted_out=True, gpc=True)
 
     # 2. Per-vendor classification on observed cookies. Deduplicate by vendor
     #    name; accumulate cookies under each finding.
@@ -153,6 +282,25 @@ async def run_audit(url: str, *, jurisdiction: str | None = None) -> AuditBundle
     )
     har_analysis = analyze_har(scan.har_path) if scan.har_path else HarAnalysis()
 
+    # 4b. GPC delta — count pixel firings under the GPC scan and compare.
+    gpc_fields: dict[str, object] = {"gpc_tested": False}
+    if gpc_scan is not None:
+        gpc_pixels = detect_pixel_firings(gpc_scan.network_requests)
+        baseline_count = len(pixel_firings)
+        gpc_count = len(gpc_pixels)
+        # Respected when GPC scan dropped to zero (or near-zero) tracking pixels.
+        # "Near-zero" tolerance is 1 to account for cookieless ACM modeling pings.
+        respected = gpc_count <= 1 and baseline_count > 1
+        gpc_fields = {
+            "gpc_tested": True,
+            "gpc_header_sent": gpc_scan.gpc_header_sent,
+            "gpc_navigator_api_set": True,
+            "gpc_signal_respected": respected if baseline_count > 0 else None,
+            "gpc_vendors_after_signal": gpc_count,
+            "gpc_pixel_count_baseline": baseline_count,
+            "gpc_pixel_count_with_gpc": gpc_count,
+        }
+
     # 5. Assemble AuditResult.
     audit_result = AuditResult(
         audit_id=audit_id,
@@ -163,7 +311,6 @@ async def run_audit(url: str, *, jurisdiction: str | None = None) -> AuditBundle
         gtm_container_id=scan.gtm_container_id,
         ssgtm_detected=ssgtm.detected,
         ssgtm_domain=ssgtm.domain,
-        gpc_tested=False,
         gcs_value=scan.gcs_value,
         gcd_raw=scan.gcd_raw,
         findings=findings,
@@ -178,6 +325,14 @@ async def run_audit(url: str, *, jurisdiction: str | None = None) -> AuditBundle
         cmp_detection_confidence=scan.cmp_detection_confidence,
         bot_detection_encountered=scan.bot_detection_encountered,
         scan_mode_used=scan.scan_mode_used,
+        **gpc_fields,
+    )
+
+    # 5b. Derive concrete remediation steps + open gaps from the assembled
+    #     AuditResult. These populate the "Remediation Steps" + "Open Gaps"
+    #     sections in the HTML report.
+    audit_result.remediation, audit_result.open_gaps = _derive_action_items(
+        audit_result, scan
     )
 
     # 6. Wiki context retrieval (markdown KB, no vector DB).

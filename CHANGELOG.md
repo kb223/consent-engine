@@ -3,6 +3,39 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0] — 2026-05-17 — KJB-branded report, GPC scan, auto-remediation
+
+### Added
+- **`--with-gpc` flag** on `consent-engine audit`. Runs a second scan with
+  `Sec-GPC: 1` asserted on every request + `navigator.globalPrivacyControl`
+  injected, then compares pixel-firing counts against the primary S3 scan.
+  Populates the GPC panel in the HTML report with a clear respected /
+  ignored / inconclusive verdict, the baseline and post-GPC pixel counts,
+  and a CCPA/CPRA enforceability note.
+- **Auto-derived remediation steps** for every `confirmed_violation`
+  finding. Vendor-specific copy for Meta, Google Analytics, Google Ads,
+  Dynatrace, and Dynamic Yield; sensible fallback for the rest. Each step
+  uses the buyer's GTM-container vocabulary (`ad_storage`,
+  `analytics_storage`, `ads_data_redaction`, consent settings). Rendered
+  in a new **Remediation Steps** section of the HTML report.
+- **Auto-populated open gaps** for items that need a human eye: OneTrust
+  cookies present but no JS API detected (async-load slip-through),
+  GCS=G111 + requires_investigation findings (CMP overriding our
+  injection), server-side GTM presence, and GPC-not-respected verdicts.
+  Rendered in a new **Open Gaps** section.
+
+### Changed (visual)
+- **Marp deck restyled** to Anthropic-style typography with the locked
+  KJB palette: Source Serif 4 for headlines + big numbers, Inter 300 for
+  body, single-idea slides, navy `#2b3954` background, KJB blue `#3d6abb`
+  accent, off-white `#e8edf5` body, generous padding. Replaces the prior
+  cyan/sky scheme.
+- **HTML report restyled** with the same Anthropic + KJB system in a
+  light variant: warm-cream `#f6f4ee` background, navy headlines,
+  KJB blue accents, Inter throughout, restrained card borders, no heavy
+  shadows. The CTA block now uses the KJB navy as a dark inversion at
+  the bottom of the report.
+
 ## [0.1.8] — 2026-05-17 — revert v0.1.7 patchright swap
 
 ### Reverted

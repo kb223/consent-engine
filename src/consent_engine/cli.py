@@ -1,10 +1,15 @@
 """consent-engine CLI.
 
 Usage:
-    consent-engine audit <url> [--output-dir DIR]
+    consent-engine audit <url> [--with-gpc] [--output-dir DIR]
     consent-engine render-deck <audit_id> [--output-dir DIR]
     consent-engine chat <audit_id>
     consent-engine version
+
+The `--with-gpc` flag runs a second scan with Sec-GPC: 1 asserted and
+compares pixel-firing counts. Populates the GPC compliance section of
+the HTML report so you can see whether the site honored the legally
+binding opt-out signal under CCPA/CPRA.
 
 The `audit` command writes a full audit bundle (report.html, audit_result.json,
 evidence.jsonl, deck.marp.md) to ./out/<audit_id>/.
@@ -39,8 +44,13 @@ def _audit_command(args: argparse.Namespace) -> int:
     out_dir = Path(args.output_dir or "./out")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Scanning {url} (this takes ~30s)…", flush=True)
-    bundle = asyncio.run(run_audit(url))
+    with_gpc = bool(getattr(args, "with_gpc", False))
+    print(
+        f"Scanning {url} ({'two-pass S3 + GPC' if with_gpc else 'S3 opt-out'}, "
+        f"~{'60s' if with_gpc else '30s'})…",
+        flush=True,
+    )
+    bundle = asyncio.run(run_audit(url, with_gpc=with_gpc))
 
     audit_dir = out_dir / bundle.audit_id
     audit_dir.mkdir(parents=True, exist_ok=True)
@@ -59,12 +69,29 @@ def _audit_command(args: argparse.Namespace) -> int:
     (audit_dir / "executive_summary.md").write_text(bundle.executive_summary)
 
     findings = bundle.audit_result.findings
+    confirmed = [f for f in findings if f.status == "confirmed_violation"]
     print()
     print(f"Audit complete: {audit_dir}")
     print(f"  Report:    {audit_dir / 'report.html'}")
     print(f"  Deck:      {audit_dir / 'deck.marp.md'}")
     print(f"  Evidence:  {audit_dir / 'evidence.jsonl'}")
-    print(f"  Findings:  {len(findings)} vendor finding(s)")
+    print(
+        f"  Findings:  {len(findings)} vendor{'s' if len(findings) != 1 else ''}"
+        f" ({len(confirmed)} confirmed violation{'s' if len(confirmed) != 1 else ''})"
+    )
+    if bundle.audit_result.gpc_tested:
+        respected = bundle.audit_result.gpc_signal_respected
+        verdict = (
+            "respected" if respected
+            else ("ignored" if respected is False else "inconclusive")
+        )
+        print(
+            f"  GPC:       {verdict} "
+            f"(baseline {bundle.audit_result.gpc_pixel_count_baseline} pixels → "
+            f"{bundle.audit_result.gpc_pixel_count_with_gpc} under GPC)"
+        )
+    if bundle.audit_result.remediation:
+        print(f"  Remediation: {len(bundle.audit_result.remediation)} step(s) in report")
     return 0
 
 
@@ -150,6 +177,11 @@ def main(argv: list[str] | None = None) -> int:
     p_audit = sub.add_parser("audit", help="Run an audit against a URL.")
     p_audit.add_argument("url", help="The URL to audit.")
     p_audit.add_argument("--output-dir", help="Output directory (default: ./out).")
+    p_audit.add_argument(
+        "--with-gpc",
+        action="store_true",
+        help="Run a second scan with Sec-GPC: 1 asserted and compare pixel-firing counts.",
+    )
     p_audit.set_defaults(func=_audit_command)
 
     p_render = sub.add_parser(

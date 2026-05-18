@@ -8,4 +8,4 @@ Public package surface:
 - consent_engine.llm.client     LiteLLM-wrapped chat surface (agentic layer)
 """
 
-__version__ = "0.1.8"
+__version__ = "0.2.0"
