@@ -3,6 +3,21 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.5] — 2026-05-17 — fix evidence.jsonl crash on network_requests
+
+### Fixed
+- `consent-engine audit <url>` crashed with `AttributeError: 'str' object
+  has no attribute 'model_dump'` because `ScanResult.network_requests` is
+  `list[str]` but the CLI, API, and MCP server all called `.model_dump()`
+  on each item as if it were a Pydantic model.
+- Fixed in all three call sites: `cli.py`, `api.py`, `mcp_server.py`.
+  Each URL string now serializes as `{"url": "<url>"}` in evidence.jsonl.
+
+### Verified
+- Built wheel locally, installed in a clean venv, ran a real audit
+  end-to-end against a live URL. Confirmed report.html, audit_result.json,
+  evidence.jsonl, and deck.marp.md all write without error.
+
 ## [0.1.4] — 2026-05-18 — actually fix the data paths
 
 ### Fixed
