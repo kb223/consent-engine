@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import re
 
-from playwright.async_api import Frame, Page
+from patchright.async_api import Frame, Page
 
 from consent_engine.tools.cmp_detector import CMPProfile
 

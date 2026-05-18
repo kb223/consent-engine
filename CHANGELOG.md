@@ -3,6 +3,38 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.7] — 2026-05-17 — patchright tier-1 stealth + self-annealing fallback
+
+### Changed
+- Browser automation now uses `patchright.async_api` instead of
+  `playwright.async_api` across all three scanner files (tool_03_browser_scanner,
+  cmp_detector, cmp_clicker). Patchright is a drop-in Playwright fork that
+  patches the runtime to hide common automation fingerprints — most notably
+  `navigator.webdriver` reads as `false` instead of `true`, defeating the
+  single most common bot-detection check. Same API surface, same Chromium
+  cache (`~/Library/Caches/ms-playwright/`), no behavior change for clean sites.
+- `ensure_chromium_installed()` now shells out to
+  `python -m patchright install chromium`. Existing Playwright Chromium
+  caches are reused automatically.
+
+### Stealth cascade
+The full self-annealing flow is now:
+1. **Tier 1 — patchright** (this release). Fast, drop-in stealth.
+2. **Tier 2 — Scrapling/Camoufox fallback** (already present in
+   tool_03_browser_scanner). Auto-triggers when `bot_detection_encountered`
+   is set on the primary scan. Firefox-based, heavier fingerprint
+   randomization via apify-fingerprint-datapoints.
+
+The cascade requires no flags. Every scan starts with patchright; if the
+page returns a Cloudflare/PerimeterX/DataDome challenge, the scanner
+escalates to Camoufox automatically and tags `scan_mode_used="stealthy"`
+on the returned `ScanResult` so downstream callers can see which tier
+resolved the page.
+
+### Added
+- `patchright>=1.48.0` declared as an explicit dependency (was previously
+  pulled in only transitively via `scrapling[fetchers]`).
+
 ## [0.1.6] — 2026-05-17 — render-deck subcommand + contact-page CTA
 
 ### Added
