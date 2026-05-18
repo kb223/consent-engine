@@ -3,6 +3,36 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.1] — 2026-05-18 — ACM rule re-verified against Google official docs
+
+### Changed
+- **Wiki page `concepts/consent-mode-v2.md` re-verified** against five
+  official Google sources. Added a *Source Verification* table mapping
+  each load-bearing claim ("no cookies written when consent denied",
+  cookieless-pings-not-cookies, `_gcl_au` behavior under denied
+  `ad_storage`, `ads_data_redaction` semantics, URL passthrough as the
+  cookieless alternative) to direct quotes from the corresponding
+  Google docs page. Plus a *Scanner classifier implication* paragraph
+  documenting why `_ga` + GCS=G100 on a fresh-context scan is the
+  scanner's flagged config error and not "ACM working as designed."
+- Wiki ships inside the wheel (`data/wiki/**/*.md` via hatch
+  `tool.hatch.build` includes), so this update lands in the audit
+  pipeline immediately — the wiki retriever (`tool_07_rag_retriever`)
+  picks it up for any GCS=G100 finding.
+
+### Sources cross-checked (all official Google domains)
+- developers.google.com/tag-platform/security/concepts/consent-mode
+- developers.google.com/tag-platform/security/guides/consent
+- support.google.com/analytics/answer/13802165 (Consent mode reference)
+- support.google.com/analytics/answer/10000067 (About consent mode)
+- support.google.com/google-ads/answer/13802165 (Consent mode reference – Ads)
+
+### Outcome
+Scanner classifier in `tool_02_violation_classifier.py` is verified
+correct against Google's spec. No behavior change — only documentation
+strengthening so the buyer's compliance team can cite the actual
+Google pages, not the project's own wiki, when discussing findings.
+
 ## [0.3.0] — 2026-05-18 — light-theme deck, GPC always, brand-logo grab, ACM clarity
 
 ### Changed

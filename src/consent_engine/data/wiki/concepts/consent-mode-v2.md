@@ -124,3 +124,47 @@ Non-compliant advertisers face:
 Sending any network request (which exposes IP addresses) before explicit consent may carry legal risk under strict interpretations of GDPR and Quebec Law 25. The transmission of cookieless pings requires a defensible legal basis — typically documented legitimate interest for aggregate modeling.
 
 An audit finding of `gcs=G100` with conversion events = data flowing to Google for modeling. This is not a clean pass — it requires documentation of the legal basis used.
+
+## Source Verification — Google's Official Documentation (re-verified 2026-05-18)
+
+The "no cookies written when consent denied" rule is the load-bearing claim
+behind the scanner's `_ga`+`GCS=G100` = ACM-misconfiguration classification.
+Re-verified against Google's official docs:
+
+| Claim | Google source | Direct evidence |
+|---|---|---|
+| `_ga` / `_ga_<id>` cookies are not written when `analytics_storage` is denied | [Consent mode reference](https://support.google.com/analytics/answer/13802165) + [About consent mode](https://support.google.com/analytics/answer/10000067) | "When visitors deny consent, consent-aware tags do not store cookies. Instead, tags communicate consent state and user activity by sending measurements without cookies (web), or signals (apps)" |
+| Advanced Mode sends cookieless pings, not cookies | [Consent mode overview](https://developers.google.com/tag-platform/security/concepts/consent-mode) | "tags load with default settings and adjust behavior based on consent... If consent is denied, Google receives cookieless pings" |
+| `_gcl_au` is not written when `ad_storage` is denied | [Set up consent mode](https://developers.google.com/tag-platform/security/guides/consent) | "If ad_storage is denied, Google tags won't save this information locally. Existing first-party advertising cookies won't be read." |
+| `ads_data_redaction` deletes stored info on top of the cookie-write block | [Consent mode reference (Google Ads)](https://support.google.com/google-ads/answer/13802165) | "If you enable ads_data_redaction, when the user denies consent, Google Ads will delete the stored information" |
+| URL passthrough is the cookieless alternative for cross-page analytics | [Set up consent mode](https://developers.google.com/tag-platform/security/guides/consent) | "If analytics_storage is set to denied, URL passthrough can be used to send event and session-based analytics (including key events) without cookies across pages" |
+
+### Scanner classifier implication (load-bearing)
+
+The above is what makes `_ga` (or `_ga_<id>`) **+** `GCS=G100` on a fresh-context
+scan a real config error and not "ACM working as designed":
+
+- `GCS=G100` in the request payload proves the cookieless-ping layer is
+  active (Google's server sees a denied state).
+- A fresh browser context has no pre-existing `_ga` cookies.
+- If `_ga` appears after the scan, GA4 wrote it during this denied-consent
+  visit. Per the Google sources above, that is **not** ACM-compliant behavior.
+
+The scanner classifies this as `confirmed_violation` with notes that frame
+it as **"Advanced Consent Mode misconfiguration — cookieless-ping layer
+firing correctly, cookie-suppression layer broken."** This is technically
+distinct from a non-Google vendor firing without consent (no ACM equivalent
+exists for Meta, TikTok, LinkedIn, etc.) — both are violations under denied
+consent, but the fix paths differ and the report copy reflects that.
+
+### What this rule does NOT say
+
+- It does **not** say `_ga_<id>` (the GA4-property-specific session cookie)
+  is always blocked. Some non-ACM implementations may set it; the audit
+  flags those.
+- It does **not** apply to non-Google vendors. Meta, TikTok, LinkedIn, etc.
+  must be fully blocked when consent is denied — no cookieless-ping
+  equivalent exists for them.
+- It does **not** mean GCS=G100 is itself a "clean pass." See the
+  *Regulatory Gray Area* section above on EU/Quebec exposure from any
+  pre-consent network request.

@@ -4,6 +4,29 @@ Format: `## [YYYY-MM-DD] operation | description`
 
 ---
 
+## [2026-05-18] verify | ACM cookie behavior re-checked against Google official docs
+
+Triggered by Kenneth's pushback on whether cookies-in-anonymous-state under
+Advanced Consent Mode count as a violation. Fact-checked via WebSearch
+against the official Google sources listed below; all five confirmed the
+"no cookies written when consent denied" rule that the scanner's classifier
+relies on.
+
+Sources cross-checked (all from official Google domains):
+- https://developers.google.com/tag-platform/security/concepts/consent-mode
+- https://developers.google.com/tag-platform/security/guides/consent
+- https://support.google.com/analytics/answer/13802165 (Consent mode reference)
+- https://support.google.com/analytics/answer/10000067 (About consent mode)
+- https://support.google.com/google-ads/answer/13802165 (Consent mode reference – Ads)
+
+Page updated: `concepts/consent-mode-v2.md` — added a *Source Verification*
+section with direct quotes mapped to each load-bearing claim, and a
+*Scanner classifier implication* paragraph explaining why `_ga` + GCS=G100
+on a fresh-context scan is a real config error (not "ACM working as
+designed").
+
+Outcome: scanner classification stands. Wiki is now the auditable record.
+
 ## [2026-04-08] ingest | Initial wiki build — 9 regulatory source docs
 
 Sources ingested from `data/regulatory/`:
