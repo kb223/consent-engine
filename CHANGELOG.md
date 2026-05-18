@@ -3,6 +3,24 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.2] — 2026-05-18 — LLM disabled by default + README setup section
+
+### Changed
+- **LLM call now skipped by default.** `generate_executive_summary()` checks
+  the environment for `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`
+  / `GOOGLE_APPLICATION_CREDENTIALS` and only invokes LiteLLM when one is
+  present. With no key set (the OSS-default shipping state), the function
+  skips the LLM entirely and uses the deterministic template summary — no
+  provider-probe warnings, no Vertex/Bedrock/SageMaker tracebacks. The
+  template summary is hand-tuned and reads cleanly on its own.
+
+### Added
+- **README "Optional: unlock LLM-written executive summaries" section**
+  documenting the four env-var paths to enable LLM prose summaries, what
+  LiteLLM is and why we use it, and how to override the default model
+  targets. Users can plug in any LiteLLM-supported provider without
+  changing code.
+
 ## [0.4.1] — 2026-05-18 — auto-render + auto-open + quieter CLI
 
 ### Added

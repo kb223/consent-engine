@@ -127,6 +127,44 @@ running **$5,000 per violation** in active class actions against retailers,
 healthcare systems, and B2B SaaS marketing sites. See
 `data/wiki/enforcement/lawsuit-surge.md` for the case file.
 
+## Optional: unlock LLM-written executive summaries
+
+By default, consent-engine ships with the LLM call **disabled**. The audit
+runs the full deterministic pipeline (scan → classify → wiki retrieval → HTML
+report + Marp deck) and writes a templated executive summary that's
+hand-tuned to be readable. No LLM, no API keys, no LiteLLM provider-probe
+warnings on stderr. This is the OSS-shipping default.
+
+If you want the LLM-written prose summary instead — slightly sharper framing,
+adapted per-audit to the actual findings + wiki citations — set **any one** of
+these env vars before running:
+
+```sh
+# Gemini direct (recommended — generous free tier, simple auth)
+export GEMINI_API_KEY="..."
+
+# OR Anthropic (best at legal/compliance nuance)
+export ANTHROPIC_API_KEY="..."
+
+# OR OpenAI
+export OPENAI_API_KEY="..."
+
+# OR Vertex AI (requires a GCP service-account JSON)
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/sa.json"
+```
+
+The engine uses [LiteLLM](https://github.com/BerriAI/litellm) under the hood
+to route to whatever provider you've configured — no SDK swap required. The
+default model targets are `gemini/gemini-2.5-pro` (audit) and
+`gemini/gemini-2.5-flash` (executive summary classification), but you can
+override either via the `default_audit_model` / `default_classify_model`
+fields on `consent_engine.config.Settings`. Or just set
+`LITELLM_LOG=ERROR` and pick any model string LiteLLM understands.
+
+The audit pipeline always falls back to the deterministic template if the
+LLM call fails for any reason — so if your key is rate-limited or invalid,
+the audit still completes cleanly.
+
 ## Develop
 
 ```sh

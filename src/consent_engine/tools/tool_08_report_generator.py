@@ -630,6 +630,35 @@ Rules:
 - Never use em dashes."""
 
 
+def _llm_key_available() -> bool:
+    """Return True if any supported LLM provider has an API key configured.
+
+    Checks the env vars LiteLLM actually reads:
+
+    - ``GEMINI_API_KEY``    — for ``gemini/...`` models (default)
+    - ``ANTHROPIC_API_KEY`` — for ``claude-...`` models
+    - ``OPENAI_API_KEY``    — for ``gpt-...`` / ``o1-...`` models
+    - ``GOOGLE_APPLICATION_CREDENTIALS`` — for ``vertex_ai/...`` (GCP service account)
+
+    When none of these are set, the audit pipeline skips the LLM call entirely
+    and uses the deterministic executive-summary template. This keeps the OSS
+    shipped default quiet (no LiteLLM provider-probe warnings) for users who
+    just want the structured-evidence audit and don't need a generated prose
+    summary. To unlock LLM summaries, set one of those env vars (see README).
+    """
+    import os as _os
+
+    return any(
+        _os.environ.get(k)
+        for k in (
+            "GEMINI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "OPENAI_API_KEY",
+            "GOOGLE_APPLICATION_CREDENTIALS",
+        )
+    )
+
+
 async def generate_executive_summary(
     audit_result: AuditResult,
     wiki_pages: list[WikiPage],
@@ -638,54 +667,63 @@ async def generate_executive_summary(
 ) -> str:
     """Generate LLM-written executive summary grounded in wiki regulatory context.
 
-    Uses `default_classify_model` (Claude Haiku) for cost efficiency.
-    Falls back to a deterministic summary if the LLM call fails.
+    Uses the configured classify model when an LLM provider API key is present
+    in the environment. When no key is configured (the OSS-default state), the
+    function skips the LLM call entirely — no LiteLLM warnings, no Vertex /
+    Bedrock / SageMaker probe noise — and returns the deterministic template
+    summary directly. See ``_llm_key_available()`` for the exact env vars
+    checked and the README for the setup instructions.
     """
-    try:
-        settings = get_settings()
-        client = LLMClient(model=settings.default_classify_model)
-        prompt = _build_executive_summary_prompt(audit_result, wiki_pages, variant, recovery)
-        response = await client.complete(messages=[{"role": "user", "content": prompt}])
-        return str(response["choices"][0]["message"]["content"])
-    except Exception:  # noqa: BLE001
-        violations = [
-            f.vendor.name for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED
-        ]
-        if variant == "signal":
-            if violations:
-                rec_suffix = ""
-                if recovery and recovery.get("has_recovery_opportunity"):
-                    rec_suffix = (
-                        f" Estimated recoverable ad revenue at current spend: "
-                        f"${recovery['monthly_recoverable_low_usd']:,}-${recovery['monthly_recoverable_high_usd']:,}/mo."
-                    )
-                return (
-                    f"Signal gaps detected at {audit_result.url}. "
-                    f"The following vendors are leaking post-consent data the ad AI cannot optimize on: "
-                    f"{', '.join(violations)}. "
-                    f"This caps scale on Meta Advantage+, Performance Max, and TikTok Smart+ — "
-                    f"the ad platforms optimize on the signal they receive, and this stack is giving them an incomplete picture."
-                    f"{rec_suffix}"
+    if _llm_key_available():
+        try:
+            settings = get_settings()
+            client = LLMClient(model=settings.default_classify_model)
+            prompt = _build_executive_summary_prompt(audit_result, wiki_pages, variant, recovery)
+            response = await client.complete(messages=[{"role": "user", "content": prompt}])
+            return str(response["choices"][0]["message"]["content"])
+        except Exception:  # noqa: BLE001
+            pass  # fall through to deterministic summary below
+
+    # Deterministic summary path — no LLM, no warnings. Used when the user has
+    # not configured any LLM API key (the OSS-default shipping state).
+    violations = [
+        f.vendor.name for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED
+    ]
+    if variant == "signal":
+        if violations:
+            rec_suffix = ""
+            if recovery and recovery.get("has_recovery_opportunity"):
+                rec_suffix = (
+                    f" Estimated recoverable ad revenue at current spend: "
+                    f"${recovery['monthly_recoverable_low_usd']:,}-${recovery['monthly_recoverable_high_usd']:,}/mo."
                 )
             return (
-                f"No consent-driven signal gaps detected at {audit_result.url} "
-                f"under the {audit_result.methodology} methodology. "
-                f"The measurement stack is AI-ready — ad platforms are receiving clean post-consent signal."
-            )
-        if violations:
-            jurisdiction = audit_result.detected_jurisdiction or "US"
-            law = "CCPA/CPRA" if jurisdiction in ("US", "CA") else "GDPR"
-            return (
-                f"Confirmed consent violations detected at {audit_result.url}. "
-                f"The following vendors fired tracking technologies despite opted-out consent: "
+                f"Signal gaps detected at {audit_result.url}. "
+                f"The following vendors are leaking post-consent data the ad AI cannot optimize on: "
                 f"{', '.join(violations)}. "
-                f"This constitutes a potential violation of {law} and may expose the organization "
-                f"to regulatory enforcement and class-action litigation."
+                f"This caps scale on Meta Advantage+, Performance Max, and TikTok Smart+ — "
+                f"the ad platforms optimize on the signal they receive, and this stack is giving them an incomplete picture."
+                f"{rec_suffix}"
             )
         return (
-            f"No confirmed consent violations were detected at {audit_result.url} "
-            f"under the {audit_result.methodology} methodology."
+            f"No consent-driven signal gaps detected at {audit_result.url} "
+            f"under the {audit_result.methodology} methodology. "
+            f"The measurement stack is AI-ready — ad platforms are receiving clean post-consent signal."
         )
+    if violations:
+        jurisdiction = audit_result.detected_jurisdiction or "US"
+        law = "CCPA/CPRA" if jurisdiction in ("US", "CA") else "GDPR"
+        return (
+            f"Confirmed consent violations detected at {audit_result.url}. "
+            f"The following vendors fired tracking technologies despite opted-out consent: "
+            f"{', '.join(violations)}. "
+            f"This constitutes a potential violation of {law} and may expose the organization "
+            f"to regulatory enforcement and class-action litigation."
+        )
+    return (
+        f"No confirmed consent violations were detected at {audit_result.url} "
+        f"under the {audit_result.methodology} methodology."
+    )
 
 
 def _build_manual_validation(audit_result: AuditResult) -> list[dict[str, str]]:
