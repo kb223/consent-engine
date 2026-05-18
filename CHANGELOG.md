@@ -3,6 +3,19 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.6] — 2026-05-17 — render-deck subcommand + contact-page CTA
+
+### Added
+- `consent-engine render-deck <audit_id>` shells out to
+  `@marp-team/marp-cli` (via `npx --yes`) to convert the per-audit
+  `deck.marp.md` into a browsable `deck.html`. Requires Node.js + npx
+  on PATH. Prints a clear fallback command if Node is missing.
+
+### Changed
+- Audit report CTA points to `https://kennethjbuchanan.com/contact`
+  with button copy "Get in Touch" instead of a scoping-call link.
+- Marp deck "Next step" line now points to the same contact page.
+
 ## [0.1.5] — 2026-05-17 — fix evidence.jsonl crash on network_requests
 
 ### Fixed

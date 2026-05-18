@@ -2,11 +2,15 @@
 
 Usage:
     consent-engine audit <url> [--output-dir DIR]
+    consent-engine render-deck <audit_id> [--output-dir DIR]
     consent-engine chat <audit_id>
     consent-engine version
 
 The `audit` command writes a full audit bundle (report.html, audit_result.json,
 evidence.jsonl, deck.marp.md) to ./out/<audit_id>/.
+
+The `render-deck` command turns that deck.marp.md into a browsable deck.html
+via @marp-team/marp-cli (shells out to `npx`; requires Node.js on PATH).
 
 The `chat` command opens a per-audit Claude conversation grounded in the
 captured evidence + audit result + wiki context cited by the audit. Closes
@@ -18,6 +22,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -59,6 +65,41 @@ def _audit_command(args: argparse.Namespace) -> int:
     print(f"  Deck:      {audit_dir / 'deck.marp.md'}")
     print(f"  Evidence:  {audit_dir / 'evidence.jsonl'}")
     print(f"  Findings:  {len(findings)} vendor finding(s)")
+    return 0
+
+
+def _render_deck_command(args: argparse.Namespace) -> int:
+    """Render an audit's deck.marp.md to deck.html via @marp-team/marp-cli."""
+    audit_dir = Path(args.output_dir or "./out") / args.audit_id
+    marp_md = audit_dir / "deck.marp.md"
+    if not marp_md.exists():
+        print(f"error: no deck.marp.md at {marp_md}", file=sys.stderr)
+        return 1
+
+    npx = shutil.which("npx")
+    if not npx:
+        print(
+            "error: render-deck requires Node.js + npx on PATH.\n"
+            "Install Node from https://nodejs.org/ then re-run, or render manually:\n"
+            f"  npx --yes @marp-team/marp-cli@latest {marp_md} -o {audit_dir / 'deck.html'} --html",
+            file=sys.stderr,
+        )
+        return 1
+
+    deck_html = audit_dir / "deck.html"
+    print(f"Rendering {marp_md} via @marp-team/marp-cli…", flush=True)
+    try:
+        subprocess.run(
+            [
+                npx, "--yes", "@marp-team/marp-cli@latest",
+                str(marp_md), "-o", str(deck_html), "--html",
+            ],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"error: marp-cli exited {e.returncode}", file=sys.stderr)
+        return 1
+    print(f"Deck rendered: {deck_html}")
     return 0
 
 
@@ -110,6 +151,14 @@ def main(argv: list[str] | None = None) -> int:
     p_audit.add_argument("url", help="The URL to audit.")
     p_audit.add_argument("--output-dir", help="Output directory (default: ./out).")
     p_audit.set_defaults(func=_audit_command)
+
+    p_render = sub.add_parser(
+        "render-deck",
+        help="Render an audit deck.marp.md to deck.html via @marp-team/marp-cli.",
+    )
+    p_render.add_argument("audit_id", help="Audit ID (the directory name under ./out/).")
+    p_render.add_argument("--output-dir", help="Output directory (default: ./out).")
+    p_render.set_defaults(func=_render_deck_command)
 
     p_chat = sub.add_parser("chat", help="Chat over a completed audit.")
     p_chat.add_argument("audit_id", help="Audit ID (the directory name under ./out/).")
