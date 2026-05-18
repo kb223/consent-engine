@@ -9,8 +9,12 @@ class Settings(BaseSettings):
 
     # LLM
     anthropic_api_key: str | None = None
-    default_audit_model: str = "vertex_ai/gemini-2.5-pro"
-    default_classify_model: str = "vertex_ai/gemini-2.5-flash"
+    # Defaults use the direct Gemini API (GEMINI_API_KEY), not Vertex AI, so
+    # `uvx consent-engine audit` doesn't need GCP service-account credentials.
+    # The deterministic fallback in generate_executive_summary() handles the
+    # "no key set" case gracefully — the audit still completes.
+    default_audit_model: str = "gemini/gemini-2.5-pro"
+    default_classify_model: str = "gemini/gemini-2.5-flash"
 
     # Gemini / Vertex AI
     gemini_api_key: str | None = None

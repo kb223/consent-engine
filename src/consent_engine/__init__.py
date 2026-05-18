@@ -8,4 +8,13 @@ Public package surface:
 - consent_engine.llm.client     LiteLLM-wrapped chat surface (agentic layer)
 """
 
-__version__ = "0.4.0"
+# Silence LiteLLM's startup probes for providers the user hasn't configured
+# (Bedrock / SageMaker / Vertex AI) before litellm imports anywhere downstream.
+# These warnings are harmless when the user is on Anthropic or OpenAI, but they
+# emit a noisy stderr block on every audit run via uvx.
+import os as _os
+
+_os.environ.setdefault("LITELLM_LOG", "ERROR")
+_os.environ.setdefault("LITELLM_DROP_PARAMS", "true")
+
+__version__ = "0.4.1"

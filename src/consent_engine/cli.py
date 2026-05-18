@@ -3,7 +3,7 @@
 Usage:
     consent-engine audit <url> [--variant signal|compliance]
                                [--monthly-ad-spend N] [--firm-name "Acme LLC"]
-                               [--output-dir DIR]
+                               [--output-dir DIR] [--no-open]
     consent-engine render-deck <audit_id> [--output-dir DIR]
     consent-engine chat <audit_id>
     consent-engine version
@@ -108,7 +108,95 @@ def _audit_command(args: argparse.Namespace) -> int:
         )
     if bundle.audit_result.remediation:
         print(f"  Remediation: {len(bundle.audit_result.remediation)} step(s) in report")
+
+    # Auto-render deck.html (best-effort; silent skip if Node is missing).
+    deck_html = _render_marp_to_html(audit_dir / "deck.marp.md", verbose=False)
+    if deck_html is not None:
+        print(f"  Deck HTML: {deck_html}")
+
+    # Auto-open report + deck in the default browser unless --no-open is set.
+    if not getattr(args, "no_open", False):
+        _open_in_browser(
+            [
+                audit_dir / "report.html",
+                deck_html if deck_html is not None else audit_dir / "deck.marp.md",
+            ]
+        )
     return 0
+
+
+def _render_marp_to_html(marp_md: Path, *, verbose: bool = True) -> Path | None:
+    """Shell out to ``@marp-team/marp-cli`` and return the rendered ``deck.html``.
+
+    Returns the path on success, ``None`` on failure (Node missing, marp-cli
+    error, etc.). The verbose flag controls whether we print a "Rendering…"
+    line — quiet from the auto-render path inside ``_audit_command``; chatty
+    from the explicit ``render-deck`` subcommand.
+    """
+    if not marp_md.exists():
+        if verbose:
+            print(f"error: no deck.marp.md at {marp_md}", file=sys.stderr)
+        return None
+    npx = shutil.which("npx")
+    if not npx:
+        if verbose:
+            print(
+                "error: render-deck requires Node.js + npx on PATH.\n"
+                "Install Node from https://nodejs.org/ then re-run, or render manually:\n"
+                f"  npx --yes @marp-team/marp-cli@latest {marp_md} -o "
+                f"{marp_md.parent / 'deck.html'} --html",
+                file=sys.stderr,
+            )
+        return None
+    deck_html = marp_md.parent / "deck.html"
+    if verbose:
+        print(f"Rendering {marp_md} via @marp-team/marp-cli…", flush=True)
+    try:
+        subprocess.run(
+            [
+                npx, "--yes", "@marp-team/marp-cli@latest",
+                str(marp_md), "-o", str(deck_html), "--html",
+            ],
+            check=True,
+            capture_output=not verbose,
+        )
+    except subprocess.CalledProcessError as e:
+        if verbose:
+            print(f"error: marp-cli exited {e.returncode}", file=sys.stderr)
+        return None
+    return deck_html
+
+
+def _open_in_browser(paths: list[Path]) -> None:
+    """Open the given file paths in the default browser/handler.
+
+    macOS: ``open <path1> <path2> ...`` (single Finder open call).
+    Linux: ``xdg-open`` per path. Windows: ``start`` via shell per path. Falls
+    back to Python's ``webbrowser`` module if no platform-native command is
+    found. Best-effort — failures are silent (the user can always click the
+    paths printed above).
+    """
+    real_paths = [p for p in paths if p.exists()]
+    if not real_paths:
+        return
+    if sys.platform == "darwin":
+        opener = ["open"]
+    elif sys.platform.startswith("linux"):
+        opener = ["xdg-open"]
+    elif sys.platform == "win32":
+        opener = ["cmd", "/c", "start", ""]
+    else:
+        opener = None
+    try:
+        if opener is not None:
+            subprocess.run(opener + [str(p) for p in real_paths], check=False)
+        else:
+            import webbrowser
+
+            for p in real_paths:
+                webbrowser.open(p.as_uri())
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _render_deck_command(args: argparse.Namespace) -> int:
@@ -216,6 +304,12 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         help="Self-reported monthly ad spend in USD. Activates per-vendor signal "
         "recovery math in the signal-variant report. Example: --monthly-ad-spend 50000",
+    )
+    p_audit.add_argument(
+        "--no-open",
+        dest="no_open",
+        action="store_true",
+        help="Don't auto-open report.html + deck.html in the default browser after the audit.",
     )
     p_audit.set_defaults(func=_audit_command)
 

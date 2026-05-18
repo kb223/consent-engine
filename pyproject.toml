@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "consent-engine"
-version = "0.4.0"
+version = "0.4.1"
 description = "Forensic consent-compliance audit engine. Deterministic by design."
 readme = "README.md"
 license = { text = "MIT" }

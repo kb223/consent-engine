@@ -3,6 +3,32 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.1] — 2026-05-18 — auto-render + auto-open + quieter CLI
+
+### Added
+- **Auto-render deck** at the end of every `consent-engine audit` run. The
+  CLI now calls `@marp-team/marp-cli` directly (best-effort; if Node/npx
+  isn't on PATH it silently skips and falls back to the v0.3.x manual
+  rendering instructions).
+- **Auto-open report + deck** in the system default browser when the audit
+  finishes. macOS uses `open`, Linux uses `xdg-open`, Windows uses
+  `start`, anything else falls back to Python's `webbrowser`. Opt out
+  with `--no-open` if running in CI / a remote shell / a test harness.
+
+### Changed
+- **LiteLLM noise suppressed.** `LITELLM_LOG=ERROR` and
+  `LITELLM_DROP_PARAMS=true` are now set in `consent_engine/__init__.py`
+  before LiteLLM is imported anywhere. Stops the Bedrock / SageMaker /
+  Vertex-AI startup probes from emitting tracebacks to stderr when the
+  user is only configured for one of those providers.
+- **Default LLM models switched to direct Gemini API.** `default_audit_model`
+  and `default_classify_model` no longer point at `vertex_ai/...` (which
+  requires GCP service-account credentials). Now point at
+  `gemini/gemini-2.5-pro` and `gemini/gemini-2.5-flash`, which read a
+  `GEMINI_API_KEY` env var. The deterministic fallback in
+  `generate_executive_summary()` still handles the "no key set" case
+  cleanly — the audit always completes.
+
 ## [0.4.0] — 2026-05-18 — structured evidence.jsonl (Tier-2 foundation)
 
 The first Tier-2 release. Lays the data foundation that side-by-side,
