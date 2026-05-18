@@ -3,6 +3,43 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.8] — 2026-05-17 — revert v0.1.7 patchright swap
+
+### Reverted
+- All three scanner files (`tool_03_browser_scanner`, `cmp_detector`,
+  `cmp_clicker`) are back on `playwright.async_api`. Reverted the
+  `python -m patchright install chromium` change in
+  `ensure_chromium_installed()`. Removed the explicit `patchright`
+  dependency declaration.
+
+### Why
+The v0.1.7 swap broke 7 scanner tests. Patchright's runtime patches
+interfered with `document.cookie` writes from page JS and with the
+CMP detector's `page.evaluate()` calls — `detected_cmp` came back as
+`None` for known OneTrust/CookieYes pages, and `test_cookie` writes
+never made it into `context.cookies()`. For a forensic compliance
+tool, that is a worse regression than the bot-detection gain was
+worth.
+
+### What we already have (and forgot to credit)
+`tool_03_browser_scanner` ships a hand-written `_STEALTH_INIT_SCRIPT`
+that is *stronger* than patchright's runtime patches:
+- `navigator.webdriver` reads as `undefined` (patchright sets it to
+  `false`, which still trips `'webdriver' in navigator` checks).
+- Realistic `navigator.plugins` (PluginArray, 5 entries) instead of
+  the headless default of 0.
+- `window.chrome.runtime` injection — absence is one of the strongest
+  headless tells.
+- `navigator.permissions.query` returns `prompt` (not `denied`) for
+  notifications.
+- Realistic `navigator.hardwareConcurrency`, `navigator.languages`.
+
+Plus `_STEALTH_LAUNCH_ARGS` with `--disable-blink-features=AutomationControlled`
+and `_STEALTH_UA` set to a real Mac Chrome user-agent. And the
+Scrapling/Camoufox fallback in `tool_03_browser_scanner` auto-engages
+on bot-challenge detection. That cascade was already production-grade
+before v0.1.7.
+
 ## [0.1.7] — 2026-05-17 — patchright tier-1 stealth + self-annealing fallback
 
 ### Changed

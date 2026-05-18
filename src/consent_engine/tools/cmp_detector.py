@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from patchright.async_api import Page
+from playwright.async_api import Page
 
 
 @dataclass

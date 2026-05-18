@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 from typing import Any, cast
 from urllib.parse import parse_qs, urlparse
 
-from patchright.async_api import Page, ProxySettings, Request, Route, async_playwright
+from playwright.async_api import Page, ProxySettings, Request, Route, async_playwright
 
 from consent_engine.models.audit_request import ConsentState
 from consent_engine.models.audit_result import GCSValue, GTMExtractionMethod, MethodologyFlag

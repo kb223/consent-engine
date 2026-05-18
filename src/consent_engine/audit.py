@@ -52,17 +52,19 @@ class AuditBundle:
 
 
 def ensure_chromium_installed() -> None:
-    """Download a Chromium build for patchright if one isn't cached yet.
+    """Download the Playwright Chromium browser if it isn't on disk yet.
 
-    patchright is a Playwright fork that patches the runtime to hide common
-    automation fingerprints (`navigator.webdriver`, plugins, etc). It uses
-    the same `ms-playwright` cache directory as upstream Playwright, so an
-    existing Playwright Chromium install is reused; otherwise we shell out
-    to `python -m patchright install chromium` (idempotent, ~140 MB).
+    Playwright ships the browser binaries separately from the Python package,
+    so a freshly installed `consent-engine` will hit
+    `BrowserType.launch: Executable doesn't exist…` on the first audit.
+    This shells out to `playwright install chromium` (idempotent, ~140 MB
+    one-time download into ~/Library/Caches/ms-playwright/) so the user
+    never has to.
     """
     cache_dir = Path.home() / "Library/Caches/ms-playwright"
-    # Heuristic: any chromium folder under the cache means a Chromium build
-    # has been downloaded. Cheaper than launching the browser to test.
+    # Heuristic: any chromium folder under the cache means Playwright has
+    # downloaded at least one Chromium build. Cheaper than launching the
+    # browser to test.
     if cache_dir.exists() and any(cache_dir.glob("chromium*")):
         return
 
@@ -72,14 +74,14 @@ def ensure_chromium_installed() -> None:
         flush=True,
     )
     res = subprocess.run(
-        [sys.executable, "-m", "patchright", "install", "chromium"],
+        [sys.executable, "-m", "playwright", "install", "chromium"],
         capture_output=False,
         check=False,
     )
     if res.returncode != 0:
         raise RuntimeError(
             "Failed to install Chromium. Run manually:\n"
-            "  python -m patchright install chromium"
+            "  python -m playwright install chromium"
         )
 
 
