@@ -21,8 +21,32 @@ permissions:
   id-token: write       # PyPI Trusted Publishing OIDC
 
 jobs:
+  test:
+    name: Test (pre-publish gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Install Playwright Chromium
+        run: uv run playwright install --with-deps chromium
+
+      - name: Run tests
+        run: uv run pytest tests/ -q
+
   build:
     name: Build distributions
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

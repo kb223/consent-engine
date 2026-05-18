@@ -1,7 +1,9 @@
 """consent-engine CLI.
 
 Usage:
-    consent-engine audit <url> [--with-gpc] [--output-dir DIR]
+    consent-engine audit <url> [--with-gpc] [--variant signal|compliance]
+                               [--monthly-ad-spend N] [--firm-name "Acme LLC"]
+                               [--output-dir DIR]
     consent-engine render-deck <audit_id> [--output-dir DIR]
     consent-engine chat <audit_id>
     consent-engine version
@@ -10,6 +12,10 @@ The `--with-gpc` flag runs a second scan with Sec-GPC: 1 asserted and
 compares pixel-firing counts. Populates the GPC compliance section of
 the HTML report so you can see whether the site honored the legally
 binding opt-out signal under CCPA/CPRA.
+
+`--variant signal --monthly-ad-spend N` activates the recoverable-revenue
+math block (signal recovery framing for the CMO buyer). `--firm-name`
+whitelabels the report.
 
 The `audit` command writes a full audit bundle (report.html, audit_result.json,
 evidence.jsonl, deck.marp.md) to ./out/<audit_id>/.
@@ -45,12 +51,23 @@ def _audit_command(args: argparse.Namespace) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     with_gpc = bool(getattr(args, "with_gpc", False))
+    firm_name = getattr(args, "firm_name", None)
+    variant = getattr(args, "variant", "compliance")
+    monthly_ad_spend = getattr(args, "monthly_ad_spend", None)
     print(
         f"Scanning {url} ({'two-pass S3 + GPC' if with_gpc else 'S3 opt-out'}, "
         f"~{'60s' if with_gpc else '30s'})…",
         flush=True,
     )
-    bundle = asyncio.run(run_audit(url, with_gpc=with_gpc))
+    bundle = asyncio.run(
+        run_audit(
+            url,
+            with_gpc=with_gpc,
+            firm_name=firm_name,
+            report_variant=variant,
+            monthly_ad_spend_usd=monthly_ad_spend,
+        )
+    )
 
     audit_dir = out_dir / bundle.audit_id
     audit_dir.mkdir(parents=True, exist_ok=True)
@@ -181,6 +198,25 @@ def main(argv: list[str] | None = None) -> int:
         "--with-gpc",
         action="store_true",
         help="Run a second scan with Sec-GPC: 1 asserted and compare pixel-firing counts.",
+    )
+    p_audit.add_argument(
+        "--firm-name",
+        dest="firm_name",
+        help="Customer firm name to render at the top of the report (whitelabel).",
+    )
+    p_audit.add_argument(
+        "--variant",
+        choices=("compliance", "signal"),
+        default="compliance",
+        help="Report variant: 'compliance' (legal/risk framing) or 'signal' "
+        "(growth/recovery framing with dollar math). Default: compliance.",
+    )
+    p_audit.add_argument(
+        "--monthly-ad-spend",
+        dest="monthly_ad_spend",
+        type=int,
+        help="Self-reported monthly ad spend in USD. Activates per-vendor signal "
+        "recovery math in the signal-variant report. Example: --monthly-ad-spend 50000",
     )
     p_audit.set_defaults(func=_audit_command)
 

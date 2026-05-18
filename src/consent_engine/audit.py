@@ -23,6 +23,7 @@ from consent_engine.models.audit_result import (
     VendorFinding,
 )
 from consent_engine.models.scan_result import ScanResult
+from consent_engine.tools.cmp_detector import detect_cmp_from_network_only
 from consent_engine.tools.jurisdiction_detector import detect_jurisdiction
 from consent_engine.tools.tool_01_gtm_parser import parse_gtm_container
 from consent_engine.tools.tool_02_violation_classifier import classify_finding
@@ -202,6 +203,9 @@ async def run_audit(
     *,
     jurisdiction: str | None = None,
     with_gpc: bool = False,
+    firm_name: str | None = None,
+    report_variant: str = "compliance",
+    monthly_ad_spend_usd: int | None = None,
 ) -> AuditBundle:
     """Run a full forensic consent-compliance audit and return an `AuditBundle`.
 
@@ -226,6 +230,16 @@ async def run_audit(
 
     # 1. Primary S3 scan — consent pre-set to "reject all".
     scan, _ = await scan_page_fast(url=url, opted_out=True)
+
+    # 1a. Post-scan CMP refinement. The in-scan CMP detector runs at
+    #     networkidle, but some CMPs (Truyo, certain TrustArc deploys)
+    #     finish loading later. Re-check the full network_requests list to
+    #     catch late-loaded CMP CDNs that the in-scan detector missed.
+    if not scan.detected_cmp or scan.cmp_detection_confidence == "low":
+        net_cmp = detect_cmp_from_network_only(scan.network_requests)
+        if net_cmp is not None and net_cmp.name != "unknown":
+            scan.detected_cmp = net_cmp.name
+            scan.cmp_detection_confidence = net_cmp.confidence
 
     # 1b. Optional GPC scan — same flow but with Sec-GPC: 1 header on every
     #     request + navigator.globalPrivacyControl injected. Compared against
@@ -342,8 +356,22 @@ async def run_audit(
     exec_summary = await generate_executive_summary(audit_result, wiki_pages)
 
     # 8. HTML report + Marp slide deck.
-    report_html = await generate_report(audit_result, wiki_pages, exec_summary)
-    deck_md = generate_marp_slides(audit_result, exec_summary, brand="kjb")
+    report_html = await generate_report(
+        audit_result,
+        wiki_pages,
+        exec_summary,
+        report_variant=report_variant,  # type: ignore[arg-type]
+        estimated_monthly_ad_spend_usd=monthly_ad_spend_usd,
+        firm_name=firm_name,
+    )
+    deck_md = generate_marp_slides(
+        audit_result,
+        exec_summary,
+        brand="kjb",
+        firm_name=firm_name,
+        report_variant=report_variant,  # type: ignore[arg-type]
+        estimated_monthly_ad_spend_usd=monthly_ad_spend_usd,
+    )
 
     return AuditBundle(
         audit_id=audit_id,

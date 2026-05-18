@@ -3,6 +3,43 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.1] — 2026-05-17 — Truyo detection, deck restyle (for real), CI gate, sales flags
+
+### Fixed
+- **Truyo CMP detected.** The v0.2.0 audit on oreillyauto.com missed Truyo
+  (the actual CMP) and labeled the site as having "OneTrust cookies present
+  but no CMP detected." Two root causes: (1) the URL fallback in
+  `cmp_detector` only matched `cmp.truyo.com` while O'Reilly's deployment
+  serves from `truyoproductionuscdn.truyo.com`; (2) the in-scan detector
+  ran at networkidle, before Truyo's late-loaded CDN scripts appeared in
+  network_requests. Broadened the URL pattern to `.truyo.com/` and added a
+  **post-scan CMP refinement** call from `run_audit()` that re-checks the
+  full network_requests list after the scan completes.
+- **Marp deck restyle landed where it actually lives.** v0.2.0 restyled
+  `templates/audit_deck.marp.md.j2` but that file is dead — Marp markdown is
+  generated **inline** in `tool_08_report_generator.generate_marp_slides()`,
+  and that inline CSS still used the old `Outfit/Raleway` + `#0d1117` palette.
+  Rewrote the inline `<style>` block with the KJB navy `#2b3954` +
+  blue `#3d6abb` palette and Anthropic-style typography (Source Serif 4 for
+  headlines + big numbers, Inter 300 for body, generous padding, restrained
+  chrome). Decks now render the way v0.2.0 promised.
+
+### Added
+- **Pre-publish test gate** in `.github/workflows/release.yml`. The new
+  `test` job runs `uv run pytest tests/ -q` against Python 3.12 with
+  Playwright Chromium installed; the `build` job now `needs: test`. The
+  v0.1.7 mistake (broken release shipped because tests weren't run) can't
+  happen again without explicitly removing this gate.
+- **`--firm-name "Acme LLC"`** flag whitelabels the HTML report with a
+  confidentiality line at the top: "Audit prepared for Acme LLC."
+- **`--variant signal|compliance`** flag picks the report framing.
+  `compliance` (default) is the existing legal/risk framing. `signal`
+  unlocks the recoverable-revenue math block aimed at the CMO buyer.
+- **`--monthly-ad-spend N`** flag plumbs self-reported ad spend through to
+  `estimate_recoverable_revenue()`. Activates per-vendor signal recovery
+  dollarization (monthly + annual recoverable ranges, formula breakdown).
+  Only effective when paired with `--variant signal`.
+
 ## [0.2.0] — 2026-05-17 — KJB-branded report, GPC scan, auto-remediation
 
 ### Added

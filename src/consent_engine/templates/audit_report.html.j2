@@ -632,6 +632,12 @@
 <body>
 <div class="container">
 
+  {% if firm_name %}
+  <div style="font-size: 0.7rem; color: var(--kjb-blue); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 600; margin-bottom: 8px;">
+    Prepared for {{ firm_name }} · Confidential
+  </div>
+  {% endif %}
+
   <h1>{{ 'Signal Recovery Audit' if report_variant == 'signal' else 'Consent Compliance Audit' }}</h1>
   <p class="meta">{{ result.url }} &nbsp;·&nbsp; {{ result.timestamp | string | truncate(19, True, '') }} UTC &nbsp;·&nbsp; {{ methodology_label }}</p>
 

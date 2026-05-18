@@ -265,6 +265,7 @@ _SCRIPT_URL_RULES: list[tuple[str, str]] = [
     ("cmp.osano.com", "Osano"),
     ("global.ketchcdn.com", "Ketch"),
     ("cmp.truyo.com", "Truyo"),
+    (".truyo.com/", "Truyo"),  # generic Truyo CDN catch (truyoproductionuscdn.truyo.com, etc.)
     ("cdn.privacy-mgmt.com", "Sourcepoint"),
     ("sourcepoint.mgr.consensu.org", "Sourcepoint"),
     ("cdn.tagcommander.com", "TrustCommander"),
@@ -411,3 +412,27 @@ async def detect_cmp(page: Page, network_requests: list[str]) -> CMPProfile:
             continue
 
     return CMPProfile(name="unknown", confidence="low", dom_type="standard", js_api=False)
+
+
+def detect_cmp_from_network_only(network_requests: list[str]) -> CMPProfile | None:
+    """Network-URL-only CMP detection for post-scan refinement.
+
+    Mirrors the URL fallback path of `detect_cmp` but takes only the URL list
+    (no Playwright Page), so it can be invoked from `audit.py` after the scan
+    completes when the full network_requests list is available. Catches CMPs
+    that load past the in-scan `networkidle` window (Truyo's late-loaded CDN
+    on O'Reilly is the canonical example).
+
+    Returns None when no CMP URL pattern matches.
+    """
+    for url in network_requests:
+        for pattern, name in _SCRIPT_URL_RULES:
+            if pattern in url:
+                confidence, dom_type, js_api = _CMP_META.get(name, ("medium", "standard", False))
+                return CMPProfile(
+                    name=name,
+                    confidence="medium",
+                    dom_type=dom_type,
+                    js_api=js_api,
+                )
+    return None

@@ -861,6 +861,7 @@ async def generate_report(
     executive_summary: str,
     report_variant: ReportVariant = "compliance",
     estimated_monthly_ad_spend_usd: int | None = None,
+    firm_name: str | None = None,
 ) -> str:
     """Render AuditResult as a self-contained HTML audit report.
 
@@ -906,6 +907,7 @@ async def generate_report(
         report_variant=report_variant,
         recovery=recovery,
         exposure=exposure,
+        firm_name=firm_name,
     )
     return html
 
@@ -952,6 +954,9 @@ def generate_marp_slides(
     executive_summary: str,
     site_image_url: str | None = None,
     brand: str = "rsc",
+    firm_name: str | None = None,
+    report_variant: str = "compliance",
+    estimated_monthly_ad_spend_usd: int | None = None,
 ) -> str:
     """Generate a Marp-compatible markdown presentation from an audit result.
 
@@ -1626,38 +1631,121 @@ theme: default
 paginate: true
 footer: '{_brand_primary} · Consent Compliance Intelligence'
 style: |
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Raleway:wght@100;200;300;400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
 
   :root {{
-    --a: #3d6abb; --bg: #0d1117; --s: #111927; --b: #1f2937;
-    --m: #4b5563; --t: #f9fafb; --body: #9ca3af; --label: #6b7280;
-    --g: #22c55e; --r: #ef4444; --y: #f59e0b;
+    /* KJB locked palette + Anthropic-style accents */
+    --a:     #3d6abb;          /* KJB blue accent */
+    --bg:    #2b3954;          /* KJB navy background */
+    --s:     #345187;          /* KJB divider / elevated surface */
+    --b:     rgba(232,237,245,0.12); /* hairline divider */
+    --m:     #9aa7c4;          /* muted */
+    --t:     #ffffff;          /* headline white */
+    --body:  #e8edf5;          /* body off-white */
+    --label: #9aa7c4;
+    --g:     #86efac;
+    --r:     #fca5a5;
+    --y:     #fcd34d;
   }}
   section {{
-    background: var(--bg); color: var(--t);
-    font-family: 'Raleway', sans-serif; font-weight: 200;
-    padding: 56px 72px 80px; line-height: 1.5;
+    background: var(--bg); color: var(--body);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 300;
+    padding: 72px 96px 88px; line-height: 1.55;
+    letter-spacing: -0.005em;
     box-sizing: border-box;
   }}
   section > * {{ max-width: 100%; }}
   footer {{
-    font-size: 0.55em; color: #6b7280; padding: 6px 72px 14px;
+    font-size: 0.52em; color: var(--m);
+    padding: 14px 96px 18px;
     background: var(--bg); position: absolute; bottom: 0; left: 0; right: 0;
-    border-top: 1px solid #1f2937;
+    border-top: 1px solid var(--b);
+    letter-spacing: 0.06em;
   }}
-  h1 {{ font-family: 'Outfit'; font-weight: 800; font-size: 3em; color: var(--t); letter-spacing: -0.03em; line-height: 1; margin: 0 0 4px; }}
-  h2 {{ font-family: 'Raleway'; font-weight: 100; font-size: 1.3em; color: #888; margin: 0 0 20px; }}
-  h3 {{ font-family: 'Outfit'; font-weight: 600; font-size: 0.6em; color: var(--m); text-transform: uppercase; letter-spacing: 0.2em; margin: 0 0 4px; }}
-  strong {{ color: var(--a); font-weight: 300; }}
-  p {{ color: var(--body); font-size: 0.85em; line-height: 1.7; margin: 0 0 8px; }}
-  code {{ background: var(--s); color: #93c5fd; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; font-family: 'SF Mono', 'Fira Code', monospace; }}
+  h1 {{
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-weight: 500;
+    font-size: 2.8em;
+    color: var(--t);
+    letter-spacing: -0.022em;
+    line-height: 1.12;
+    margin: 0 0 14px;
+  }}
+  h2 {{
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-weight: 400;
+    font-size: 1.2em;
+    color: var(--body);
+    margin: 0 0 28px;
+    letter-spacing: 0;
+  }}
+  h3 {{
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.62em;
+    color: var(--a);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin: 0 0 10px;
+  }}
+  strong {{ color: var(--t); font-weight: 600; }}
+  p {{ color: var(--body); font-size: 0.86em; line-height: 1.65; margin: 0 0 10px; }}
+  li {{ color: var(--body); font-size: 0.86em; line-height: 1.65; margin-bottom: 6px; }}
+  blockquote {{
+    margin: 22px 0 28px;
+    padding-left: 22px;
+    border-left: 2px solid var(--a);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 0.95em;
+    color: var(--body);
+  }}
+  a {{ color: var(--a); text-decoration: none; border-bottom: 1px solid var(--a); }}
+  code {{
+    background: rgba(255,255,255,0.06); color: #c4d4f5;
+    padding: 1px 6px; border-radius: 3px;
+    font-size: 0.84em; font-family: 'SF Mono', Menlo, monospace;
+  }}
   section.lead {{ display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }}
-  section::after {{ font-family: 'Outfit'; font-size: 0.6em; color: #6b7280; }}
-  footer {{ font-family: 'Outfit'; font-size: 0.55em; color: #6b7280; }}
-  .tag {{ font-family: 'Outfit'; font-weight: 600; font-size: 0.55em; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 10px; border-radius: 4px; display: inline-block; }}
-  details {{ background: var(--s); border: 1px solid var(--b); border-radius: 10px; padding: 14px 18px; margin-top: 8px; }}
-  details summary {{ color: var(--a); font-family: 'Outfit'; font-weight: 600; font-size: 0.8em; cursor: pointer; }}
-  details p {{ color: var(--body); font-size: 0.78em; margin-top: 8px; line-height: 1.6; }}
+  section.cover {{ padding: 110px 96px; }}
+  section.cover h1 {{
+    font-size: 3.6em; border-left: 3px solid var(--a);
+    padding-left: 28px; margin-bottom: 18px;
+  }}
+  section.cover h2 {{
+    font-size: 1.1em; padding-left: 31px;
+    color: var(--body); margin: 0 0 56px;
+  }}
+  section::after {{
+    font-family: 'Inter', sans-serif; font-size: 0.54em;
+    color: var(--m); right: 96px; bottom: 18px; letter-spacing: 0.08em;
+  }}
+  table {{ width: 100%; border-collapse: collapse; font-size: 0.78em; margin: 14px 0 18px; }}
+  th {{
+    text-align: left; padding: 12px 18px 12px 0;
+    color: var(--m); font-weight: 500;
+    font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.12em;
+    border-bottom: 1px solid var(--b);
+  }}
+  td {{
+    padding: 12px 18px 12px 0; color: var(--body);
+    border-bottom: 1px solid var(--b);
+  }}
+  tr:last-child td {{ border-bottom: none; }}
+  .tag {{
+    font-family: 'Inter', sans-serif; font-weight: 600;
+    font-size: 0.52em; letter-spacing: 0.12em;
+    text-transform: uppercase; padding: 3px 9px;
+    border-radius: 3px; display: inline-block;
+  }}
+  details {{
+    background: rgba(255,255,255,0.04); border: 1px solid var(--b);
+    border-radius: 5px; padding: 14px 18px; margin-top: 8px;
+  }}
+  details summary {{ color: var(--a); font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.78em; cursor: pointer; }}
+  details p {{ color: var(--body); font-size: 0.76em; margin-top: 8px; line-height: 1.6; }}
 ---
 
 <style>section:first-of-type > footer {{ display: none !important; }}</style>
