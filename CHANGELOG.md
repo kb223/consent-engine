@@ -3,6 +3,42 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.3] — 2026-05-18 — dynamic enterprise recovery math + slide-6 alignment
+
+### Changed — recovery formula now enterprise-scale by default
+- **Brand-tier auto-estimation.** `_estimate_brand_tier()` scores each audit
+  from observable signals (vendor count, pixel-endpoint diversity, sGTM
+  presence, enterprise CMP) and maps to one of five tiers:
+  Global Enterprise ($10M/mo, 7× ROAS), National Enterprise ($2M/mo, 6×),
+  Mid-Large / Multi-Channel ($500K/mo, 5.5×), Mid-Market ($100K/mo, 5×),
+  SMB ($20K/mo, 4×). Used as the default `monthly_ad_spend` when the
+  buyer hasn't passed `--monthly-ad-spend`. Replaces the prior flat
+  $50K mid-market anchor that produced peanut numbers for national
+  enterprise scans.
+- **Formula now returns recovered conversion value, not "ad spend not wasted."**
+  New math:
+  `monthly_recovered = (ad_spend × ROAS) × 35% US-opt-out-market × signal_gap × 50% recapture`
+  Replaces the prior `ad_spend × 25% CA × signal_gap × 50%` which only ever
+  returned a fraction of a fraction of ad spend. The new output reflects
+  what's actually at stake: ad-attributable revenue lost to the leak, not
+  the slice of spend wasted.
+- **Recovery panel in the HTML report** now renders the tier label, the
+  ROAS multiplier, the derived ad-attributable revenue, and a clearer
+  formula footnote so buyers can sanity-check the math against their own
+  numbers.
+
+### Fixed — slide 6 (Financial Exposure Estimate) alignment + overflow
+- Applied the `.compact` slide class (introduced in v0.3.2) so this slide
+  gets the same tighter 56px padding the GPC slide uses.
+- Unified both rows of cards (statutory rates + scenarios) on identical
+  `flex: 1 1 0; min-width: 0` sizing + matched padding so the columns
+  align and `align-items: stretch` produces equal-height cards.
+- Reduced bottom-row value font (1.5em → 1.05em) and dropped
+  `white-space: nowrap` so the high-traffic range
+  ($42.0M–$420.0M) wraps cleanly inside its card instead of pushing the
+  row past the slide bounds. Top-row font dropped 2.1em → 1.7em to
+  match.
+
 ## [0.3.2] — 2026-05-18 — deck polish + session-continuity methodology note
 
 ### Fixed

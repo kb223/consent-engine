@@ -22,13 +22,62 @@ from consent_engine.tools.tool_07_rag_retriever import WikiPage
 
 ReportVariant = Literal["signal", "compliance"]
 
-# Default assumed monthly ad spend if the buyer doesn't self-report one.
-# Calibrated to the ICP (brands spending $20k+/mo on paid) — mid-market anchor.
-_DEFAULT_AD_SPEND_USD: int = 50_000
-# Average consent opt-out rate in California (CCPA/CPRA markets).
-_CA_OPTOUT_RATE: float = 0.25
+# Share of US population in CCPA-like opt-out-protected states (CA, CO, CT, VA,
+# UT, TX, OR, MT, IA, DE, NJ, NH, TN, NE, MN, MD, RI plus pending — ~35% of US
+# population is in a state with a binding opt-out right as of 2026).
+_US_OPTOUT_MARKET_RATE: float = 0.35
 # Share of consent-denied traffic that can be recovered via proper sGTM + CAPI + ACM.
 _RECOVERY_UPLIFT: float = 0.50
+
+# Brand-tier auto-estimation: scan signals → (label, default monthly ad spend,
+# typical ROAS multiplier). Used when the buyer hasn't self-reported
+# --monthly-ad-spend, so the dollar math defaults to numbers that match the
+# actual scale of the company being audited (not a generic mid-market anchor).
+_BRAND_TIERS: list[tuple[str, int, float]] = [
+    # (tier_label, monthly_ad_spend_usd, roas_multiplier)
+    ("Global Enterprise",       10_000_000, 7.0),  # multi-domain, sGTM, 15+ vendors
+    ("National Enterprise",      2_000_000, 6.0),  # single-domain, sophisticated CMP, 8+ vendors
+    ("Mid-Large / Multi-Channel",  500_000, 5.5),  # OneTrust/Truyo/Cookiebot, 5-7 vendors
+    ("Mid-Market",                 100_000, 5.0),  # established CMP, 3-5 vendors
+    ("SMB",                         20_000, 4.0),  # basic stack, <3 vendors
+]
+
+
+def _estimate_brand_tier(audit_result: AuditResult) -> tuple[str, int, float]:
+    """Return ``(tier_label, monthly_ad_spend_usd, roas_multiplier)`` from the scan.
+
+    Used when the buyer doesn't self-report ``--monthly-ad-spend``. Scores brand
+    sophistication from observable signals (vendor count, sGTM presence,
+    enterprise CMP) and maps to the matching tier in ``_BRAND_TIERS``. Bigger
+    brands get bigger defaults so the recoverable-revenue math doesn't default
+    to peanut numbers when the audit is run against a national enterprise site.
+    """
+    vendor_count = len(audit_result.findings)
+    pixel_count = len(audit_result.pixel_firings)
+    has_ssgtm = audit_result.ssgtm_detected
+    # Enterprise-grade CMPs — running these signals significant procurement +
+    # legal involvement, which correlates with enterprise ad budgets.
+    enterprise_cmp = {
+        "OneTrust", "Truyo", "TrustArc", "Usercentrics", "Sourcepoint",
+        "Didomi", "Cookiebot", "Ketch",
+    }
+    has_enterprise_cmp = audit_result.detected_cmp in enterprise_cmp
+
+    score = 0
+    score += min(vendor_count, 10)         # up to 10 from vendor breadth
+    score += min(pixel_count, 6)           # up to 6 from pixel endpoint diversity
+    score += 6 if has_ssgtm else 0         # sGTM = enterprise infrastructure
+    score += 3 if has_enterprise_cmp else 0
+
+    if score >= 18:
+        return _BRAND_TIERS[0]  # Global Enterprise
+    if score >= 13:
+        return _BRAND_TIERS[1]  # National Enterprise
+    if score >= 8:
+        return _BRAND_TIERS[2]  # Mid-Large
+    if score >= 4:
+        return _BRAND_TIERS[3]  # Mid-Market
+    return _BRAND_TIERS[4]      # SMB
 
 _TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
@@ -101,22 +150,36 @@ def estimate_recoverable_revenue(
     audit_result: AuditResult,
     monthly_ad_spend_usd: int | None = None,
 ) -> dict[str, int | float | str | bool]:
-    """Estimate the monthly ad revenue recoverable by fixing the measurement stack.
+    """Estimate the monthly **conversion value** recoverable by fixing the stack.
 
-    Formula: ``monthly_recoverable = ad_spend * consent_loss_rate * signal_gap_score``
+    Formula:
+        ad_revenue        = monthly_ad_spend × ROAS
+        monthly_recovered = ad_revenue × US_opt_out_rate × signal_gap × recovery_uplift
 
-    ``signal_gap_score`` scales 0.0 → 1.0 based on observable defects in the scan:
-    each confirmed cookie violation, post-denial pixel firing, sGTM presence, and
-    partial/broken Consent Mode state adds to the gap. The gap is capped at 1.0
-    (a fully broken stack losing all consent-denied traffic back to ad AI).
+    The output is *recovered conversion value*, not "ad spend not wasted" — that
+    distinction matters at enterprise scale, where a 4% signal gap on $5M/mo of
+    ad-attributable revenue ($30M+ with ROAS) is six figures, not four.
 
-    Kept deliberately simple so it's defensible in a sales conversation:
-    numbers come from the same AuditResult the rest of the report is built on.
+    Auto-tiers brand size from scan signals when the buyer hasn't self-reported
+    ``--monthly-ad-spend``. Without auto-tiering, the formula defaulted to a
+    mid-market anchor that understates enterprise impact by 50-100×.
+
+    ``signal_gap`` scales 0.0 → 1.0 based on observable defects in the scan:
+    each confirmed cookie violation, post-denial pixel firing, sGTM presence,
+    and partial/broken Consent Mode state adds to the gap. Capped at 1.0.
+
+    Kept defensible in a sales conversation: every input is either user-reported
+    or derived from the same AuditResult the rest of the report is built on.
     """
+    # Brand-tier auto-estimation provides defaults when the buyer hasn't
+    # self-reported spend. ROAS is always derived from the tier — even with a
+    # user-reported spend, we want the recovery framing in revenue terms.
+    tier_label, tier_default_spend, roas = _estimate_brand_tier(audit_result)
+
     spend = (
         monthly_ad_spend_usd
         if monthly_ad_spend_usd and monthly_ad_spend_usd > 0
-        else _DEFAULT_AD_SPEND_USD
+        else tier_default_spend
     )
 
     violations = [f for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED]
@@ -151,7 +214,12 @@ def estimate_recoverable_revenue(
         gap += 0.05  # no CMP detected = no consent plumbing
     gap = min(gap, 1.0)
 
-    monthly_recoverable = int(spend * _CA_OPTOUT_RATE * gap * _RECOVERY_UPLIFT)
+    # Ad-attributable monthly revenue = spend × ROAS (e.g. $2M × 6x = $12M).
+    ad_attributable_revenue = int(spend * roas)
+    # Monthly recovered conversion value at full signal gap on opt-out traffic.
+    monthly_recoverable = int(
+        ad_attributable_revenue * _US_OPTOUT_MARKET_RATE * gap * _RECOVERY_UPLIFT
+    )
     monthly_recoverable_low = int(monthly_recoverable * 0.6)
     monthly_recoverable_high = int(monthly_recoverable * 1.4)
     annual_recoverable = monthly_recoverable * 12
@@ -159,8 +227,11 @@ def estimate_recoverable_revenue(
     return {
         "monthly_ad_spend_usd": spend,
         "ad_spend_user_provided": bool(monthly_ad_spend_usd and monthly_ad_spend_usd > 0),
+        "brand_tier_label": tier_label,
+        "roas_multiplier": roas,
+        "ad_attributable_revenue_usd": ad_attributable_revenue,
         "signal_gap_pct": round(gap * 100, 1),
-        "consent_loss_rate_pct": int(_CA_OPTOUT_RATE * 100),
+        "consent_loss_rate_pct": int(_US_OPTOUT_MARKET_RATE * 100),
         "recovery_uplift_pct": int(_RECOVERY_UPLIFT * 100),
         "monthly_recoverable_usd": monthly_recoverable,
         "monthly_recoverable_low_usd": monthly_recoverable_low,
@@ -1060,14 +1131,17 @@ def generate_marp_slides(
         )
 
     def _metric_card(label: str, value: str, sub: str, accent: str) -> str:
+        # Top-row card. Sized to align visually with the bottom-row scenario
+        # cards on the financial-exposure slide — matching padding + flex base
+        # so the two rows render at equal heights regardless of value width.
         return (
-            f'<div style="flex:1;background:#ffffff;border-radius:10px;padding:20px;'
-            f'border-top:3px solid {accent};">'
-            f'<div style="color:#4b5563;font-size:0.58em;text-transform:uppercase;'
-            f"letter-spacing:0.15em;margin-bottom:6px;font-family:'Inter';font-weight:600;\">{label}</div>"
-            f"<div style=\"font-family:'Inter';font-weight:800;font-size:2.1em;color:{accent};"
-            f'line-height:1;margin-bottom:4px;">{value}</div>'
-            f'<div style="color:#6b7280;font-size:0.65em;font-weight:200;">{sub}</div>'
+            f'<div style="flex:1 1 0;min-width:0;background:#ffffff;border-radius:10px;'
+            f'padding:12px 14px;border-top:3px solid {accent};">'
+            f'<div style="color:#4b5563;font-size:0.55em;text-transform:uppercase;'
+            f"letter-spacing:0.14em;margin-bottom:4px;font-family:'Inter';font-weight:600;\">{label}</div>"
+            f"<div style=\"font-family:'Inter';font-weight:800;font-size:1.7em;color:{accent};"
+            f'line-height:1.1;margin-bottom:4px;letter-spacing:-0.01em;">{value}</div>'
+            f'<div style="color:#6b7280;font-size:0.55em;font-weight:300;line-height:1.45;">{sub}</div>'
             f"</div>"
         )
 
@@ -1319,8 +1393,8 @@ def generate_marp_slides(
     if violations or pixel_violations:
         v_count = len(violations)
         p_count = len(pixel_violations)
-        # Statutory rates row
-        _exposure_html = '<div style="display:flex;gap:8px;margin-top:14px;">'
+        # Statutory rates row — top of slide
+        _exposure_html = '<div style="display:flex;gap:8px;margin-top:14px;align-items:stretch;">'
         _exposure_html += _metric_card(
             "CCPA / CPRA", "$7,500", "per intentional violation · per consumer", "#3d6abb"
         )
@@ -1356,20 +1430,22 @@ def generate_marp_slides(
                 return f"${n/1_000_000:.1f}M"
             return f"${n/1_000:.0f}K"
 
-        # Scenario cards — compact variant (smaller value font keeps the range on one line
-        # so the benchmarks footnote doesn't overflow the slide)
-        _exposure_html += '<div style="display:flex;gap:8px;margin-top:8px;">'
+        # Scenario cards — bottom row. Equal width via flex:1 1 0, min-width:0
+        # so wide ranges can shrink inside their column instead of pushing the
+        # row past the slide bounds. Smaller value font (1.05em) matches the
+        # top-row card hierarchy and stays on one line at any tier.
+        _exposure_html += '<div style="display:flex;gap:8px;margin-top:8px;align-items:stretch;">'
         for label, optouts, statutory, s_low, s_high in _scenarios:
             _exposure_html += (
-                f'<div style="flex:1;background:#ffffff;border-radius:10px;padding:12px 16px;'
-                f'border-top:3px solid #ef4444;">'
-                f'<div style="color:#4b5563;font-size:0.58em;text-transform:uppercase;'
-                f"letter-spacing:0.15em;margin-bottom:4px;font-family:'Inter';font-weight:600;\">{label}</div>"
-                f"<div style=\"font-family:'Inter';font-weight:800;font-size:1.5em;color:#ef4444;"
-                f'line-height:1.1;margin-bottom:3px;white-space:nowrap;">'
+                f'<div style="flex:1 1 0;min-width:0;background:#ffffff;border-radius:10px;'
+                f'padding:12px 14px;border-top:3px solid #ef4444;">'
+                f'<div style="color:#4b5563;font-size:0.55em;text-transform:uppercase;'
+                f"letter-spacing:0.14em;margin-bottom:4px;font-family:'Inter';font-weight:600;\">{label}</div>"
+                f"<div style=\"font-family:'Inter';font-weight:800;font-size:1.05em;color:#ef4444;"
+                f'line-height:1.15;margin-bottom:4px;letter-spacing:-0.01em;">'
                 f"{_fmt(s_low)}–{_fmt(s_high)}</div>"
-                f'<div style="color:#6b7280;font-size:0.6em;font-weight:200;line-height:1.4;">'
-                f"{optouts:,} CA opt-outs/mo · statutory max {_fmt(statutory)}/yr</div>"
+                f'<div style="color:#6b7280;font-size:0.55em;font-weight:300;line-height:1.45;">'
+                f"{optouts:,} CA opt-outs/mo<br>max {_fmt(statutory)}/yr</div>"
                 f"</div>"
             )
         _exposure_html += "</div>"
@@ -1809,7 +1885,7 @@ style: |
 
 {"---" + chr(10) + chr(10) + _pixel_marp_section if _pixel_marp_section else ""}
 
-{"---" + chr(10) + chr(10) + "### RISK QUANTIFICATION" + chr(10) + chr(10) + "# Financial Exposure Estimate" + chr(10) + chr(10) + _exposure_html if (violations or pixel_violations) else ""}
+{"---" + chr(10) + chr(10) + "<!-- _class: compact -->" + chr(10) + chr(10) + "### RISK QUANTIFICATION" + chr(10) + chr(10) + "# Financial Exposure Estimate" + chr(10) + chr(10) + _exposure_html if (violations or pixel_violations) else ""}
 
 {_gpc_slide_md}
 

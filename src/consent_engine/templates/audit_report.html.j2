@@ -692,8 +692,8 @@
   <!-- REVENUE RECOVERY ESTIMATE (signal variant only) -->
   <div class="recovery-panel">
     <div class="recovery-head">
-      <span class="recovery-tag">Recoverable Ad Revenue</span>
-      <h3 class="recovery-title">Estimated scale unlock from fixing this stack</h3>
+      <span class="recovery-tag">Recoverable Conversion Value</span>
+      <h3 class="recovery-title">Monthly conversion value recoverable by fixing this stack</h3>
     </div>
     <div class="recovery-figure">
       <div class="recovery-range">
@@ -701,19 +701,24 @@
         <span class="recovery-unit">/ month</span>
       </div>
       <div class="recovery-annual">
-        ≈ ${{ "{:,}".format(recovery.annual_recoverable_usd) }} / year at current spend
+        ≈ ${{ "{:,}".format(recovery.annual_recoverable_usd) }} / year &nbsp;·&nbsp; brand tier: <strong>{{ recovery.brand_tier_label }}</strong>
       </div>
     </div>
     <div class="recovery-grid">
       <div class="recovery-cell">
         <div class="recovery-cell-label">Monthly ad spend</div>
         <div class="recovery-cell-value">${{ "{:,}".format(recovery.monthly_ad_spend_usd) }}</div>
-        <div class="recovery-cell-sub">{{ 'self-reported' if recovery.ad_spend_user_provided else 'ICP default — override with real spend' }}</div>
+        <div class="recovery-cell-sub">{{ 'self-reported' if recovery.ad_spend_user_provided else 'auto-estimated from brand tier — override with --monthly-ad-spend' }}</div>
+      </div>
+      <div class="recovery-cell">
+        <div class="recovery-cell-label">Ad-attributable revenue</div>
+        <div class="recovery-cell-value">${{ "{:,}".format(recovery.ad_attributable_revenue_usd) }}</div>
+        <div class="recovery-cell-sub">monthly, at {{ recovery.roas_multiplier }}× ROAS</div>
       </div>
       <div class="recovery-cell">
         <div class="recovery-cell-label">Signal gap</div>
         <div class="recovery-cell-value">{{ recovery.signal_gap_pct }}%</div>
-        <div class="recovery-cell-sub">of consent-denied traffic leaking</div>
+        <div class="recovery-cell-sub">of opt-out traffic leaking</div>
       </div>
       <div class="recovery-cell">
         <div class="recovery-cell-label">Recovery uplift</div>
@@ -722,9 +727,11 @@
       </div>
     </div>
     <p class="recovery-footnote">
-      Formula: monthly ad spend × {{ recovery.consent_loss_rate_pct }}% CA consent-denial rate × {{ recovery.signal_gap_pct }}% signal gap × {{ recovery.recovery_uplift_pct }}% recapture.
-      Re-run with a self-reported ad spend for a sharper estimate. Recovery is realized by routing post-consent signal
-      through server-side GTM → Meta CAPI, Google Enhanced Conversions, and TikTok Events API.
+      Formula: monthly ad spend × {{ recovery.roas_multiplier }}× ROAS × {{ recovery.consent_loss_rate_pct }}% US opt-out market × {{ recovery.signal_gap_pct }}% signal gap × {{ recovery.recovery_uplift_pct }}% recapture =
+      <strong>${{ "{:,}".format(recovery.monthly_recoverable_usd) }}/month recovered conversion value</strong>.
+      Brand tier ({{ recovery.brand_tier_label }}) is auto-derived from scan signals — vendor breadth, sGTM presence, CMP sophistication — so the math defaults to the
+      scale of the audited site rather than a generic mid-market anchor. Re-run with <code>--monthly-ad-spend</code> for a sharper estimate.
+      Recovery is realized by routing post-consent signal through server-side GTM → Meta CAPI, Google Enhanced Conversions, and TikTok Events API.
     </p>
   </div>
   {% endif %}
