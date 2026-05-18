@@ -26,6 +26,27 @@ class CookieSnapshot(BaseModel):
     expires: float | None = None  # Unix timestamp, None = session cookie
 
 
+class NetworkRequest(BaseModel):
+    """Structured per-request record for forensic evidence.jsonl output.
+
+    Captured for every network request observed during a scan. Goes into
+    ``ScanResult.request_log`` and into the ``evidence.jsonl`` bundle on
+    disk where compare-audits, side-by-side, and any plaintiff-style
+    "what fired and when" investigations can read it without re-deriving
+    from a flat URL list.
+    """
+
+    url: str
+    method: str = "GET"
+    timestamp: datetime
+    status_code: int | None = None
+    request_type: str = "other"
+    # Playwright resource type: "document" / "stylesheet" / "image" / "media" /
+    # "font" / "script" / "texttrack" / "xhr" / "fetch" / "eventsource" /
+    # "websocket" / "manifest" / "other"
+    initiator: str | None = None  # the page/script URL that triggered this request
+
+
 class ScanResult(BaseModel):
     """Output of a single headless browser scan (Tool 3)."""
 
@@ -35,6 +56,12 @@ class ScanResult(BaseModel):
     timestamp: datetime
     cookies: list[CookieSnapshot] = []
     network_requests: list[str] = []  # All request URLs observed during scan
+    request_log: list[NetworkRequest] = []
+    # Structured per-request log — same set of requests as ``network_requests``
+    # but with timestamp, method, status code, resource type, and initiator.
+    # Powers the rich ``evidence.jsonl`` format. Stays parallel to
+    # ``network_requests`` rather than replacing it, so existing detectors
+    # (Tool 6 / Tool 6b) keep reading the flat URL list unchanged.
     gcs_value: GCSValue | None = None  # First GCS value found in network requests
     gcd_raw: str | None = None  # First GCD (V2 consent detail) value found
     gtm_container_id: str | None = None  # e.g. "GTM-XXXXXX"

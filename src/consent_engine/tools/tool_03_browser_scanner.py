@@ -23,8 +23,50 @@ from playwright.async_api import Page, ProxySettings, Request, Route, async_play
 
 from consent_engine.models.audit_request import ConsentState
 from consent_engine.models.audit_result import GCSValue, GTMExtractionMethod, MethodologyFlag
-from consent_engine.models.scan_result import CookieSnapshot, ScanResult
+from consent_engine.models.scan_result import CookieSnapshot, NetworkRequest, ScanResult
 from consent_engine.tools.cmp_clicker import _banner_present, attempt_cmp_decline
+
+
+def _capture_request(
+    req: Request,
+    network_requests: list[str],
+    request_log: list[NetworkRequest],
+) -> None:
+    """Append both a URL (backward-compat) and a structured NetworkRequest row.
+
+    The structured row carries timestamp, method, resource_type, and initiator
+    so the resulting ``evidence.jsonl`` has enough detail for compare-audits,
+    side-by-side diffing, and a plaintiff-style "when did each tag fire" view.
+    Status code is filled in by ``_capture_response_status`` once the response
+    lands.
+    """
+    network_requests.append(req.url)
+    with contextlib.suppress(Exception):
+        initiator: str | None = None
+        with contextlib.suppress(Exception):
+            initiator = req.frame.url if req.frame else None
+        request_log.append(
+            NetworkRequest(
+                url=req.url,
+                method=req.method,
+                timestamp=datetime.now(UTC),
+                request_type=(req.resource_type or "other"),
+                initiator=initiator,
+            )
+        )
+
+
+def _capture_response_status(
+    request_log: list[NetworkRequest],
+    url: str,
+    status: int,
+) -> None:
+    """Fill in ``status_code`` for the most recent matching log entry."""
+    with contextlib.suppress(Exception):
+        for entry in reversed(request_log):
+            if entry.url == url and entry.status_code is None:
+                entry.status_code = status
+                break
 
 # ---------------------------------------------------------------------------
 # Pure helper functions (no Playwright)
@@ -505,7 +547,9 @@ async def _scan_s1(url: str, proxy_url: str | None = None) -> ScanResult:
         await _apply_geoip_spoofing(page)
 
         network_requests: list[str] = []
-        page.on("request", lambda req: network_requests.append(req.url))
+        request_log: list[NetworkRequest] = []
+        page.on("request", lambda req: _capture_request(req, network_requests, request_log))
+        page.on("response", lambda r: _capture_response_status(request_log, r.url, r.status))
 
         _js_responses: list[Any] = []
         page.on(
@@ -596,6 +640,7 @@ async def _scan_s1(url: str, proxy_url: str | None = None) -> ScanResult:
         timestamp=datetime.now(tz=UTC),
         cookies=cookies,
         network_requests=network_requests,
+        request_log=request_log,
         gcs_value=gcs_value,
         gcd_raw=gcd_raw,
         gtm_container_id=gtm_id,
@@ -811,7 +856,9 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
         await _apply_geoip_spoofing(page)
 
         network_requests: list[str] = []
-        page.on("request", lambda req: network_requests.append(req.url))
+        request_log: list[NetworkRequest] = []
+        page.on("request", lambda req: _capture_request(req, network_requests, request_log))
+        page.on("response", lambda r: _capture_response_status(request_log, r.url, r.status))
 
         _js_responses: list[Any] = []
         _collect_responses: list[Any] = []  # first-party /g/collect (Stape custom loader)
@@ -1199,6 +1246,7 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
         timestamp=datetime.now(tz=UTC),
         cookies=cookies,
         network_requests=network_requests,
+        request_log=request_log,
         gcs_value=gcs_value,
         gcd_raw=gcd_raw,
         gtm_container_id=gtm_id,
@@ -1277,7 +1325,9 @@ async def _scan_gpc(url: str, proxy_url: str | None = None) -> ScanResult:
         )
 
         network_requests: list[str] = []
-        page.on("request", lambda req: network_requests.append(req.url))
+        request_log: list[NetworkRequest] = []
+        page.on("request", lambda req: _capture_request(req, network_requests, request_log))
+        page.on("response", lambda r: _capture_response_status(request_log, r.url, r.status))
 
         _js_responses: list[Any] = []
         page.on(
@@ -1366,6 +1416,7 @@ async def _scan_gpc(url: str, proxy_url: str | None = None) -> ScanResult:
         timestamp=datetime.now(tz=UTC),
         cookies=cookies,
         network_requests=network_requests,
+        request_log=request_log,
         gcs_value=gcs_value,
         gcd_raw=gcd_raw,
         gtm_container_id=gtm_id,
@@ -1481,7 +1532,9 @@ async def scan_page_fast(
         )
 
         network_requests: list[str] = []
-        page.on("request", lambda req: network_requests.append(req.url))
+        request_log: list[NetworkRequest] = []
+        page.on("request", lambda req: _capture_request(req, network_requests, request_log))
+        page.on("response", lambda r: _capture_response_status(request_log, r.url, r.status))
 
         # Load page — use domcontentloaded (fast) then wait for trackers to fire
         with contextlib.suppress(Exception):
@@ -1609,6 +1662,7 @@ async def scan_page_fast(
         timestamp=datetime.now(tz=UTC),
         cookies=cookies,
         network_requests=network_requests,
+        request_log=request_log,
         gcs_value=gcs_value,
         gcd_raw=gcd_raw,
         gtm_container_id=gtm_id,
@@ -1663,6 +1717,7 @@ async def _scan_page_stealthy(url: str, opted_out: bool, gpc: bool) -> ScanResul
         consent_state = ConsentState.OPTED_IN
 
     network_requests: list[str] = []
+    request_log: list[NetworkRequest] = []
     captured_cookies: list[dict[str, Any]] = []
     captured_html: str = ""
     captured_cmp_name: str | None = None
@@ -1671,7 +1726,8 @@ async def _scan_page_stealthy(url: str, opted_out: bool, gpc: bool) -> ScanResul
     async def _page_setup(page: Any) -> Any:
         """Runs before Scrapling navigates — install the request listener here
         so we capture requests made during the initial page load."""
-        page.on("request", lambda req: network_requests.append(req.url))
+        page.on("request", lambda req: _capture_request(req, network_requests, request_log))
+        page.on("response", lambda r: _capture_response_status(request_log, r.url, r.status))
         return page
 
     async def _page_action(page: Any) -> Any:
@@ -1812,6 +1868,7 @@ async def _scan_page_stealthy(url: str, opted_out: bool, gpc: bool) -> ScanResul
         timestamp=datetime.now(tz=UTC),
         cookies=cookies,
         network_requests=network_requests,
+        request_log=request_log,
         gcs_value=gcs_value,
         gcd_raw=gcd_raw,
         gtm_container_id=gtm_id,
@@ -1881,7 +1938,9 @@ async def check_gpc_fast(url: str, baseline_pixel_count: int) -> bool:
         )
 
         network_requests: list[str] = []
-        page.on("request", lambda req: network_requests.append(req.url))
+        request_log: list[NetworkRequest] = []
+        page.on("request", lambda req: _capture_request(req, network_requests, request_log))
+        page.on("response", lambda r: _capture_response_status(request_log, r.url, r.status))
 
         with contextlib.suppress(Exception):
             await page.goto(url, wait_until="domcontentloaded", timeout=15_000)

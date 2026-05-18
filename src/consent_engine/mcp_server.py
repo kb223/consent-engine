@@ -115,8 +115,12 @@ async def _audit_url(url: str) -> list[TextContent]:
         json.dumps(bundle.audit_result.model_dump(mode="json"), indent=2, default=str)
     )
     with (audit_dir / "evidence.jsonl").open("w") as f:
-        for url in bundle.scan_result.network_requests:
-            f.write(json.dumps({"url": url}) + "\n")
+        if bundle.scan_result.request_log:
+            for entry in bundle.scan_result.request_log:
+                f.write(json.dumps(entry.model_dump(mode="json"), default=str) + "\n")
+        else:
+            for url in bundle.scan_result.network_requests:
+                f.write(json.dumps({"url": url}) + "\n")
     (audit_dir / "report.html").write_text(bundle.report_html)
     (audit_dir / "deck.marp.md").write_text(bundle.deck_marp_md)
     return [TextContent(

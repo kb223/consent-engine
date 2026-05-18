@@ -3,6 +3,44 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] — 2026-05-18 — structured evidence.jsonl (Tier-2 foundation)
+
+The first Tier-2 release. Lays the data foundation that side-by-side,
+compare-audits, multi-page, and banner-click all need. Side-by-side and
+compare-audits will land in v0.4.x as separate releases — this is just
+the structured-evidence plumbing.
+
+### Added
+- **New `NetworkRequest` Pydantic model** in `models/scan_result.py`.
+  Captures per-request `url`, `method`, `timestamp`, `status_code`,
+  `request_type` (script / image / xhr / fetch / document / etc — from
+  Playwright's `resource_type`), and `initiator` (the frame URL that
+  triggered the request).
+- **`ScanResult.request_log: list[NetworkRequest]`** runs parallel to the
+  existing `network_requests: list[str]` so existing detectors (Tool 6
+  sSGTM, Tool 6b pixel detection) keep reading the flat URL list
+  unchanged while the rich log is available for downstream consumers.
+- **Two module-level helpers** in `tool_03_browser_scanner.py`
+  (`_capture_request`, `_capture_response_status`) wire Playwright
+  `page.on("request")` and `page.on("response")` to populate both lists
+  atomically. Status code is filled in once the response lands. All six
+  scan paths (S1, S3, S3 banner-click, GPC, JS-consent-mode, and the
+  Scrapling/Camoufox stealthy fallback) now capture both shapes.
+- **Evidence.jsonl writers** in `cli.py`, `api.py`, and `mcp_server.py`
+  now emit one structured row per request when `request_log` is
+  populated — `{timestamp, method, url, status_code, request_type,
+  initiator}` — and fall back to the prior `{"url": "..."}` flat
+  format only when the log is empty (so audits from old wheels still
+  serialize cleanly).
+
+### Why this matters
+The flat URL log let v0.1–v0.3 power vendor detection and pixel
+endpoint analysis, but it lost everything else: when each tag fired,
+which page triggered it, whether it succeeded. Side-by-side opt-in vs
+opt-out (v0.4.3) needs the timestamp + status to align two runs.
+Compare-audits (v0.4.4) needs all of it to diff remediation progress.
+This release makes that downstream work tractable.
+
 ## [0.3.4] — 2026-05-18 — fix ci.yml ruff failures from v0.3.0+
 
 ### Fixed
