@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "consent-engine"
-version = "0.1.2"
+version = "0.1.3"
 description = "Forensic consent-compliance audit engine. Deterministic by design."
 readme = "README.md"
 license = { text = "MIT" }
@@ -74,6 +74,21 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/consent_engine"]
+
+# Bundle non-Python resources (vendor library, wiki, Jinja2 templates) inside
+# the wheel so a `pip install` / `uvx` deployment is fully self-contained.
+[tool.hatch.build.targets.wheel.shared-data]
+"src/consent_engine/data" = "consent_engine/data"
+"src/consent_engine/templates" = "consent_engine/templates"
+
+[tool.hatch.build]
+include = [
+  "src/consent_engine/**/*.py",
+  "src/consent_engine/data/**/*.json",
+  "src/consent_engine/data/**/*.csv",
+  "src/consent_engine/data/**/*.md",
+  "src/consent_engine/templates/**/*.j2",
+]
 
 [tool.ruff]
 line-length = 100

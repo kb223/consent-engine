@@ -3,6 +3,32 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.3] — 2026-05-17 — bundle data files into the wheel
+
+### Fixed
+- `consent-engine audit <url>` crashed with `FileNotFoundError: Vendor
+  library not found at <venv>/lib/python3.X/data/vendor_library/vendors.json`
+  because the vendor library JSON, the markdown wiki, and the Jinja2 audit
+  templates lived at the repo root and never made it into the wheel.
+- Same root cause would have hit Tool 7 (wiki retrieval) and Tool 8
+  (report generation) on the next audit call.
+
+### Changed
+- Relocated `data/` and `templates/` into `src/consent_engine/` so they're
+  co-located with the Python package. Single source of truth.
+- Updated `tool_05_vendor_library`, `tool_07_rag_retriever`, and
+  `tool_08_report_generator` path computations to use the new in-package
+  layout (`Path(__file__).parent.parent / "data" / ...`).
+- Added explicit `[tool.hatch.build]` include rules so `.json`, `.csv`,
+  `.md`, and `.j2` files get bundled in the wheel.
+
+### Verified
+- Built the wheel locally and confirmed all 6 critical resources
+  (vendors.json, open-cookie-database.csv, wiki/index.md, lawsuit-surge.md,
+  audit_report.html.j2, audit_deck.marp.md.j2) ship inside the wheel at
+  paths that match the production code's `Path(__file__).parent.parent`
+  resolution. Avoids another trial-and-error round.
+
 ## [0.1.2] — 2026-05-17 — Playwright auto-install
 
 ### Fixed
