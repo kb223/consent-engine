@@ -11,11 +11,11 @@ from typing import Any, TypedDict
 from consent_engine.models.vendor import CookieCategory, LegalExposure, Vendor
 
 _VENDOR_DATA_PATH = (
-    Path(__file__).parent.parent.parent.parent / "data" / "vendor_library" / "vendors.json"
+    Path(__file__).parent.parent / "data" / "vendor_library" / "vendors.json"
 )
 
 _OCD_DATA_PATH = (
-    Path(__file__).parent.parent.parent.parent
+    Path(__file__).parent.parent
     / "data"
     / "vendor_library"
     / "open-cookie-database.csv"

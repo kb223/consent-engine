@@ -15,7 +15,7 @@ from consent_engine.models.audit_result import AuditResult, MethodologyFlag, Vio
 
 _log = logging.getLogger(__name__)
 
-_WIKI_ROOT = Path(__file__).parent.parent.parent.parent / "data" / "wiki"
+_WIKI_ROOT = Path(__file__).parent.parent / "data" / "wiki"
 
 # ---------------------------------------------------------------------------
 # Audit finding → wiki page mapping

@@ -30,7 +30,7 @@ _CA_OPTOUT_RATE: float = 0.25
 # Share of consent-denied traffic that can be recovered via proper sGTM + CAPI + ACM.
 _RECOVERY_UPLIFT: float = 0.50
 
-_TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates"
+_TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
 # KJB logo — read from bundled PNG so it renders in Playwright file:// PDF context
 _RSC_LOGO_PATH = Path(__file__).parent.parent / "rsc-logo.png"
@@ -174,7 +174,7 @@ def estimate_recoverable_revenue(
 _PIXEL_VENDORS_LOWER: frozenset[str] = frozenset({"meta", "facebook", "tiktok", "linkedin"})
 
 _WIKI_ENFORCEMENT_PATH = (
-    Path(__file__).parent.parent.parent.parent
+    Path(__file__).parent.parent
     / "data"
     / "wiki"
     / "enforcement"

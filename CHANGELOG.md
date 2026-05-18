@@ -3,6 +3,25 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.4] — 2026-05-18 — actually fix the data paths
+
+### Fixed
+- v0.1.3 shipped with the path-fix edits silently reverted. The wheel
+  bundled the data files correctly but `tool_05_vendor_library`,
+  `tool_07_rag_retriever`, and `tool_08_report_generator` still computed
+  `Path(__file__).parent.parent.parent.parent / "data" / ...` which
+  resolved to nonexistent locations in the installed venv.
+- Caught a fifth stale path reference at `tool_08:_WIKI_ENFORCEMENT_PATH`
+  that the prior fix missed.
+
+### Verified
+- Built wheel locally, extracted it, walked every Path computation from
+  the installed code, and confirmed all 5 resources (vendors.json,
+  open-cookie-database.csv, wiki tree, templates dir, enforcement md
+  file) resolve to real files inside the wheel. Source-level grep
+  confirms zero remaining `.parent.parent.parent.parent` references in
+  `src/`.
+
 ## [0.1.3] — 2026-05-17 — bundle data files into the wheel
 
 ### Fixed
