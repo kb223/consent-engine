@@ -3,6 +3,70 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.3] — 2026-05-19 — vendor library expansion (36 → 77) + E2E smoke
+
+Pre-launch polish before the Thursday LinkedIn announcement.
+
+### Added — vendor library expanded from 36 to 77
+
+Vendor coverage in `src/consent_engine/data/vendor_library/vendors.json`
+went from 36 entries to 77. The expansion prioritized **lawsuit-exposed
+categories** the v0.5.2 library was missing or thin on.
+
+#### Session replay + behavior recording (heaviest CIPA exposure)
+Recently the foundation of California / state-wiretap class actions
+(Javier v. Pomerantz, Williams v. DDR Media, Calvert v. Red Robin, etc.).
+- **Microsoft Clarity**, **Hotjar**, **FullStory**, **Mouseflow**,
+  **Smartlook**, **Quantum Metric**, **Glassbox**, **Lucky Orange**,
+  **Inspectlet**, **Crazy Egg**, **Heap**, **Pendo**
+
+#### Chat / conversational widgets (CIPA exposure)
+Transcript capture without consent banner = wiretap-claim surface.
+- **Drift**, **Intercom**, **LiveChat**, **Zendesk**, **Tawk.to**
+
+#### Adobe ecosystem
+- **Adobe Analytics** (s_cc / s_sq / s_vi / AMCV_* family — extremely
+  common on enterprise sites), **Adobe Target** (mbox), **Adobe Audience
+  Manager** (demdex DMP — high CCPA/GDPR exposure)
+
+#### Marketing automation + CRM
+- **Marketo** (Adobe Engage), **HubSpot**, **Salesforce Pardot**,
+  **ActiveCampaign**, **Mailchimp**, **Klaviyo** (added in v0.5.2 already
+  — kept here for catalog completeness)
+
+#### Customer data platforms + tag management
+- **Segment**, **mParticle**, **Snowplow**, **Tealium iQ** (new
+  `functional` category — the TMS itself isn't tracking, but
+  misconfigured tag management can defeat the CMP)
+
+#### Ad networks + identity resolution
+- **Bing Ads / Microsoft UET**, **Quora**, **AppLovin**, **RTB House**,
+  **Yandex Metrika**, **Baidu Analytics**, **ID5** (cookieless ID),
+  **LiveIntent**
+
+#### Cookieless analytics (false-positive guards)
+Flagged so the scanner doesn't false-positive these as tracking cookies:
+- **Cloudflare Web Analytics**, **Plausible**, **Fathom Analytics**
+
+Every new entry includes the same schema as the existing library
+(`domains`, `cookie_names`, `category`, `legal_exposure`,
+`onetrust_category`, `notes`) with a litigation-context note where
+applicable.
+
+### Verified — E2E smoke run on five sites (v0.5.2 wheel)
+
+| Site | Vendors | Confirmed | GPC | CMP | Jurisdiction |
+|---|---|---|---|---|---|
+| `https://example.com` | 1 | 0 | inconclusive | none | US |
+| `https://apple.com` | 3 | 1 | inconclusive | none | US |
+| `https://microsoft.com` | 6 | 2 | **respected** (2 → 0) | OneTrust | US |
+| `https://sap.com` | 2 | 0 | inconclusive | none | US |
+| `https://tesco.com` | 3 | 0 | ignored (1 → 1) | OneTrust | EU |
+
+Microsoft's GPC-respected case is the first sample in the corpus where
+the scanner can definitively show that GPC works when the site honors
+it — useful as a positive control.
+
 ## [0.5.2] — 2026-05-18 — public-repo cleanup pass + API/MCP/skill tests
 
 Pre-launch hygiene before LinkedIn announcement. No runtime behavior change.

@@ -322,5 +322,374 @@
     "legal_exposure": "medium",
     "onetrust_category": "C0002",
     "notes": "Ratings and reviews platform."
+  },
+  {
+    "name": "Microsoft Clarity",
+    "domains": ["clarity.ms", "c.clarity.ms"],
+    "cookie_names": ["_clck", "_clsk", "CLID", "ANONCHK", "MR", "MUID", "SM"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Microsoft session-replay + heatmap product. Session-replay tools are central to active CIPA / state-wiretap class actions (Javier v. Pomerantz line). Records mouse movement, clicks, scrolls, form interaction."
+  },
+  {
+    "name": "Hotjar",
+    "domains": ["hotjar.com", "static.hotjar.com", "script.hotjar.com"],
+    "cookie_names": ["_hjSessionUser_", "_hjSession_", "_hjid", "_hjFirstSeen", "_hjIncludedInSessionSample", "_hjAbsoluteSessionInProgress", "_hjTLDTest"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Session replay + heatmaps + form analytics. Named in multiple CIPA filings. Records keystrokes by default."
+  },
+  {
+    "name": "FullStory",
+    "domains": ["fullstory.com", "edge.fullstory.com", "rs.fullstory.com"],
+    "cookie_names": ["fs_uid", "fs_session"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Session-replay platform. Heavy CIPA exposure — Williams v. DDR Media named FullStory specifically."
+  },
+  {
+    "name": "Mouseflow",
+    "domains": ["mouseflow.com", "cdn.mouseflow.com"],
+    "cookie_names": ["mf_user", "_mf_session"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Session replay. CIPA exposure equivalent to Hotjar/FullStory."
+  },
+  {
+    "name": "Smartlook",
+    "domains": ["smartlook.com", "cdn.smartlook.com"],
+    "cookie_names": ["SL_C_*", "SL_GWPT_Show_Hide_tmp", "SL_wptGlobTipTmp"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Session replay. Named in 2025 California class-action filings."
+  },
+  {
+    "name": "Quantum Metric",
+    "domains": ["quantummetric.com", "cdn.quantummetric.com"],
+    "cookie_names": ["QuantumMetricUserID", "QuantumMetricSessionID"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Enterprise session-replay platform. Used heavily by financial services + retail."
+  },
+  {
+    "name": "Glassbox",
+    "domains": ["glassbox.com", "secure.glassboxdigital.com"],
+    "cookie_names": ["_cls_v", "_cls_s"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Session replay + digital experience monitoring. Specifically cited in Calvert v. Red Robin (Sept 2024)."
+  },
+  {
+    "name": "Heap",
+    "domains": ["heap.io", "heapanalytics.com", "cdn.heapanalytics.com"],
+    "cookie_names": ["_hp2_id.*", "_hp2_ses_props.*", "_hp2_props.*", "_hp2_ts.*"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Auto-capture product analytics — instruments every click/form/page without explicit tagging. Privacy concern: captures more than the implementer realizes."
+  },
+  {
+    "name": "Pendo",
+    "domains": ["pendo.io", "data.pendo.io", "cdn.pendo.io"],
+    "cookie_names": ["_pendo_visitorId.*", "_pendo_meta.*", "_pendo_accountId.*"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Product analytics + in-app guides. Tracks behavior + identifies users via embedded SDK."
+  },
+  {
+    "name": "Crazy Egg",
+    "domains": ["crazyegg.com", "script.crazyegg.com"],
+    "cookie_names": ["_ceg.s", "_ceg.u", "is_returning"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Heatmaps + session recording."
+  },
+  {
+    "name": "Lucky Orange",
+    "domains": ["luckyorange.com", "settings.luckyorange.net"],
+    "cookie_names": ["__lo_cid", "__lotr", "__lo_uid"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Session replay + heatmaps. Named in California CIPA filings."
+  },
+  {
+    "name": "Inspectlet",
+    "domains": ["inspectlet.com", "cdn.inspectlet.com"],
+    "cookie_names": ["__insp_uid", "__insp_slim", "__insp_sid", "__insp_targlpu", "__insp_targlpt", "__insp_nv", "__insp_pad", "__insp_norec_sess"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Session-replay tool — first defendant in Yale v. Clicktale-line CIPA class actions."
+  },
+  {
+    "name": "Drift",
+    "domains": ["drift.com", "js.driftt.com", "api.drift.com"],
+    "cookie_names": ["driftt_aid", "drift_eid", "drift_eid_signature", "drift_campaign_refresh"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0003",
+    "notes": "Conversational marketing / chat widget. CIPA exposure when chat logs are captured without consent banner."
+  },
+  {
+    "name": "Intercom",
+    "domains": ["intercom.com", "intercom.io", "widget.intercom.io"],
+    "cookie_names": ["intercom-id-*", "intercom-session-*", "intercom-device-id-*"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0003",
+    "notes": "Chat widget + product analytics. Captures conversation transcripts + user identifiers."
+  },
+  {
+    "name": "LiveChat",
+    "domains": ["livechatinc.com", "cdn.livechatinc.com"],
+    "cookie_names": ["__lc_cid", "__lc_cst", "__lc_vv", "__lc_visitor_id"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0003",
+    "notes": "Chat widget. CIPA exposure when chat content is logged without consent."
+  },
+  {
+    "name": "Zendesk",
+    "domains": ["zendesk.com", "zopim.com", "static.zdassets.com"],
+    "cookie_names": ["__zlcmid", "_zendesk_cookie", "_zendesk_authenticated", "_zendesk_session"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0003",
+    "notes": "Zendesk Chat (formerly Zopim) + support widgets. Same CIPA exposure as other chat tools."
+  },
+  {
+    "name": "Tawk.to",
+    "domains": ["tawk.to", "embed.tawk.to"],
+    "cookie_names": ["TawkConnectionTime", "twk_uuid_*"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0003",
+    "notes": "Free chat widget — extremely common on SMB and lead-gen sites."
+  },
+  {
+    "name": "Adobe Analytics",
+    "domains": ["sc.omtrdc.net", "demdex.net", "adobedtm.com", "everesttech.net"],
+    "cookie_names": ["s_cc", "s_sq", "s_vi", "s_fid", "AMCV_*", "AMCVS_*", "mbox", "_sdsat_*"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Adobe Experience Cloud analytics (formerly SiteCatalyst). AMCV cookies carry the Marketing Cloud Visitor ID — cross-property identifier."
+  },
+  {
+    "name": "Adobe Target",
+    "domains": ["tt.omtrdc.net", "demdex.net"],
+    "cookie_names": ["mbox", "mboxEdgeCluster", "at_check"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Adobe Target — A/B testing + personalization. Reads visitor ID for segment membership."
+  },
+  {
+    "name": "Adobe Audience Manager",
+    "domains": ["demdex.net", "dpm.demdex.net"],
+    "cookie_names": ["demdex", "dextp", "_dpm"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Adobe DMP — cross-site identity resolution for advertising audiences. High CCPA/GDPR exposure."
+  },
+  {
+    "name": "Marketo",
+    "domains": ["marketo.net", "marketo.com", "mktoresp.com"],
+    "cookie_names": ["_mkto_trk", "BIGipServer*"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Adobe Marketo Engage — B2B marketing automation. _mkto_trk tracks anonymous visitors across the funnel."
+  },
+  {
+    "name": "HubSpot",
+    "domains": ["hubspot.com", "js.hs-analytics.net", "js.hsforms.net", "track.hubspot.com"],
+    "cookie_names": ["hubspotutk", "__hstc", "__hssrc", "__hssc", "messagesUtk"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "HubSpot CRM + Marketing Hub. hubspotutk is the persistent visitor identifier — joins form submissions to the CRM contact record."
+  },
+  {
+    "name": "Salesforce Pardot",
+    "domains": ["pardot.com", "pi.pardot.com", "pi-go.pardot.com"],
+    "cookie_names": ["pardot", "visitor_id*"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Salesforce Marketing Cloud Account Engagement (Pardot). B2B lead tracking."
+  },
+  {
+    "name": "Mailchimp",
+    "domains": ["mailchimp.com", "list-manage.com", "click.mailchimp.com"],
+    "cookie_names": ["MCPopupClosed", "MCPopupSubscribed", "_mcid"],
+    "category": "targeting",
+    "legal_exposure": "low",
+    "onetrust_category": "C0004",
+    "notes": "Mailchimp email + popup widgets. Lower CIPA risk than chat tools — surface is email subscription, not full chat capture."
+  },
+  {
+    "name": "Klaviyo",
+    "domains": ["klaviyo.com", "static.klaviyo.com", "a.klaviyo.com"],
+    "cookie_names": ["__kla_id", "_kuid_"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "DTC ecommerce marketing platform. Tracks anonymous visitors via __kla_id and merges with email identity post-signup."
+  },
+  {
+    "name": "ActiveCampaign",
+    "domains": ["activecampaign.com", "trackcmp.net"],
+    "cookie_names": ["ac_enable_tracking", "_ac_*"],
+    "category": "targeting",
+    "legal_exposure": "low",
+    "onetrust_category": "C0004",
+    "notes": "Marketing automation + CRM. Site-tracking cookie ties anonymous behavior to known contacts."
+  },
+  {
+    "name": "Tealium iQ",
+    "domains": ["tiqcdn.com", "collect.tealiumiq.com"],
+    "cookie_names": ["utag_main", "utag_main_*"],
+    "category": "functional",
+    "legal_exposure": "low",
+    "onetrust_category": "C0003",
+    "notes": "Enterprise tag-management system. utag_main carries Tealium's anonymous visitor identifier + session state across the funnel. Foundational risk: misconfigured TMS can defeat the CMP."
+  },
+  {
+    "name": "Segment",
+    "domains": ["segment.com", "cdn.segment.com", "api.segment.io"],
+    "cookie_names": ["ajs_anonymous_id", "ajs_user_id"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Twilio Segment CDP — server-side identity routing. ajs_anonymous_id flows downstream to whatever destinations are wired in."
+  },
+  {
+    "name": "mParticle",
+    "domains": ["mparticle.com", "config2.mparticle.com", "identity.mparticle.com"],
+    "cookie_names": ["mp_*", "mprtcl-v*"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Enterprise CDP — competitor to Segment. Same downstream-routing concern."
+  },
+  {
+    "name": "Snowplow",
+    "domains": ["snowplowanalytics.com", "snowcat.io"],
+    "cookie_names": ["_sp_id.*", "_sp_ses.*", "sp"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Open-source enterprise behavioral analytics. Often self-hosted; cookie names match the standard schema."
+  },
+  {
+    "name": "Quora",
+    "domains": ["quora.com", "q.quora.com"],
+    "cookie_names": ["__qca", "m-uid", "m-b"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Quora Pixel — B2B / consumer ad conversion tracking on Quora's network."
+  },
+  {
+    "name": "Bing Ads",
+    "domains": ["bat.bing.com", "bing.com"],
+    "cookie_names": ["_uetsid", "_uetvid", "_uetmsclkid"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Microsoft Universal Event Tracking (UET) — Bing Ads conversion + remarketing pixel. Common second ad-network behind Google Ads."
+  },
+  {
+    "name": "Yandex Metrika",
+    "domains": ["yandex.ru", "mc.yandex.ru", "yastatic.net"],
+    "cookie_names": ["yandexuid", "yabs-sid", "_ym_uid", "_ym_d", "_ym_isad"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Russian analytics platform — equivalent of Google Analytics. Sanctions / cross-border data-flow exposure for US companies still running it post-2022."
+  },
+  {
+    "name": "Baidu Analytics",
+    "domains": ["baidu.com", "hm.baidu.com"],
+    "cookie_names": ["HMACCOUNT", "Hm_lvt_*", "Hm_lpvt_*"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Baidu Tongji analytics — common on China-focused sites."
+  },
+  {
+    "name": "AppLovin",
+    "domains": ["applovin.com", "d.applovin.com"],
+    "cookie_names": ["al_*", "applovin_*"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Mobile + CTV ad network. High legal exposure following recent FTC + DOJ scrutiny of CTV data flows."
+  },
+  {
+    "name": "RTB House",
+    "domains": ["rtbhouse.com", "creativecdn.com"],
+    "cookie_names": ["RTBuid", "RTBhid"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Programmatic display + personalized retargeting. EU-headquartered; GDPR-exposed."
+  },
+  {
+    "name": "ID5",
+    "domains": ["id5-sync.com", "cdn.id5-sync.com"],
+    "cookie_names": ["id5", "_id5_consent"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Universal cookieless ID — one of the post-3rd-party-cookie identity solutions. Cross-publisher resolution: high regulatory scrutiny."
+  },
+  {
+    "name": "LiveIntent (Audience)",
+    "domains": ["liadm.com", "liveintent.com"],
+    "cookie_names": ["li_giant", "li_format", "li_sugr"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Email-based identity resolution + advertising. High CCPA exposure — ties anonymous behavior to email identities."
+  },
+  {
+    "name": "Cloudflare Web Analytics",
+    "domains": ["cloudflareinsights.com", "static.cloudflareinsights.com"],
+    "cookie_names": [],
+    "category": "analytics",
+    "legal_exposure": "low",
+    "onetrust_category": "C0002",
+    "notes": "Cookieless privacy-focused analytics (no persistent identifier). Flagged here so the scanner doesn't false-positive it as a tracking cookie."
+  },
+  {
+    "name": "Plausible Analytics",
+    "domains": ["plausible.io"],
+    "cookie_names": [],
+    "category": "analytics",
+    "legal_exposure": "low",
+    "onetrust_category": "C0002",
+    "notes": "Cookieless EU-hosted analytics. Same false-positive guard as Cloudflare Insights."
+  },
+  {
+    "name": "Fathom Analytics",
+    "domains": ["usefathom.com", "cdn.usefathom.com"],
+    "cookie_names": [],
+    "category": "analytics",
+    "legal_exposure": "low",
+    "onetrust_category": "C0002",
+    "notes": "Cookieless privacy-focused analytics. False-positive guard."
   }
 ]
