@@ -192,9 +192,15 @@ uv run mypy src/              # types clean
 
 The audit engine is configurable by data, not code:
 
-- **Add a new CMP** (the system ships with OneTrust): drop a detector in
-  `src/consent_engine/tools/cmp_detector.py` and a regional behavior profile
-  in `data/wiki/concepts/`.
+- **Add a new CMP**: the system ships with ~30 CMP detectors out of the box
+  (OneTrust, Truyo, Cookiebot, CookieYes, Usercentrics, Didomi, TrustArc,
+  Ketch, Sourcepoint, Quantcast, Osano, Axeptio, Klaro, CookieScript,
+  CookieHub, Crownpeak, Truyo, TrustCommander, Termly, Complianz, TrueVault,
+  iubenda, Borlabs, Civic, Consentmanager, Shopify Customer Privacy,
+  Pandectes, PiwikPRO, Transcend, Ensighten, DataGrail, CCM19, Wix, plus
+  IAB TCF + GPC/GPP). Add a new one by dropping a detector in
+  `src/consent_engine/tools/cmp_detector.py` (JS-global, URL-pattern, and
+  DOM-selector tiers) and a regional behavior profile in `data/wiki/concepts/`.
 - **Add a vendor** to the lawsuit-annotated library:
   edit `data/vendor_library/vendors.json` (priority lookup) or the
   Open Cookie Database CSV (fallback).
@@ -220,13 +226,10 @@ MIT. See `LICENSE`.
 
 Built by [Kenneth Buchanan](https://kennethjbuchanan.com).
 
-Architecture decisions credit Fred Pike's "Consent Chaos: Using AI to Build
-Consent Systems That Still Break" at MeasureSummit, May 2026 — particularly
-the agentic-vs-deterministic split, the glass-box reporting pattern, and the
-per-audit chat surface. Lawsuit-surge documentation pulls from Stephanie
-Balaconis (Lifesight), Denis Golubovskyi (Stape), and Phil Pearce's
-MeasureSummit talks on attribution, signal quality, and the consent
-enforcement landscape.
+Architecture credit to **Fred Pike** (Northwoods) for the agentic-vs-
+deterministic split + the glass-box reporting pattern, and to **Phil Pearce**
+for the 67%-of-Consent-Mode-v2-implementations-fail-basic-compliance
+baseline. Both presented at MeasureSummit, May 2026.
 
 The Open Cookie Database (~3,200 entries) is included under the project's
 permissive license.

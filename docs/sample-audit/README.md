@@ -13,14 +13,10 @@
 | [`evidence.jsonl`](evidence.jsonl) | Per-request forensic log. One JSON object per line: `{url, method, timestamp, status_code, request_type, initiator}`. |
 | [`executive_summary.md`](executive_summary.md) | Deterministic template summary (no LLM key set during sample run). |
 
-## How to view live
-
-Once GitHub Pages is enabled for this repo (Settings → Pages → "Deploy from a branch" → `main` / `/docs`), these URLs become live:
+## Live
 
 - https://kb223.github.io/consent-engine/sample-audit/report.html
 - https://kb223.github.io/consent-engine/sample-audit/deck.html
-
-Until then, clone the repo and open the local files.
 
 ## How this was generated
 
@@ -34,10 +30,11 @@ That's the whole thing. ~30 seconds. The other 5 files are produced by the same 
 
 `example.com` is RFC 2606 reserved, has no tracking, and produces a deterministic clean-pass audit. It's the safest demo target — no risk of a future page change invalidating this sample.
 
-For more interesting demo runs (vendor leaks, GPC ignored, multi-jurisdiction), see the audits captured during development:
+For more interesting demo runs (vendor leaks, GPC ignored, multi-jurisdiction), try these on your own machine:
 
+- `https://onetrust.com` — the CMP vendor itself; well-configured, useful baseline
 - `https://canadiantire.ca` — 17 vendors, 11 confirmed violations, jurisdiction CA, OneTrust CMP
-- `https://tesco.com` — 3 vendors, jurisdiction EU (per the v0.5.1 fix), OneTrust CMP
-- `https://oreillyauto.com` — 8 vendors, 4 confirmed violations, Truyo CMP
+- `https://tesco.com` — UK retailer on `.com`; jurisdiction detected as EU (per the v0.5.1 fix)
+- `https://apple.com` — large enterprise site, sophisticated stack
 
 Run any of those yourself to see the violation-heavy variant.

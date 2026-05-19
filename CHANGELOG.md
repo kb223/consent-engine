@@ -3,6 +3,73 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.2] — 2026-05-18 — public-repo cleanup pass + API/MCP/skill tests
+
+Pre-launch hygiene before LinkedIn announcement. No runtime behavior change.
+
+### Removed (cleanup)
+- **`HANDOFF.md`** at repo root — internal dev-handoff doc from the v0.1.5
+  bring-up. Not appropriate for a public OSS repo.
+- **`RELEASING.md`** at repo root — exposed the GitHub-environment name +
+  workflow-trust-publisher details. Not a security vulnerability per se
+  (Trusted Publishing is OIDC, no secrets in the file), but internal
+  release-engineering process shouldn't live in a public repo. The
+  release flow runs the same way; the docs just live in the maintainer's
+  private notes now.
+- **`AGENTS.md`** replaced with a symlink to `CLAUDE.md` — the two were
+  byte-identical. One source, two filenames for the two convention names
+  (Anthropic + general).
+
+### Fixed (docs)
+- **`uv run` vs `uvx` clarification** in `CLAUDE.md`. Both are valid for
+  different contexts: `uv run` runs from a local clone (developer), `uvx`
+  installs from PyPI + runs (end user). Added an explicit section.
+- **Stale `consent-engine chat` reference removed** from `.claude/skills/
+  consent-audit/SKILL.md`. The chat subcommand was removed in v0.5.0;
+  the skill now correctly points users at the MCP `query_evidence` tool
+  or direct `evidence.jsonl` grep.
+- **README "Customize for your stack"** now lists the ~30 CMPs actually
+  supported (OneTrust, Truyo, Cookiebot, CookieYes, Usercentrics,
+  Didomi, TrustArc, Ketch, Sourcepoint, Quantcast, Osano, Axeptio,
+  Klaro, CookieScript, CookieHub, Crownpeak, TrustCommander, Termly,
+  Complianz, TrueVault, iubenda, Borlabs, Civic, Consentmanager,
+  Shopify, Pandectes, PiwikPRO, Transcend, Ensighten, DataGrail, CCM19,
+  Wix, plus IAB TCF + GPC/GPP). Was misleadingly saying "ships with
+  OneTrust" as if it were the only one.
+- **README credits trimmed** to Fred Pike + Phil Pearce (the two
+  MeasureSummit speakers whose frameworks materially shaped the
+  architecture). Removed third-party-vendor name-drops.
+- **`docs/sample-audit/README.md`** removed the "Once GitHub Pages is
+  enabled" instructional block (Pages is enabled). Removed reference to
+  a Bounteous-channel client; replaced with `onetrust.com` and
+  `apple.com` as suggested demo targets.
+
+### Added (tests)
+Test coverage expanded from 56 to 70 with three new test files. All
+cover surfaces that the v0.5.0 audit identified as under-tested.
+
+- **`tests/test_api.py`** — 6 tests for the FastAPI surface:
+  - `/healthz` returns 200 + version
+  - `POST /audit` returns 503 when `CONSENT_ENGINE_API_TOKEN` unset
+  - `POST /audit` returns 401 with missing token
+  - `POST /audit` returns 401 with wrong token
+  - `POST /audit` accepts `Authorization: Bearer <token>` (run_audit mocked)
+  - `POST /audit` accepts `X-Consent-Engine-Token: <token>`
+- **`tests/test_mcp_server.py`** — 5 tests for the MCP tool surface:
+  - `_safe_audit_dir` accepts valid UUID4s (parametrized)
+  - `_safe_audit_dir` rejects path-traversal payloads (parametrized)
+  - `_AUDIT_ID_PATTERN` rejects uppercase UUIDs (keeps the path-resolve check sound)
+  - `list_tools` returns the three audit tools with correct required-field schemas
+  - `_read_audit_result` + `_query_evidence` return error TextContent (not raise) on bad audit_id
+- **`tests/test_skill.py`** — 7 tests for `.claude/skills/consent-audit/SKILL.md`:
+  - File exists at the expected path
+  - YAML frontmatter parses + has `name` + `description`
+  - `name` matches the directory slug
+  - Description includes the trigger keywords (audit / consent / url)
+  - Body does **not** reference the removed `consent-engine chat` subcommand
+  - Body still shows the current `consent-engine audit <url>` run command
+  - Body doesn't reference dead-code imports / deprecated flags
+
 ## [0.5.1] — 2026-05-18 — jurisdiction fix + release artifacts + demo URL
 
 ### Fixed
@@ -331,7 +398,7 @@ Google pages, not the project's own wiki, when discussing findings.
 ## [0.2.1] — 2026-05-17 — Truyo detection, deck restyle (for real), CI gate, sales flags
 
 ### Fixed
-- **Truyo CMP detected.** The v0.2.0 audit on oreillyauto.com missed Truyo
+- **Truyo CMP detected.** The v0.2.0 audit on a Truyo-protected enterprise site missed Truyo
   (the actual CMP) and labeled the site as having "OneTrust cookies present
   but no CMP detected." Two root causes: (1) the URL fallback in
   `cmp_detector` only matched `cmp.truyo.com` while O'Reilly's deployment

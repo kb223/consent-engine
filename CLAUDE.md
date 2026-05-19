@@ -32,26 +32,46 @@ demand letters.
 
 ## Commands
 
-- Install: `uv sync`
-- CLI: `uv run consent-engine audit <url>`
-- API: `uv run uvicorn consent_engine.api:app --reload`
-- MCP server: `uv run consent-engine-mcp`
+These commands assume the developer has the repo cloned locally and has run
+`uv sync` once. They're for **in-repo work** (running tests, iterating on
+code, debugging the scanner). End users who just want to run an audit go
+through `uvx` from PyPI instead — see the README's install one-liner.
+
+- Install (dev clone): `uv sync --group dev`
+- CLI from source: `uv run consent-engine audit <url>`
+- API from source: `uv run uvicorn consent_engine.api:app --reload`
+- MCP server from source: `uv run consent-engine-mcp`
 - Test: `uv run pytest tests/ -v`
 - Lint: `uv run ruff check src/`
 - Type check: `uv run mypy src/`
 - Evals: `uv run python evals/run_evals.py`
 
+### `uv run` vs `uvx` — the distinction
+
+- `uv run <cmd>` — runs a command using the locked dependencies of the
+  current repo. Requires `uv sync` first. Used by contributors who have
+  cloned the source.
+- `uvx <pkg> <cmd>` — installs `<pkg>` from PyPI into a temporary venv +
+  runs `<cmd>` once. No clone needed. Used by end users who just want to
+  run the tool against a URL.
+
+Both end up invoking the same `consent-engine` entrypoint. The choice is
+about where the code comes from (local clone vs PyPI), not what gets run.
+
 ## When the user wants to audit a URL
 
-Use the CLI directly (`uv run consent-engine audit <url>`) or call the
-underlying tools. Output bundle lands in `./out/<audit_id>/` with
-`report.html`, `audit_result.json`, `evidence.jsonl`, `deck.marp.md`.
+Use the CLI directly (`uv run consent-engine audit <url>` for dev, or
+`uvx consent-engine audit <url>` if running cold) or call the underlying
+tools. Output bundle lands in `./out/<audit_id>/` with `report.html`,
+`audit_result.json`, `evidence.jsonl`, `deck.marp.md`, and (auto-rendered
+when `npx` is on PATH) `deck.html`.
 
 ## When the user wants to query a prior audit
 
-Use `consent-engine chat <audit_id>` or, if working through MCP, the
-`query_evidence` tool against the audit_id. The evidence.jsonl has every
-captured network request — grounding for follow-ups.
+If working through MCP, use the `query_evidence` tool against the
+`audit_id`. The `evidence.jsonl` file in the bundle has every captured
+network request with timestamp + method + status + initiator — grounding
+for follow-ups.
 
 ## When adding knowledge
 

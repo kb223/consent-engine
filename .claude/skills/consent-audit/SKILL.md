@@ -41,8 +41,8 @@ Output bundle: `./consent-audits/<audit_id>/`
 
 ## Follow-up questions to support
 
-- "Why did <vendor> fire?" → invoke `consent-engine chat <audit_id>` or call
-  the `consent-engine-mcp` `query_evidence` tool with `host_contains` set.
+- "Why did <vendor> fire?" → call the `consent-engine-mcp` `query_evidence`
+  tool with `host_contains` set, or grep `evidence.jsonl` directly.
 - "What's the financial exposure?" → read the `legal_exposure` block in
   `audit_result.json`.
 - "How do I remediate?" → read the `remediation` section in `report.html`
