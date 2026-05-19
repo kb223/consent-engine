@@ -22,8 +22,27 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from pathlib import Path
 from typing import Any
+
+_AUDIT_ID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+
+
+def _safe_audit_dir(audit_id: str) -> Path:
+    """Resolve `./out/<audit_id>` after rejecting non-UUID inputs.
+
+    Closes the MCP-side path-traversal vector — an MCP host could pass an
+    untrusted audit_id like `../../../etc` and reach files outside `./out/`.
+    Audit IDs come from `uuid.uuid4()` so we can validate the shape.
+    """
+    if not _AUDIT_ID_PATTERN.fullmatch(audit_id):
+        raise ValueError(f"Invalid audit_id format: {audit_id!r} (expected UUID4)")
+    out = Path("./out").resolve()
+    candidate = (out / audit_id).resolve()
+    if not str(candidate).startswith(str(out) + "/"):
+        raise ValueError(f"audit_id resolves outside ./out/: {audit_id!r}")
+    return candidate
 
 # `mcp` is an optional dependency. If the user installed
 # `pip install consent-engine[mcp]` we get it; otherwise we surface a clear
@@ -135,7 +154,11 @@ async def _audit_url(url: str) -> list[TextContent]:
 
 
 def _read_audit_result(audit_id: str) -> list[TextContent]:
-    path = Path("./out") / audit_id / "audit_result.json"
+    try:
+        audit_dir = _safe_audit_dir(audit_id)
+    except ValueError as e:
+        return [TextContent(type="text", text=f"error: {e}")]
+    path = audit_dir / "audit_result.json"
     if not path.exists():
         return [TextContent(type="text", text=f"No audit bundle at {path}")]
     return [TextContent(type="text", text=path.read_text())]
@@ -147,7 +170,11 @@ def _query_evidence(args: dict[str, Any]) -> list[TextContent]:
     url_contains = (args.get("url_contains") or "").lower()
     host_contains = (args.get("host_contains") or "").lower()
 
-    path = Path("./out") / audit_id / "evidence.jsonl"
+    try:
+        audit_dir = _safe_audit_dir(audit_id)
+    except ValueError as e:
+        return [TextContent(type="text", text=f"error: {e}")]
+    path = audit_dir / "evidence.jsonl"
     if not path.exists():
         return [TextContent(type="text", text=f"No evidence at {path}")]
 

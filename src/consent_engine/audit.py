@@ -12,7 +12,10 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import ipaddress
+import os
 import re
+import socket
 import subprocess
 import sys
 import uuid
@@ -43,6 +46,67 @@ from consent_engine.tools.tool_08_report_generator import (
     generate_marp_slides,
     generate_report,
 )
+
+_METADATA_HOSTS: frozenset[str] = frozenset(
+    {
+        "169.254.169.254",        # AWS / GCP / Oracle Cloud IMDSv1
+        "fd00:ec2::254",          # AWS IMDSv2 IPv6
+        "metadata.google.internal",
+        "metadata.azure.com",
+        "100.100.100.200",        # Alibaba Cloud
+    }
+)
+
+
+def _validate_audit_url(url: str) -> None:
+    """SSRF guard. Reject URLs that resolve to private / loopback / metadata IPs.
+
+    Closes the high-severity SSRF surface identified by the v0.5.0 security
+    audit: without this, ``consent-engine audit http://169.254.169.254/`` would
+    hit cloud metadata services in a real Chromium browser, and the same surface
+    is reachable unauthenticated via the FastAPI ``POST /audit`` route.
+
+    Set ``CONSENT_ENGINE_ALLOW_INTERNAL=1`` to bypass (intended for self-hosters
+    auditing their own internal staging sites).
+    """
+    if os.environ.get("CONSENT_ENGINE_ALLOW_INTERNAL") == "1":
+        return
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(
+            f"Only http/https URLs allowed; got scheme {parsed.scheme!r}. "
+            f"file:// / chrome:// / etc are rejected to prevent local file disclosure."
+        )
+    host = parsed.hostname
+    if host is None:
+        raise ValueError(f"URL is missing a hostname: {url!r}")
+    if host.lower() in _METADATA_HOSTS:
+        raise ValueError(
+            f"Refusing to scan known cloud-metadata host: {host}. "
+            f"Set CONSENT_ENGINE_ALLOW_INTERNAL=1 to override."
+        )
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror as e:
+        raise ValueError(f"Cannot resolve hostname {host!r}: {e}") from e
+    for info in infos:
+        addr = info[4][0]
+        try:
+            ip = ipaddress.ip_address(addr)
+        except ValueError:
+            continue
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            raise ValueError(
+                f"Refusing to scan internal/private IP {addr} (for host {host!r}). "
+                f"Set CONSENT_ENGINE_ALLOW_INTERNAL=1 to override."
+            )
 
 
 @dataclass
@@ -309,6 +373,9 @@ async def run_audit(
         cookies), the rendered HTML report, the LLM-written executive summary,
         and the Marp slide deck.
     """
+    # SSRF guard — reject URLs resolving to private / loopback / metadata IPs.
+    _validate_audit_url(url)
+
     audit_id = str(uuid.uuid4())
 
     # 0. First-run setup: download Chromium binaries if they aren't cached.

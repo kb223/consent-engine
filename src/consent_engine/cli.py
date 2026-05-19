@@ -33,6 +33,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -201,6 +202,7 @@ def _open_in_browser(paths: list[Path]) -> None:
 
 def _render_deck_command(args: argparse.Namespace) -> int:
     """Render an audit's deck.marp.md to deck.html via @marp-team/marp-cli."""
+    _validate_audit_id(args.audit_id)
     audit_dir = Path(args.output_dir or "./out") / args.audit_id
     marp_md = audit_dir / "deck.marp.md"
     if not marp_md.exists():
@@ -234,41 +236,23 @@ def _render_deck_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def _chat_command(args: argparse.Namespace) -> int:
-    """Open a Claude conversation grounded in a completed audit."""
-    audit_dir = Path("./out") / args.audit_id
-    if not audit_dir.exists():
-        print(f"error: no audit bundle at {audit_dir}", file=sys.stderr)
-        return 1
+_AUDIT_ID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
-    try:
-        from consent_engine.llm.client import chat_with_context
-    except ImportError:
-        print("error: chat requires `pip install consent-engine[chat]`", file=sys.stderr)
-        return 1
 
-    audit = json.loads((audit_dir / "audit_result.json").read_text())
-    evidence_lines = (audit_dir / "evidence.jsonl").read_text().splitlines()
+def _validate_audit_id(audit_id: str) -> None:
+    """Reject anything that doesn't match the UUID format `run_audit()` produces.
 
-    print(
-        f"Loaded audit {args.audit_id}. {len(evidence_lines)} network "
-        f"events captured. Type 'exit' to quit.\n"
-    )
-
-    while True:
-        try:
-            question = input("you> ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            return 0
-        if not question or question.lower() in {"exit", "quit"}:
-            return 0
-        answer = chat_with_context(
-            question=question,
-            audit_result=audit,
-            evidence=evidence_lines,
+    Closes the path-traversal vector identified by the v0.5.0 security audit:
+    `consent-engine render-deck ../../../../etc` would otherwise resolve to a
+    `Path('./out') / '../../../../etc'` and let an attacker read files outside
+    the output directory. Audit IDs are always UUID4s from `uuid.uuid4()`;
+    enforce that shape.
+    """
+    if not _AUDIT_ID_PATTERN.fullmatch(audit_id):
+        raise ValueError(
+            f"Invalid audit_id format: {audit_id!r}. "
+            f"Audit IDs are UUID4s like 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'."
         )
-        print(f"claude> {answer}\n")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -320,10 +304,6 @@ def main(argv: list[str] | None = None) -> int:
     p_render.add_argument("audit_id", help="Audit ID (the directory name under ./out/).")
     p_render.add_argument("--output-dir", help="Output directory (default: ./out).")
     p_render.set_defaults(func=_render_deck_command)
-
-    p_chat = sub.add_parser("chat", help="Chat over a completed audit.")
-    p_chat.add_argument("audit_id", help="Audit ID (the directory name under ./out/).")
-    p_chat.set_defaults(func=_chat_command)
 
     p_ver = sub.add_parser("version", help="Print version + exit.")
     p_ver.set_defaults(func=lambda _: (print(f"consent-engine {__version__}"), 0)[1])

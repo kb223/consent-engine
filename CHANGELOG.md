@@ -3,6 +3,56 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0] — 2026-05-18 — FDE-portfolio public release
+
+Cornerstone release. Internal security audit closed all HIGH + MED findings;
+new SECURITY.md + CONTRIBUTING.md ship at repo root; broken `chat`
+subcommand removed; defaults hardened.
+
+### Security — HIGH findings closed
+- **SSRF guard** (`audit.py::_validate_audit_url`). Every `run_audit()` call
+  resolves the target hostname and rejects: non-`http(s)` schemes, known
+  cloud-metadata hosts (AWS / GCP / Azure / Alibaba), and any A/AAAA record
+  that resolves to a private / loopback / link-local / reserved / multicast IP.
+  Override with `CONSENT_ENGINE_ALLOW_INTERNAL=1` for self-hosters auditing
+  their own staging.
+- **FastAPI authentication** (`api.py::_require_token`). The `POST /audit`
+  endpoint now requires a bearer token via `CONSENT_ENGINE_API_TOKEN`. If the
+  env var is unset, the route returns `503 Service Unavailable`. The v0.1.x
+  unauthenticated default is **closed**. `uvicorn` binds `127.0.0.1` by
+  default; override with `CONSENT_ENGINE_HOST=0.0.0.0` only after setting
+  the token. Constant-time compare via `secrets.compare_digest`.
+
+### Security — MED findings closed
+- **Path-traversal guards** on `audit_id` inputs. New `_validate_audit_id`
+  in `cli.py` and `_safe_audit_dir` in `mcp_server.py` reject non-UUID4
+  audit_ids before resolving paths under `./out/`. Defense-in-depth via
+  `Path.resolve().is_relative_to(...)` containment check on the MCP side.
+- **Dependency hygiene**: `jinja2>=3.1.6` (was `>=3.1.0`) — closes the
+  installer-floor exposure to CVE-2025-27516.
+
+### Fixed
+- **`consent-engine chat` subcommand removed.** Imported a function
+  (`chat_with_context`) that doesn't exist in `consent_engine.llm.client`,
+  causing an `ImportError` on invocation. Drop the broken subcommand; will
+  re-add as part of a proper RAG-over-evidence build later.
+
+### Added
+- **SECURITY.md** at repo root — threat model, v0.5.0 mitigations, known
+  limitations, coordinated-disclosure policy.
+- **CONTRIBUTING.md** at repo root — local setup, lint + type-check, how to
+  add a vendor / wiki page / CMP detection rule / eval case, PR guidelines.
+- **mypy override** for `mcp.*` (`pyproject.toml`) — the optional `[mcp]`
+  extra ships without type stubs, mirrors the existing `markdown` override.
+
+### Verified
+- 56-test suite green locally + in CI.
+- Ruff clean on `src/` + `tests/`.
+- Smoke test: `uvx --refresh consent-engine audit https://example.com` exits
+  0 in <90s, all 5 output artifacts produced + auto-rendered deck.html +
+  auto-open works. SSRF guard rejects `http://localhost:8080/`,
+  `http://169.254.169.254/`, `file:///etc/passwd` with `ValueError`.
+
 ## [0.4.2] — 2026-05-18 — LLM disabled by default + README setup section
 
 ### Changed
