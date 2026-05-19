@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "consent-engine"
-version = "0.5.3"
+version = "0.5.4"
 description = "Forensic consent-compliance audit engine. Deterministic by design."
 readme = "README.md"
 license = { text = "MIT" }
@@ -110,6 +110,13 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["mcp", "mcp.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# The optional `mcp` package's decorators (Server.list_tools, Server.call_tool)
+# come back as untyped because the package ships no stubs. The decorated
+# functions themselves are properly typed in our source. Silence the cascade.
+module = ["consent_engine.mcp_server"]
+disable_error_code = ["untyped-decorator"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

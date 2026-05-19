@@ -1,0 +1,22 @@
+name: "Cookiebot CMP — EU jurisdiction via TLD"
+url: "https://www.cookiebot.com/"
+methodology: "S3"
+notes: |
+  Cookiebot is one of the canonical EU/GDPR CMP vendors. Their own marketing
+  site is on a `.com` TLD but serves an EU audience. The jurisdiction
+  detector should resolve to EU via the `<html lang="en-GB">` /
+  `og:locale` signals (post-v0.5.1 content-signal-on-generic-TLD path)
+  even though `.com` would otherwise default to US.
+
+  Cookiebot's stack on their own marketing site is the cleanest CMP-vendor
+  baseline available. We expect a "no definitive violations" result with
+  Cookiebot itself correctly detected.
+
+  Re-baseline if Cookiebot relaunches the site or rebrands as Usercentrics
+  Cookiebot (parent acquired them in 2024).
+expected:
+  has_definitive_findings: false
+  consent_state: "OPTED_OUT"
+  cmp_detected: "cookiebot"
+  cmp_confidence_at_least: "medium"
+  jurisdiction: "EU"

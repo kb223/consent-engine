@@ -283,6 +283,24 @@ _SCRIPT_URL_RULES: list[tuple[str, str]] = [
     ("transcend-cdn.com", "Transcend"),
     ("nexus.ensighten.com", "Ensighten"),
     ("cloud.ccm19.de", "CCM19"),
+    # Additional CDN patterns + commonly-missed CMPs (added v0.5.4)
+    ("cdn.cookiehub.eu", "CookieHub"),
+    ("widget.cookieinformation.com", "CookieInformation"),
+    ("cookieinformation.com", "CookieInformation"),
+    ("cdn.cookielaw.org", "OneTrust"),  # duplicate-safe; already present above as primary
+    ("policy.cookiereports.com", "CookieReports"),
+    ("klaro.kiprotect.com", "Klaro"),
+    ("cdn.cookiebot.eu", "Cookiebot"),  # EU CDN endpoint (in addition to .com)
+    ("borlabs.io", "Borlabs"),  # Borlabs Cookie WordPress plugin CDN
+    ("cdn.real-cookie-banner.com", "RealCookieBanner"),
+    ("cookieyes.com", "CookieYes"),  # broader pattern beyond -cdn-cookieyes
+    ("cmp.cookieinformation.com", "CookieInformation"),
+    ("policy.app.cookieinformation.com", "CookieInformation"),
+    ("static.policy.app.cookieinformation.com", "CookieInformation"),
+    ("cdn.privacymanagement.com", "Sourcepoint"),  # Sourcepoint legacy
+    ("api.privacy-mgmt.com", "Sourcepoint"),
+    (".sp-prod.net/", "Sourcepoint"),
+    ("sdks.shopifycdn.com/consent", "Shopify"),  # Shopify Customer Privacy
 ]
 
 # DOM selector fallbacks
@@ -347,6 +365,10 @@ _CMP_META: dict[str, tuple[str, str, bool]] = {
     "Wix": ("medium", "headless_api", False),
     "IAB TCF": ("high", "standard", False),
     "GPC/GPP": ("medium", "standard", False),
+    # Added in v0.5.4 — caught by URL pattern only (no JS-global yet).
+    "CookieInformation": ("medium", "standard", False),
+    "CookieReports": ("medium", "standard", False),
+    "RealCookieBanner": ("medium", "standard", False),
 }
 
 

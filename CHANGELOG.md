@@ -3,6 +3,74 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.4] — 2026-05-19 — mypy strict-clean, 4 new eval cases, more CMP URLs
+
+Continued pre-launch polish toward the Thursday LinkedIn announcement.
+Tightening pass across types, regression coverage, and CMP detection
+breadth.
+
+### Fixed — mypy strict-mode now fully clean
+
+`uv run mypy src/` reports `Success: no issues found in 27 source files`.
+Closes the four v0.5.0-deferred warnings + the mcp decorator cascade:
+
+- `audit.py::run_audit` — refactored the `**gpc_fields` dict-unpack into
+  explicit keyword arguments to `AuditResult(...)`. Each gpc field is now
+  typed at construction site. No runtime behavior change.
+- `cli.py::main` — `args.func(args)` dispatch result cast to `int`.
+- `api.py::audit` — `dict[str, Any]` return annotation (was bare `dict`).
+- Removed unused `# type: ignore[arg-type]` after the marp generator's
+  `report_variant` signature was widened to `str`.
+- `pyproject.toml` — new per-module override for
+  `consent_engine.mcp_server` (`disable_error_code = ["untyped-decorator"]`)
+  silences the cascade from `mcp` shipping without stubs. Same pattern as
+  the existing `markdown` override.
+
+[docs/release-v0.5.0/type-coverage.md](docs/release-v0.5.0/type-coverage.md)
+updated to reflect the clean state.
+
+### Added — 4 new eval cases (4 → 8 total)
+
+`evals/cases/`:
+- **005-truyo-cmp-detection.yaml** — Truyo's late-loaded CDN catches the
+  post-scan URL refinement path (not the in-scan JS-global path).
+  Internal-only per Bounteous restriction.
+- **006-cookiebot-eu-tld.yaml** — Cookiebot on a `.com` TLD resolves to
+  EU via content signals (post-v0.5.1 generic-TLD escalation).
+- **007-ketch-headless-cmp.yaml** — Ketch is `dom_type: headless_api` (no
+  on-page banner). Tests that cmp_clicker skips banner-click attempts.
+- **008-didomi-shadow-dom.yaml** — Didomi JS-global detection + `.io`
+  TLD escalating to EU via og:locale content signals.
+
+Each case follows the v0.5.0 schema (name, url, methodology, notes,
+expected:{has_definitive_findings, consent_state, cmp_detected,
+cmp_confidence_at_least, jurisdiction, violations_count_at_least}).
+
+### Added — 15 new CMP URL patterns
+
+`src/consent_engine/tools/cmp_detector.py::_SCRIPT_URL_RULES`:
+
+- Cookiebot EU CDN (`cdn.cookiebot.eu`)
+- CookieHub EU CDN (`cdn.cookiehub.eu`)
+- CookieYes broader pattern (`cookieyes.com`)
+- CookieInformation (`widget.cookieinformation.com`,
+  `cookieinformation.com`, `cmp.cookieinformation.com`,
+  `policy.app.cookieinformation.com`, `static.policy.app.cookieinformation.com`)
+- CookieReports (`policy.cookiereports.com`)
+- Klaro CDN (`klaro.kiprotect.com`)
+- Borlabs Cookie WP plugin (`borlabs.io`)
+- Real Cookie Banner (`cdn.real-cookie-banner.com`)
+- Sourcepoint legacy + new (`cdn.privacymanagement.com`,
+  `api.privacy-mgmt.com`, `.sp-prod.net/`)
+- Shopify Customer Privacy (`sdks.shopifycdn.com/consent`)
+
+Plus `_CMP_META` entries for **CookieInformation**, **CookieReports**,
+and **Real Cookie Banner** so URL matches resolve to a known profile
+instead of the fallback default.
+
+Total CMPs detectable: **35+** (was ~30 in v0.5.2). README's "Customize
+for your stack" updated.
+
 ## [0.5.3] — 2026-05-19 — vendor library expansion (36 → 77) + E2E smoke
 
 Pre-launch polish before the Thursday LinkedIn announcement.

@@ -1,0 +1,25 @@
+name: "Truyo CMP detection (late-loaded CDN, .com TLD)"
+url: "https://www.oreillyauto.com/"
+methodology: "S3"
+notes: |
+  Truyo is built on top of OneTrust's API but ships its own CDN
+  (`truyoproductionuscdn.truyo.com`). The Truyo CDN loads past the
+  in-scan `networkidle` timeout, so the cmp_detector's JS-global path
+  misses it. The post-scan URL-pattern refinement (added in v0.2.1) is
+  what catches it via the `.truyo.com/` pattern in `_SCRIPT_URL_RULES`.
+
+  This case guards two regressions:
+  1. The Truyo URL pattern in `cmp_detector.py` is broad enough to
+     match production CDN subdomains (not just `cmp.truyo.com`).
+  2. The post-scan refinement loop in `audit.py::run_audit` actually
+     calls `detect_cmp_from_network_only` when the in-scan detector
+     returns "unknown" or low-confidence.
+
+  Per memory, this site is a Bounteous-channel client. Do NOT use this
+  case in public copy / LinkedIn / case studies — internal eval only.
+expected:
+  has_definitive_findings: true
+  consent_state: "OPTED_OUT"
+  cmp_detected: "truyo"
+  cmp_confidence_at_least: "medium"
+  violations_count_at_least: 1

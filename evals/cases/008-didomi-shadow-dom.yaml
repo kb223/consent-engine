@@ -1,0 +1,19 @@
+name: "Didomi CMP — French-headquartered, common on EU enterprise"
+url: "https://www.didomi.io/"
+methodology: "S3"
+notes: |
+  Didomi is one of the top EU CMP vendors (Le Monde, L'Oréal, BNP Paribas,
+  Renault). Detected via `window.Didomi !== 'undefined'` JS-global check.
+
+  Their own marketing site on `.io` should still resolve to EU
+  jurisdiction via content signals (French team, EU-targeted
+  `og:locale`). Tests both:
+  1. Didomi JS-global detection works.
+  2. The v0.5.1 generic-TLD content-signal-check escalates .io → EU
+     when `og:locale` or `<html lang="fr-FR">` is present.
+expected:
+  has_definitive_findings: false
+  consent_state: "OPTED_OUT"
+  cmp_detected: "didomi"
+  cmp_confidence_at_least: "medium"
+  jurisdiction: "EU"

@@ -309,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
     p_ver.set_defaults(func=lambda _: (print(f"consent-engine {__version__}"), 0)[1])
 
     args = parser.parse_args(argv)
-    return args.func(args)
+    return int(args.func(args))
 
 
 if __name__ == "__main__":

@@ -450,23 +450,29 @@ async def run_audit(
     har_analysis = analyze_har(scan.har_path) if scan.har_path else HarAnalysis()
 
     # 4b. GPC delta — count pixel firings under the GPC scan and compare.
-    gpc_fields: dict[str, object] = {"gpc_tested": False}
+    # Typed explicitly (no **dict unpack into AuditResult) so mypy strict
+    # passes — see docs/release-v0.5.0/type-coverage.md for the rationale.
+    gpc_tested = gpc_scan is not None
+    gpc_header_sent = False
+    gpc_navigator_api_set = False
+    gpc_signal_respected: bool | None = None
+    gpc_vendors_after_signal = 0
+    gpc_pixel_count_baseline = 0
+    gpc_pixel_count_with_gpc = 0
     if gpc_scan is not None:
         gpc_pixels = detect_pixel_firings(gpc_scan.network_requests)
         baseline_count = len(pixel_firings)
         gpc_count = len(gpc_pixels)
-        # Respected when GPC scan dropped to zero (or near-zero) tracking pixels.
-        # "Near-zero" tolerance is 1 to account for cookieless ACM modeling pings.
+        # Respected when the GPC scan dropped to zero (or near-zero) tracking
+        # pixels. "Near-zero" tolerance is 1 to account for cookieless ACM
+        # modeling pings.
         respected = gpc_count <= 1 and baseline_count > 1
-        gpc_fields = {
-            "gpc_tested": True,
-            "gpc_header_sent": gpc_scan.gpc_header_sent,
-            "gpc_navigator_api_set": True,
-            "gpc_signal_respected": respected if baseline_count > 0 else None,
-            "gpc_vendors_after_signal": gpc_count,
-            "gpc_pixel_count_baseline": baseline_count,
-            "gpc_pixel_count_with_gpc": gpc_count,
-        }
+        gpc_header_sent = gpc_scan.gpc_header_sent
+        gpc_navigator_api_set = True
+        gpc_signal_respected = respected if baseline_count > 0 else None
+        gpc_vendors_after_signal = gpc_count
+        gpc_pixel_count_baseline = baseline_count
+        gpc_pixel_count_with_gpc = gpc_count
 
     # 5. Assemble AuditResult.
     audit_result = AuditResult(
@@ -492,7 +498,13 @@ async def run_audit(
         cmp_detection_confidence=scan.cmp_detection_confidence,
         bot_detection_encountered=scan.bot_detection_encountered,
         scan_mode_used=scan.scan_mode_used,
-        **gpc_fields,
+        gpc_tested=gpc_tested,
+        gpc_header_sent=gpc_header_sent,
+        gpc_navigator_api_set=gpc_navigator_api_set,
+        gpc_signal_respected=gpc_signal_respected,
+        gpc_vendors_after_signal=gpc_vendors_after_signal,
+        gpc_pixel_count_baseline=gpc_pixel_count_baseline,
+        gpc_pixel_count_with_gpc=gpc_pixel_count_with_gpc,
     )
 
     # 5b. Derive concrete remediation steps + open gaps from the assembled
@@ -528,7 +540,7 @@ async def run_audit(
         brand="kjb",
         site_image_url=brand_logo_data_url,
         firm_name=firm_name,
-        report_variant=report_variant,  # type: ignore[arg-type]
+        report_variant=report_variant,
         estimated_monthly_ad_spend_usd=monthly_ad_spend_usd,
     )
 

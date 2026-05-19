@@ -10,15 +10,13 @@ uv run mypy src/
 
 `pyproject.toml` configures strict mode (`[tool.mypy] strict = true`) for the whole `src/` tree against Python 3.12.
 
-## Summary
+## Summary (updated v0.5.4)
 
 | Category | Count | Action |
 |---|---|---|
-| Resolved by mypy override (declared in `pyproject.toml`) | 5 | Add `[[tool.mypy.overrides]]` for `mcp.*` (matches existing `markdown` pattern) — landed in v0.5.0 |
-| Genuine type issues fixed in v0.5.0 | 1 | `chat` subcommand removed (`cli.py:245` broken import) |
-| Generic-type warnings — fix in v0.5.1 | 5 | `api.py` `dict` return type, `audit.py` `**gpc_fields` unpack, `cli.py` int cast, audit.py unused type-ignore |
-| Optional-dep stubs | 0 | None outstanding |
-| **Total remaining errors** | **~5** | All non-blocking; documented as v0.5.1 work |
+| Resolved by mypy override (declared in `pyproject.toml`) | 7 | `[[tool.mypy.overrides]]` for `markdown` + `mcp.*` + per-module decorator silence for `consent_engine.mcp_server` — all landed by v0.5.4 |
+| Genuine type issues fixed v0.5.0 → v0.5.4 | 6 | (1) `chat` subcommand removed [v0.5.0]; (2) `**gpc_fields` unpack refactored into explicit kwargs [v0.5.4]; (3) `cli.py` `args.func(args)` cast to int [v0.5.4]; (4) `api.py` `dict[str, Any]` annotation [v0.5.0]; (5) unused `# type: ignore` deleted [v0.5.4]; (6) mcp untyped-decorator cascade silenced [v0.5.4] |
+| **Total remaining errors under `--strict`** | **0** | `uv run mypy src/` reports `Success: no issues found in 27 source files` as of v0.5.4 |
 
 ## Resolved by override
 
@@ -44,18 +42,22 @@ Same pattern as the existing `markdown` override. When the `mcp` package ships s
 
 **`cli.py` `chat_with_context` import** — the `consent-engine chat` subcommand imported a function (`chat_with_context`) that does not exist in `consent_engine.llm.client`. Invocation would raise `ImportError`. Caught during the v0.5.0 audit and resolved by removing the broken subcommand entirely.
 
-## Remaining warnings (deferred to v0.5.1)
+## Status as of v0.5.4 — fully clean
 
-These are non-blocking — they don't affect runtime behavior or correctness, they're code-quality items:
+All four of the v0.5.0-deferred warnings closed in v0.5.4:
 
-1. **`api.py:40`** — `Missing type arguments for generic type "dict"`. Should be `dict[str, Any]`. Already partially fixed in the v0.5.0 token-gate refactor; final cleanup in v0.5.1.
-2. **`audit.py` `**gpc_fields`** — unpacks a `dict[str, object]` into a Pydantic constructor. Type-correct at runtime but mypy flags the `object` values. Fix in v0.5.1 by typing `gpc_fields` as a `TypedDict`.
-3. **`cli.py:332`** — `Returning Any from function declared to return "int"`. The argparse `args.func(args)` dispatch returns whatever the subcommand returns; explicitly cast to `int`.
-4. **`audit.py:464`** — Unused `# type: ignore` comment from an earlier fix. Delete.
+1. ✅ `api.py:40` — `dict[str, Any]` return annotation added.
+2. ✅ `audit.py` `**gpc_fields` — refactored into explicit keyword arguments to the `AuditResult` constructor (no more `**dict[str, object]` unpack).
+3. ✅ `cli.py:332` — `int(args.func(args))` cast added.
+4. ✅ `audit.py` unused `# type: ignore` deleted.
 
-## Why mypy is non-blocking for v0.5.0
+Plus the per-module override for `consent_engine.mcp_server` (`disable_error_code = ["untyped-decorator"]`) silences the cascade caused by the optional `mcp` package shipping without stubs — same pattern as the existing `markdown` override.
 
-The CI pipeline in `.github/workflows/ci.yml` runs `uv run mypy src/ || true` — i.e., mypy results are advisory, not gating. The decision was deliberate for the first public release: tests + ruff are the hard gates; mypy is "fix what's easy, defer what's not, ship a working tool." Type strictness can ratchet up over v0.5.x releases.
+## Why mypy was non-blocking pre-v0.5.4
+
+The CI pipeline in `.github/workflows/ci.yml` runs `uv run mypy src/ || true` — i.e., mypy results were advisory, not gating. The decision was deliberate for the first public release: tests + ruff are the hard gates; mypy was "fix what's easy, defer what's not, ship a working tool."
+
+**Going forward (v0.5.4+):** the codebase passes `--strict` clean. A future v0.5.x release can flip the `|| true` to a hard gate. Left advisory for now to avoid breaking external contributors whose patches might be temporarily messy.
 
 ## Reproducing this analysis
 

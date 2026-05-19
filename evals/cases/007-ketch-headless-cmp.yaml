@@ -1,0 +1,20 @@
+name: "Ketch CMP — headless / API-driven"
+url: "https://www.ketch.com/"
+methodology: "S3"
+notes: |
+  Ketch is a "headless" CMP — there's typically no on-page banner;
+  consent is managed via the `ketch()` JS API and a `semaphore` queue.
+  The CMP detector picks it up via `window.ketch === 'function'` or
+  `window.semaphore` JS-global checks.
+
+  Important for evals: Ketch's `dom_type` is `headless_api`, not
+  `standard`. The cmp_clicker should know to skip banner-click attempts
+  and just use the cookie-injection / API methodology.
+
+  Ketch is enterprise-focused (Pinterest, AT&T, Booking.com use it).
+  Their own marketing site is the cleanest baseline.
+expected:
+  has_definitive_findings: false
+  consent_state: "OPTED_OUT"
+  cmp_detected: "ketch"
+  cmp_confidence_at_least: "medium"
