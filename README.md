@@ -127,6 +127,18 @@ running **$5,000 per violation** in active class actions against retailers,
 healthcare systems, and B2B SaaS marketing sites. See
 `data/wiki/enforcement/lawsuit-surge.md` for the case file.
 
+## See a finished audit before running
+
+A committed sample audit lives at [`docs/sample-audit/`](docs/sample-audit/) — open `report.html` and `deck.html` in a browser to see what the tool produces without installing it first.
+
+Once GitHub Pages is enabled for this repo, the live demo URLs are:
+- https://kb223.github.io/consent-engine/sample-audit/report.html
+- https://kb223.github.io/consent-engine/sample-audit/deck.html
+
+## Release artifacts
+
+[`docs/release-v0.5.0/`](docs/release-v0.5.0/) is the auditable record behind every v0.5.0 release claim: security audit punch list, dependency CVE scan, type-coverage rationale, end-to-end smoke test, jurisdiction-detection validation matrix. Read it before evaluating the release quality.
+
 ## Optional: unlock LLM-written executive summaries
 
 By default, consent-engine ships with the LLM call **disabled**. The audit

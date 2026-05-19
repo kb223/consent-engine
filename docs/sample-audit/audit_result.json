@@ -1,0 +1,59 @@
+{
+  "audit_id": "52d193d8-e5a4-41f7-b385-dd2e08cc66af",
+  "url": "https://example.com",
+  "timestamp": "2026-05-19T05:13:11.682097Z",
+  "methodology": "s3_fresh_load_optout_preset",
+  "gtm_extraction_method": "none",
+  "gtm_container_id": null,
+  "ssgtm_detected": false,
+  "ssgtm_domain": null,
+  "gpc_tested": true,
+  "gpc_header_sent": true,
+  "gpc_navigator_api_set": true,
+  "gpc_signal_respected": null,
+  "gpc_vendors_after_signal": 0,
+  "gpc_pixel_count_baseline": 0,
+  "gpc_pixel_count_with_gpc": 0,
+  "gcs_value": null,
+  "gcd_raw": null,
+  "cmp_interaction_method": "cookie_injection",
+  "detected_cmp": null,
+  "cmp_detection_confidence": null,
+  "bot_detection_encountered": false,
+  "scan_mode_used": "playwright",
+  "detected_jurisdiction": "US",
+  "tag_consent_map": [],
+  "gcs_timeline": [],
+  "post_payloads": [],
+  "consent_api_responses": [],
+  "findings": [
+    {
+      "vendor": {
+        "name": "OneTrust",
+        "domains": [],
+        "cookie_names": [
+          "OptanonConsent"
+        ],
+        "category": "functional",
+        "legal_exposure": "unknown",
+        "onetrust_category": "C0003",
+        "notes": "Source: Open Cookie Database"
+      },
+      "status": "no_evidence_of_violation",
+      "methodology": "s3_fresh_load_optout_preset",
+      "cookies_observed": [
+        "OptanonConsent",
+        "OptanonAlertBoxClosed"
+      ],
+      "gcs_value": null,
+      "gpc_honored": null,
+      "evidence": [],
+      "notes": ""
+    }
+  ],
+  "pixel_firings": [],
+  "open_gaps": [
+    "OneTrust cookies (<code>OptanonConsent</code>) were observed but the OneTrust JS API was not detected during the scan window. The CMP is likely loading asynchronously past the networkidle threshold. Manually verify by inspecting <code>window.OneTrust</code> in browser DevTools, then consider re-scanning with a longer wait."
+  ],
+  "remediation": []
+}

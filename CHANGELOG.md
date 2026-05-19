@@ -3,6 +3,50 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.1] — 2026-05-18 — jurisdiction fix + release artifacts + demo URL
+
+### Fixed
+- **Jurisdiction detection on `.com` UK/global brands.** The `.com` TLD was
+  short-circuiting the content-signal check, so `https://tesco.com` (Tesco
+  PLC, a UK retailer) returned "US" instead of "EU." The detector now
+  consults `og:locale`, `<html lang="xx-XX">` country subtags, and
+  `<meta name="geo.region">` for generic-TLD sites before defaulting to US.
+  Hreflang tags stay skipped in this path — they were the original reason
+  for the short-circuit (shipping-list noise on US-primary .com sites) and
+  are still ignored for generic TLDs.
+- **CA-before-EU precedence on country subtags.** A page declaring
+  `<html lang="fr-CA">` (Quebec French) was returning "EU" because the
+  primary `fr` lang code matched EU before the `CA` country subtag was
+  checked. CA wins now when both fire — the country subtag is more
+  specific than the primary-lang heuristic.
+
+### Added
+- **`docs/release-v0.5.0/`** release-artifacts folder. The auditable record
+  behind every v0.5.0 claim:
+  - [`security-audit.md`](docs/release-v0.5.0/security-audit.md) — internal
+    HIGH/MED/LOW punch list with closure status per item.
+  - [`cve-scan.md`](docs/release-v0.5.0/cve-scan.md) — dependency CVE posture,
+    Jinja2 floor-bump rationale.
+  - [`type-coverage.md`](docs/release-v0.5.0/type-coverage.md) — mypy run
+    output + accepted-warnings rationale.
+  - [`e2e-smoke-test.md`](docs/release-v0.5.0/e2e-smoke-test.md) — full
+    smoke-test command sequence + verified output.
+  - [`jurisdiction-validation.md`](docs/release-v0.5.0/jurisdiction-validation.md)
+    — five-site validation matrix (US / UK / CA / EU / Quebec-French) with
+    the two bugs caught and fixed.
+- **`docs/sample-audit/`** — a committed sample audit (against
+  `https://example.com`) so cold readers can see what `report.html` +
+  `deck.html` + `evidence.jsonl` look like without running the tool first.
+  Linked from the README under "See a finished audit before running."
+
+### Verified
+- Jurisdiction detector — all 9 unit cases pass (US / UK / CA / EU / Quebec
+  French / hreflang-shipping-list-noise / etc).
+- 56-test suite green.
+- Ruff clean.
+- `uvx --refresh consent-engine audit https://tesco.com` now produces an
+  EU/GDPR-framed report (was US/CCPA in v0.5.0).
+
 ## [0.5.0] — 2026-05-18 — FDE-portfolio public release
 
 Cornerstone release. Internal security audit closed all HIGH + MED findings;

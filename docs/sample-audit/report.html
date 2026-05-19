@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consent Compliance Audit — https://example.com</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
+
+  :root {
+    --bg:           #f6f4ee;   /* warm cream, Anthropic-style */
+    --surface:      #ffffff;
+    --surface-2:    #faf8f2;
+    --text:         #1f2944;   /* near-navy body for high readability */
+    --text-strong:  #14182b;
+    --muted:        #6b7794;
+    --kjb-navy:     #2b3954;   /* KJB locked */
+    --kjb-blue:     #3d6abb;   /* KJB locked */
+    --kjb-divider:  #345187;   /* KJB locked */
+    --border:       #e7e3d8;
+    --border-strong:#d8d2c2;
+    --red:          #b34d4d;
+    --red-soft:     #fbe8e2;
+    --green:        #2f7a4f;
+    --green-soft:   #e4f1e6;
+    --amber:        #a06913;
+    --amber-soft:   #f5ebd2;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 56px 24px;
+    line-height: 1.55;
+    letter-spacing: -0.005em;
+  }
+  .container { max-width: 880px; margin: 0 auto; }
+
+  h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 2.1rem;
+    font-weight: 500;
+    color: var(--text-strong);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin: 0 0 6px;
+  }
+  h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--text-strong);
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+  }
+  h3 {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--kjb-blue);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 0 0 10px;
+  }
+  p  { margin: 0 0 14px; line-height: 1.65; color: var(--text); }
+  .meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 36px; letter-spacing: 0.02em; }
+
+  /* Verdict header band */
+  .verdict {
+    border-radius: 6px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-left: 3px solid var(--kjb-blue);
+  }
+  .verdict.violation { border-left-color: var(--red); background: var(--red-soft); border-color: #e9c9c0; }
+  .verdict.clean     { border-left-color: var(--green); background: var(--green-soft); border-color: #c8e0cd; }
+  .verdict-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.35rem; font-weight: 500; margin: 0 0 6px;
+    letter-spacing: -0.015em;
+  }
+  .verdict.violation .verdict-title { color: var(--red); }
+  .verdict.clean     .verdict-title { color: var(--green); }
+  .verdict-sub { font-size: 0.85rem; color: var(--muted); margin: 0; }
+
+  /* Executive summary */
+  .exec-summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+  }
+  .exec-summary p {
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  /* Signal cards grid */
+  .signal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .signal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 14px 16px;
+    transition: border-color .15s ease;
+  }
+  .signal-card:hover { border-color: var(--border-strong); }
+  .signal-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .signal-value {
+    font-size: 0.92rem;
+    font-weight: 600;
+    font-family: 'SF Mono', Menlo, monospace;
+    color: var(--text-strong);
+    word-break: break-all;
+  }
+  .signal-sub { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+
+  /* Inline banners */
+  .ssgtm-warning,
+  .inconclusive-banner,
+  .wiring-broken-banner {
+    border-radius: 5px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .ssgtm-warning { border-left: 3px solid var(--amber); background: var(--amber-soft); border-color: #ecdcb6; }
+  .ssgtm-warning strong { color: var(--amber); }
+  .inconclusive-banner { border-left: 3px solid var(--amber); background: var(--amber-soft); border-color: #ecdcb6; color: #6b4a08; }
+  .inconclusive-banner strong { color: var(--amber); }
+  .inconclusive-banner .lbl {
+    display: inline-block; font-size: 0.62rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--amber);
+    background: rgba(160, 105, 19, 0.18); padding: 3px 8px; border-radius: 3px; margin-right: 8px;
+  }
+  .wiring-broken-banner { border-left: 3px solid var(--red); background: var(--red-soft); border-color: #e9c9c0; color: #6e2828; }
+  .wiring-broken-banner strong { color: var(--red); }
+  .wiring-broken-banner .lbl {
+    display: inline-block; font-size: 0.62rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--red);
+    background: rgba(179, 77, 77, 0.18); padding: 3px 8px; border-radius: 3px; margin-right: 8px;
+  }
+
+  /* GPC panel */
+  .gpc-panel {
+    border-radius: 5px;
+    padding: 18px 22px;
+    margin-bottom: 28px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-left: 3px solid var(--border-strong);
+  }
+  .gpc-panel.respected { border-left-color: var(--green); }
+  .gpc-panel.ignored   { border-left-color: var(--red); }
+  .gpc-panel.untested  { border-left-color: var(--border-strong); }
+  .gpc-panel h3 { margin: 0 0 14px; font-size: 0.7rem; color: var(--kjb-navy); letter-spacing: 0.12em; }
+  .gpc-panel .tag {
+    display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 3px; margin-left: 8px;
+  }
+  .gpc-panel.respected .tag { background: var(--green-soft); color: var(--green); }
+  .gpc-panel.ignored   .tag { background: var(--red-soft); color: var(--red); }
+  .gpc-panel.untested  .tag { background: #efeae0; color: var(--muted); }
+  .gpc-row {
+    display: flex; flex-wrap: wrap; gap: 4px 16px;
+    padding: 8px 0; font-size: 0.85rem; color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+  .gpc-row:last-child { border-bottom: none; }
+  .gpc-row .k { flex: 1 1 220px; color: var(--muted); font-weight: 500; min-width: 0; }
+  .gpc-row .v { flex: 0 0 auto; font-family: 'SF Mono', Menlo, monospace; word-break: break-word; min-width: 0; }
+  .gpc-row .v.ok  { color: var(--green); font-weight: 600; }
+  .gpc-row .v.bad { color: var(--red); font-weight: 600; }
+
+  /* Section cards (findings table, etc) */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .section-header {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th {
+    padding: 12px 20px; text-align: left;
+    font-weight: 500; color: var(--muted);
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'SF Mono', Menlo, monospace;
+    font-size: 0.85rem;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface-2); }
+
+  /* Badges */
+  .badge {
+    display: inline-block; padding: 3px 9px; border-radius: 3px;
+    font-size: 0.66rem; font-weight: 600; font-family: 'Inter', sans-serif;
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .badge-red    { background: var(--red-soft);   color: var(--red); }
+  .badge-green  { background: var(--green-soft); color: var(--green); }
+  .badge-yellow { background: var(--amber-soft); color: var(--amber); }
+  .badge-gray   { background: #efeae0;            color: var(--muted); }
+
+  .empty-state { padding: 24px; text-align: center; color: var(--muted); font-size: 0.85rem; }
+
+  /* Remediation steps */
+  .remediation {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--kjb-blue);
+    border-radius: 5px;
+    padding: 20px 24px;
+    margin-bottom: 28px;
+  }
+  .remediation ol { margin: 0; padding-left: 1.4em; }
+  .remediation li {
+    margin-bottom: 12px;
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--text);
+  }
+  .remediation li:last-child { margin-bottom: 0; }
+  .remediation code {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 0.82rem;
+    font-family: 'SF Mono', Menlo, monospace;
+  }
+
+  /* Regulatory citations */
+  .reg-chunk {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--kjb-blue);
+    border-radius: 5px;
+    padding: 18px 22px;
+    margin-bottom: 18px;
+  }
+  .reg-source {
+    font-size: 0.66rem; font-weight: 700; color: var(--kjb-blue);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 12px; display: flex; align-items: center;
+  }
+  .reg-source::before { content: "§"; margin-right: 6px; font-size: 1rem; color: var(--kjb-blue); flex-shrink: 0; }
+  .reg-text { font-size: 0.88rem; color: var(--text); line-height: 1.7; word-break: break-word; }
+  .reg-text h1,.reg-text h2,.reg-text h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem; font-weight: 700; color: var(--text-strong);
+    margin: 12px 0 6px; text-transform: none; letter-spacing: 0;
+  }
+  .reg-text p  { margin: 0 0 10px; }
+  .reg-text ul,.reg-text ol { margin: 0 0 10px; padding-left: 1.4em; }
+  .reg-text li { margin-bottom: 4px; }
+  .reg-text code { background: var(--surface-2); border-radius: 3px; padding: 1px 5px; font-size: 0.82rem; }
+  .reg-text strong { color: var(--text-strong); }
+  .reg-text-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .reg-text-wrap::-webkit-scrollbar { height: 8px; }
+  .reg-text-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+  .reg-text { max-width: 100%; }
+  .reg-text table { border-collapse: collapse; margin: 10px 0 14px; font-family: 'Inter', sans-serif; width: 100%; }
+  .reg-text-wrap .reg-text table { width: auto; min-width: 100%; }
+  .reg-text th {
+    background: var(--surface-2); padding: 8px 12px; text-align: left;
+    font-size: 0.76rem; font-weight: 600; color: var(--text-strong);
+    border: 1px solid var(--border); white-space: normal;
+  }
+  .reg-text td {
+    padding: 8px 12px; font-size: 0.78rem; font-family: 'Inter', sans-serif;
+    color: var(--text); border: 1px solid var(--border);
+    vertical-align: top; white-space: normal;
+  }
+  .reg-text-wrap .reg-text th,
+  .reg-text-wrap .reg-text td { min-width: 140px; }
+  .reg-text-wrap .reg-text th:first-child,
+  .reg-text-wrap .reg-text td:first-child { min-width: 110px; }
+
+  footer {
+    text-align: center; font-size: 0.74rem; color: var(--muted);
+    margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border);
+    letter-spacing: 0.04em;
+  }
+
+  /* CTA before footer */
+  .next-step {
+    display: flex; align-items: center; justify-content: space-between; gap: 28px;
+    background: var(--kjb-navy);
+    border: none;
+    border-radius: 6px;
+    padding: 28px 32px;
+    margin-top: 40px;
+    color: #e8edf5;
+  }
+  .next-step-eyebrow {
+    font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--kjb-blue); font-weight: 700; margin-bottom: 8px;
+  }
+  .next-step-title {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.2rem; font-weight: 500; color: #ffffff;
+    line-height: 1.3; letter-spacing: -0.01em;
+  }
+  .next-step-sub { font-size: 0.85rem; color: #c4cde0; margin-top: 6px; line-height: 1.55; }
+  .next-step-btn {
+    flex-shrink: 0; display: inline-block;
+    background: var(--kjb-blue); color: #fff !important;
+    text-decoration: none; font-size: 0.85rem; font-weight: 600;
+    padding: 14px 22px; border-radius: 5px; white-space: nowrap;
+    letter-spacing: 0.02em;
+    transition: background .15s ease;
+  }
+  .next-step-btn:hover { background: #4f7ace; }
+
+  @media (max-width: 600px) {
+    body { padding: 32px 16px; }
+    .next-step { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .next-step-btn { width: 100%; text-align: center; }
+  }
+
+  /* Revenue Recovery panel (signal variant) */
+  .recovery-panel {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%);
+    border: 1px solid #86efac;
+    border-left: 4px solid #15803d;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .recovery-head { margin-bottom: 16px; }
+  .recovery-tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #15803d;
+    background: #dcfce7;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    margin-bottom: 8px;
+  }
+  .recovery-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #064e3b;
+    margin: 0;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .recovery-figure { margin-bottom: 18px; }
+  .recovery-range {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #15803d;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+  }
+  .recovery-unit { font-size: 0.9rem; color: #059669; font-weight: 600; }
+  .recovery-annual { font-size: 0.85rem; color: #047857; margin-top: 4px; }
+  .recovery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .recovery-cell {
+    background: rgba(255,255,255,0.7);
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .recovery-cell-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .recovery-cell-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    overflow-wrap: anywhere;
+  }
+  .recovery-cell-sub { font-size: 0.72rem; color: #6b7280; margin-top: 2px; line-height: 1.4; }
+  .recovery-footnote {
+    font-size: 0.75rem;
+    color: #4b5563;
+    line-height: 1.55;
+    margin: 0;
+    padding-top: 12px;
+    border-top: 1px dashed #bbf7d0;
+  }
+
+  /* Exposure panel (compliance variant) — risk framing in amber/red */
+  .exposure-panel {
+    background: linear-gradient(135deg, #fef2f2 0%, #fffbeb 100%);
+    border: 1px solid #fca5a5;
+    border-left: 4px solid #b91c1c;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .exposure-tag {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #991b1b;
+    background: #fee2e2;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    margin-bottom: 8px;
+  }
+  .exposure-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #7f1d1d;
+    margin: 0 0 16px;
+  }
+  .exposure-range {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #b91c1c;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+  }
+  .exposure-unit { font-size: 0.9rem; color: #991b1b; font-weight: 600; }
+  .exposure-sub { font-size: 0.85rem; color: #7f1d1d; margin-top: 4px; }
+  .exposure-components { margin-top: 18px; border-top: 1px dashed #fca5a5; padding-top: 14px; }
+  .exposure-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #fee2e2;
+    align-items: start;
+  }
+  .exposure-row:last-child { border-bottom: none; }
+  .exposure-row-statute { font-size: 0.82rem; font-weight: 700; color: #111827; }
+  .exposure-row-anchor { font-size: 0.72rem; color: #6b7280; margin-top: 2px; line-height: 1.4; }
+  .exposure-row-amount { font-size: 0.85rem; font-weight: 700; color: #b91c1c; font-family: monospace; white-space: nowrap; }
+  .exposure-footnote {
+    font-size: 0.75rem;
+    color: #4b5563;
+    line-height: 1.55;
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px dashed #fca5a5;
+  }
+
+  /* Responsive table — stacked cards below ~640px so 6-col tables don't collapse */
+  .responsive-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .responsive-table { min-width: 640px; }
+  /* Horizontal-scroll container for timeline-style tables (dense data, wide columns) */
+  .scroll-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .scroll-table-wrap::-webkit-scrollbar { height: 8px; }
+  .scroll-table-wrap::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+  /* Evidence-table is the fallback for any table not yet converted to .responsive-table.
+     It shouldn't overflow its container on mobile — wrap it and allow horizontal scroll. */
+  .evidence-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0; }
+  .evidence-table { min-width: 100%; }
+  /* Long URLs and monospace identifiers should wrap aggressively on mobile */
+  code, .mono { overflow-wrap: anywhere; word-break: break-word; }
+
+  /* Tablet — collapse 4-col signal grid to 2 cols, tighten padding */
+  @media (max-width: 768px) {
+    body { padding: 16px; }
+    h1 { font-size: 1.35rem; }
+    h2 { font-size: 1.05rem; }
+    .verdict { padding: 16px 18px; }
+    .exec-summary { padding: 16px 18px; }
+    .signal-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .gpc-panel { padding: 14px 16px; }
+    .gpc-row { flex-direction: column; gap: 2px; padding: 8px 0; }
+    .gpc-row .k { flex: none; font-size: 0.75rem; }
+    .gpc-row .v { font-size: 0.9rem; }
+    th, td { padding: 8px 10px; font-size: 0.8rem; }
+  }
+
+  /* Phone — stacked card layout for tables, 1-2 col signal grid */
+  @media (max-width: 640px) {
+    .responsive-table-wrap { overflow-x: visible; }
+    .responsive-table { min-width: 0; display: block; }
+    .responsive-table thead { display: none; }
+    .responsive-table tbody, .responsive-table tr { display: block; }
+    .responsive-table tr {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .responsive-table tr:last-child { border-bottom: none; }
+    .responsive-table tr:hover td { background: transparent; }
+    .responsive-table td {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 4px 0;
+      border: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 0.85rem;
+      word-break: break-word;
+    }
+    .responsive-table td::before {
+      content: attr(data-label);
+      color: #9ca3af;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      flex: 0 0 auto;
+      padding-top: 2px;
+    }
+    .responsive-table td > * { text-align: right; }
+    .responsive-table td.cell-vendor {
+      display: block;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 4px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .responsive-table td.cell-vendor::before { display: none; }
+    .responsive-table td.cell-notes {
+      display: block;
+      font-size: 0.8rem;
+      color: #4b5563;
+      line-height: 1.5;
+      margin-top: 6px;
+    }
+    .responsive-table td.cell-notes::before {
+      display: block;
+      margin-bottom: 4px;
+    }
+  }
+
+  /* Tablet — recovery grid drops to 2-col so the three stats stay readable */
+  @media (max-width: 768px) {
+    .recovery-panel { padding: 16px 18px; }
+    .recovery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .recovery-range { font-size: 1.75rem; }
+    .exposure-panel { padding: 16px 18px; }
+    .exposure-range { font-size: 1.75rem; }
+  }
+
+  @media (max-width: 640px) {
+    .recovery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .recovery-range { font-size: 1.55rem; line-height: 1.15; }
+    .recovery-unit { font-size: 0.8rem; display: block; margin-top: 2px; }
+    .recovery-footnote { font-size: 0.72rem; }
+    .section-header h2 { font-size: 0.98rem; line-height: 1.35; }
+    /* Wrapped sub-labels in the section header (e.g. pixel-evidence) shouldn't force horizontal scroll */
+    .section-header h2 span { display: block; margin-left: 0 !important; margin-top: 4px; }
+    /* Reg source header breaks nicely on long titles */
+    .reg-source { flex-wrap: wrap; gap: 4px; }
+    /* Exposure panel — stack amount under statute label at phone widths */
+    .exposure-range { font-size: 1.55rem; line-height: 1.15; }
+    .exposure-unit { font-size: 0.8rem; display: block; margin-top: 2px; }
+    .exposure-footnote { font-size: 0.72rem; }
+    .exposure-row { grid-template-columns: 1fr; gap: 4px; }
+    .exposure-row-amount { font-size: 0.92rem; }
+    .exposure-title { font-size: 0.88rem; line-height: 1.35; }
+    .next-step { flex-direction: column; align-items: flex-start; gap: 14px; padding: 18px 20px; }
+    .next-step-btn { width: 100%; text-align: center; }
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 12px; }
+    .container { padding: 0; }
+    h1 { font-size: 1.2rem; }
+    .signal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .signal-card { padding: 10px 12px; }
+    .signal-label { font-size: 0.65rem; }
+    .signal-value { font-size: 0.82rem; word-break: break-word; }
+    .signal-sub { font-size: 0.7rem; }
+    .verdict-title { font-size: 1.05rem; }
+    .section-header { padding: 12px 14px; }
+    .reg-chunk { padding: 12px 14px; }
+    .recovery-panel { padding: 14px 16px; }
+    .recovery-grid { grid-template-columns: 1fr; }
+    .recovery-range { font-size: 1.4rem; }
+    .recovery-cell-value { font-size: 1rem; }
+    .exposure-panel { padding: 14px 16px; }
+    .exposure-range { font-size: 1.4rem; }
+    .exposure-row-statute { font-size: 0.78rem; }
+    .exposure-row-anchor { font-size: 0.68rem; }
+    .exposure-row-amount { font-size: 0.88rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  
+
+  <h1>Consent Compliance Audit</h1>
+  <p class="meta">https://example.com &nbsp;·&nbsp; 2026-05-19 05:13:11 UTC &nbsp;·&nbsp; S3 — Definitive (Privacy Logic Enforcement Test)</p>
+
+  <!-- SECTION A — EXECUTIVE SUMMARY -->
+
+  
+  
+  
+  
+  <div class="verdict clean">
+    <p class="verdict-title">
+      
+        No Consent Violations Detected
+      
+    </p>
+    <p class="verdict-sub">
+      
+        0 confirmed violations &nbsp;·&nbsp;
+        1 vendor analyzed &nbsp;·&nbsp;
+        s3_fresh_load_optout_preset
+      
+    </p>
+  </div>
+
+  <div class="exec-summary">
+    <h2>Executive Summary</h2>
+    <p>No confirmed consent violations were detected at https://example.com under the s3_fresh_load_optout_preset methodology.</p>
+  </div>
+
+  
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  <!-- GPC SIGNAL TEST -->
+  
+    
+      
+      
+    
+  <div class="gpc-panel untested">
+    <h3>GPC Signal Test <span class="tag">Inconclusive</span></h3>
+    <div class="gpc-row">
+      <div class="k">Sec-GPC: 1 header sent on all requests</div>
+      <div class="v ok">
+        YES
+      </div>
+    </div>
+    <div class="gpc-row">
+      <div class="k">navigator.globalPrivacyControl = true</div>
+      <div class="v ok">
+        YES
+      </div>
+    </div>
+    <div class="gpc-row">
+      <div class="k">Site honored GPC signal</div>
+      
+      <div class="v">Inconclusive</div>
+      
+    </div>
+    <div class="gpc-row">
+      <div class="k">Baseline pixel firings (S3 opt-out)</div>
+      <div class="v">0</div>
+    </div>
+    <div class="gpc-row">
+      <div class="k">Pixel firings under GPC</div>
+      <div class="v ok">
+        0
+      </div>
+    </div>
+    <p style="margin: 10px 0 0; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
+      Under CCPA/CPRA, GPC is a legally binding opt-out signal. California's CPPA has stated
+      GPC non-compliance is enforceable without prior notice.
+    </p>
+  </div>
+  
+
+  <div class="signal-grid">
+    <div class="signal-card">
+      <div class="signal-label">GCS Signal</div>
+      <div class="signal-value">None</div>
+      <div class="signal-sub">
+        
+          No consent mode detected
+        
+      </div>
+    </div>
+    <div class="signal-card">
+      <div class="signal-label">GTM Container</div>
+      <div class="signal-value">Not detected</div>
+      <div class="signal-sub">none</div>
+    </div>
+    
+    <div class="signal-card">
+      <div class="signal-label">CMP Interaction</div>
+      <div class="signal-value">
+        
+          Cookie injection (OneTrust)
+        
+      </div>
+    </div>
+    
+    
+    <div class="signal-card">
+      <div class="signal-label">Jurisdiction</div>
+      
+      <div class="signal-value">
+        United States (CCPA / State Laws)
+      </div>
+      <div class="signal-sub">auto-detected</div>
+    </div>
+    
+    <div class="signal-card">
+      <div class="signal-label">Server-Side GTM</div>
+      <div class="signal-value">Not detected</div>
+      <div class="signal-sub">&mdash;</div>
+    </div>
+    <div class="signal-card">
+      <div class="signal-label">GPC Tested</div>
+      <div class="signal-value">Yes</div>
+      <div class="signal-sub">Sec-GPC: 1 header</div>
+    </div>
+    
+    
+  </div>
+
+  
+
+  <!-- SECTION B — TECHNICAL EVIDENCE -->
+
+  <div class="section">
+    <div class="section-header">
+      <h2>Vendor Tracking Findings</h2>
+    </div>
+    
+    <div class="responsive-table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Signal / Cookie</th>
+            <th>Category</th>
+            <th>Legal Risk</th>
+            <th>Status</th>
+            <th>Observation</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">OneTrust</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>OptanonConsent, OptanonAlertBoxClosed</span></td>
+            <td data-label="Category"><span>Functional</span></td>
+            <td data-label="Legal Risk">
+              
+                <span class="badge badge-gray">Unknown</span>
+              
+            </td>
+            <td data-label="Status">
+              
+                <span class="badge badge-green">Passed</span>
+              
+            </td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">&mdash;</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+    
+  </div>
+
+  
+
+  
+
+  
+
+  <!-- REMEDIATION — derived per-finding fix steps -->
+
+  
+
+  <!-- OPEN GAPS — items requiring follow-up investigation -->
+
+  
+  <div class="section">
+    <div class="section-header">
+      <h2>Open Gaps <span style="font-size:0.75rem;font-weight:400;color:var(--muted);margin-left:8px;">requires manual follow-up</span></h2>
+    </div>
+    <div style="padding: 16px 22px 18px;">
+      <ul style="margin: 0; padding-left: 1.4em;">
+        
+        <li style="margin-bottom: 10px; font-size: 0.9rem; line-height: 1.6; color: var(--text);">OneTrust cookies (<code>OptanonConsent</code>) were observed but the OneTrust JS API was not detected during the scan window. The CMP is likely loading asynchronously past the networkidle threshold. Manually verify by inspecting <code>window.OneTrust</code> in browser DevTools, then consider re-scanning with a longer wait.</li>
+        
+      </ul>
+    </div>
+  </div>
+  
+
+  <!-- SECTION C — PIXEL ENDPOINT EVIDENCE -->
+
+  
+
+  <!-- REGULATORY BASIS -->
+
+  
+  <div class="section">
+    <div class="section-header">
+      <h2>Regulatory Basis</h2>
+    </div>
+    <div style="padding: 16px 20px;">
+      
+      <div class="reg-chunk">
+        <div class="reg-source">Consent Mode — Reporting Impact and Business Case</div>
+        <div class="reg-text-wrap">
+          <div class="reg-text"><h2>Why Compliance ≠ Data Destruction</h2>
+<p>The compliance argument and the commercial argument for proper Consent Mode implementation are aligned, not in tension:<br />
+- Without proper consent signals: advertising data is both legally questionable AND commercially degraded<br />
+- Properly implemented Consent Mode V2 satisfies GDPR requirements AND preserves advertising performance<br />
+- An audit finding of "CMP present but Consent Mode not implemented" is simultaneously a legal risk AND a business performance problem</p>
+<h2>Conversion Data Loss Estimates</h2>
+<p>Sites that implement consent banners WITHOUT Consent Mode V2:<br />
+- EU/UK sites: <strong>30–50% of conversions go unattributed</strong><br />
+- Sites with cookie walls: up to <strong>60% unattributed</strong> in opt-in jurisdictions<br />
+- Advanced Consent Mode with modeling: recovers approximately <strong>65–80%</strong> of lost conversions<br />
+- Basic Consent Mode: no recovery — conversions simply absent from reports</p></div>
+        </div>
+      </div>
+      
+      <div class="reg-chunk">
+        <div class="reg-source">Google Consent Mode V2 — Technical Reference</div>
+        <div class="reg-text-wrap">
+          <div class="reg-text"><h2>What It Does</h2>
+<p>Consent Mode is a signaling system between a CMP and Google tags (GA4, Google Ads). When consent is denied, tags adjust behavior:<br />
+- <strong>Basic Mode:</strong> Tags are completely blocked — no data reaches Google<br />
+- <strong>Advanced Mode:</strong> Tags fire but send cookieless "pings" for behavioral modeling</p>
+<p>Mandatory for EEA/UK advertisers using audience features or remarketing since <strong>March 2024</strong>.</p>
+<h2>GCS Parameter (Network Evidence)</h2>
+<p>The <code>gcs=</code> URL parameter in Google Analytics and DoubleClick requests encodes consent state.<br />
+Format: <code>G1AB</code> where <code>A</code> = ad_storage, <code>B</code> = analytics_storage. <code>0</code> = denied, <code>1</code> = granted, <code>-</code> = unset.</p>
+<table>
+<thead>
+<tr>
+<th>GCS Value</th>
+<th>ad_storage</th>
+<th>analytics_storage</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>G111</code></td>
+<td>granted</td>
+<td>granted</td>
+<td>All consent granted (or Consent Mode not configured)</td>
+</tr>
+<tr>
+<td><code>G100</code></td>
+<td>denied</td>
+<td>denied</td>
+<td>Full opt-out — ACM cookieless pings only</td>
+</tr>
+<tr>
+<td><code>G101</code></td>
+<td>denied</td>
+<td>granted</td>
+<td><strong>Partial opt-out</strong> — ad tracking denied, analytics still active</td>
+</tr>
+<tr>
+<td><code>G110</code></td>
+<td>granted</td>
+<td>denied</td>
+<td>Partial opt-out — analytics denied, ad tracking still active</td>
+</tr>
+<tr>
+<td><code>G1--</code></td>
+<td>unset</td>
+<td>unset</td>
+<td>Consent Mode present but signals not yet set (timing/race condition)</td>
+</tr>
+<tr>
+<td>No gcs=</td>
+<td>n/a</td>
+<td>n/a</td>
+<td>Basic Consent Mode (tag blocked entirely) or no Consent Mode</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key audit signals for S3 opt-out tests:</strong><br />
+- <code>G100</code> = ACM correctly implemented — cookieless pings only, correct response to opt-out<br />
+- <code>G101</code> = <strong>Partial CCPA compliance</strong> — ad_storage denied but analytics_storage still granted. Under CCPA, "Do Not Sell" must cover analytics profiling, not just ad delivery. This is a compliance gap.<br />
+- <code>G110</code> = Partial compliance (inverse — rare in practice)<br />
+- <code>G111</code> in S3 test = CMP integration failure — opt-out not propagating to Consent Mode at all</p>
+<p><strong>Key audit signal:</strong> If <code>gcs=G100</code> appears in network requests → the tag FIRED despite denied consent. This is Advanced Consent Mode — the tag is not blocked, it sends a cookieless ping.</p></div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  <!-- SECTION D — MANUAL VALIDATION -->
+
+  
+  <div class="section">
+    <div class="section-header">
+      <h2>Manual Validation Checklist</h2>
+    </div>
+    <div style="padding: 10px 16px 4px; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
+      Reproduce each finding in a browser to confirm audit accuracy. All steps assume incognito mode with a California VPN or geolocation override.
+    </div>
+    <div style="padding: 8px 20px 16px;">
+      
+      <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;">
+        <div style="font-size: 0.82rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
+          1. CMP Banner Presence
+        </div>
+        <div style="font-size: 0.8rem; color: #374151; line-height: 1.5; margin-bottom: 6px;">
+          <strong>Check:</strong> Verify consent banner appears for California visitors.
+        </div>
+        <div style="font-size: 0.78rem; color: #4b5563; line-height: 1.5; margin-bottom: 6px;">
+          <strong>Steps:</strong> Open an incognito window. Use a VPN set to Los Angeles, CA (or Chrome DevTools > Sensors > Location: Los Angeles). Navigate to the site. The consent banner should appear on first visit.
+        </div>
+        <div style="font-size: 0.78rem; color: #374151; line-height: 1.5; background: #fff; border-radius: 4px; padding: 8px 10px; border: 1px solid #e5e7eb;">
+          <strong>Expected:</strong> Banner appears with Reject/Deny option. Our scan detected consent banner via cookie injection.Our scan did NOT see a visible banner. The CMP may be IP-gated to specific regions.
+        </div>
+      </div>
+      
+      <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;">
+        <div style="font-size: 0.82rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
+          2. GPC Signal (Sec-GPC: 1)
+        </div>
+        <div style="font-size: 0.8rem; color: #374151; line-height: 1.5; margin-bottom: 6px;">
+          <strong>Check:</strong> Verify the site respects the Global Privacy Control signal.
+        </div>
+        <div style="font-size: 0.78rem; color: #4b5563; line-height: 1.5; margin-bottom: 6px;">
+          <strong>Steps:</strong> Install a GPC browser extension (e.g., OptMeowt or Privacy Badger with GPC enabled). Navigate to the site. Check: (1) Does the CMP auto-set to opt-out? (2) In DevTools > Network, do request headers include 'Sec-GPC: 1'? (3) Does navigator.globalPrivacyControl return true in Console?
+        </div>
+        <div style="font-size: 0.78rem; color: #374151; line-height: 1.5; background: #fff; border-radius: 4px; padding: 8px 10px; border: 1px solid #e5e7eb;">
+          <strong>Expected:</strong> Under CCPA/CPRA, GPC is a legally binding opt-out signal. The CMP should auto-deny consent when GPC is detected. California's CPPA has stated GPC non-compliance is enforceable without prior notice.
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  <div class="next-step">
+    <div class="next-step-copy">
+      <div class="next-step-eyebrow">Next step</div>
+      <div class="next-step-title">
+        
+          Want help turning these findings into a remediation plan?
+        
+      </div>
+      <div class="next-step-sub">Reach out to walk the findings with Kenneth.</div>
+    </div>
+    <a class="next-step-btn" href="https://kennethjbuchanan.com/contact">Get in Touch &rarr;</a>
+  </div>
+
+  <footer>
+    Generated by Consent Compliance Agent &nbsp;·&nbsp; Audit ID: 52d193d8-e5a4-41f7-b385-dd2e08cc66af
+  </footer>
+
+</div>
+</body>
+</html>

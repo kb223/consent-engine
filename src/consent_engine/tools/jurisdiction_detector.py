@@ -287,10 +287,32 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
         return "EU"
     if suffix in _CA_TLDS:
         return "CA"
+
+    # 2. Generic TLD (.com / .io / .net / …). Don't default to US blindly —
+    #    honor explicit developer-set signals first. og:locale, html-lang with
+    #    country subtag, and geo.region are intentionally declared markers
+    #    (set by the developer, not by a CDN shipping list), so they're
+    #    treated as STRONG signals. hreflang tags are weaker (often
+    #    international-shipping noise on a US-primary .com) and skipped here.
+    #    Tesco.com (UK retailer on .com) is the canonical case the old
+    #    "return US immediately on generic TLD" rule got wrong.
     if suffix in _US_DEFAULT_TLDS:
+        # Check CA before EU when both signals fire: a Quebec French page
+        # (lang="fr-CA") trips is_eu=True via the "fr" primary lang code AND
+        # is_ca=True via the country subtag. The country tag is more specific,
+        # so CA wins.
+        any_eu = False
+        for fn in (_og_locale_signals, _lang_signals, _geo_region_signals):
+            is_eu, is_ca = fn(page_html)
+            if is_ca:
+                return "CA"
+            any_eu = any_eu or is_eu
+        if any_eu:
+            return "EU"
         return "US"
 
-    # 2. Ambiguous TLD — fall back to content signals (strictest-wins).
+    # 3. Truly ambiguous TLD — fall back to all content signals (CA before EU,
+    # same precedence rule: country subtag wins over primary-lang heuristic).
     any_eu = False
     any_ca = False
 
@@ -299,8 +321,8 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
         any_eu = any_eu or is_eu
         any_ca = any_ca or is_ca
 
-    if any_eu:
-        return "EU"
     if any_ca:
         return "CA"
+    if any_eu:
+        return "EU"
     return "US"
