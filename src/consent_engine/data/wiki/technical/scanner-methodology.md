@@ -32,7 +32,7 @@ S1 plus: automated CMP interaction to click "Reject All" / "Do Not Sell". Measur
 
 **Limitation:** Requires accurate CMP detection and button selection. Shadow DOM, iframes, and unusual CMP builds can cause interaction failures (silent non-click).
 
-### S3 — Pre-Set Opted-Out Scan (Primary Methodology)
+### Pre-Set Opted-Out Scan (Primary Methodology)
 
 Fresh browser context. Inject opted-out consent state (cookies/localStorage/headers) BEFORE page load. Reload page. Measure everything.
 
@@ -42,7 +42,7 @@ Fresh browser context. Inject opted-out consent state (cookies/localStorage/head
 - Pixel endpoint firings (network-level evidence of tracking violation)
 - Cookie violations (tracking cookies set despite opted-out state)
 
-**Why S3 is the primary methodology:**
+**Why the opt-out pass is the primary methodology:**
 - Eliminates banner interaction variability
 - Matches how courts evaluate evidence: "did tracking fire after the user communicated a preference not to be tracked?"
 - Pre-set denial state is equivalent to a returning user who previously rejected
@@ -62,7 +62,7 @@ Both are required. Some sites check the HTTP header server-side; others check th
 2. Tracking requests to ad domains absent from network log
 3. `/.well-known/gpc.json` endpoint exists and declares `gpc: true`
 
-**Compare GPC-on vs GPC-off:** If the set of tracking domains contacted is identical between GPC scan and standard S3 scan, the site is ignoring the signal. This is a separate, independent violation from the CMP-based opt-out failure.
+**Compare GPC-on vs GPC-off:** If the set of tracking domains contacted is identical between GPC scan and standard opt-out scan, the site is ignoring the signal. This is a separate, independent violation from the CMP-based opt-out failure.
 
 **Enforcement context:** CPPA/California AB 566 signed 2025 — browser-level GPC support mandatory by January 1, 2027. CPPA enforcement sweep (Sept 2025) targeted sites receiving `Sec-GPC: 1` from CA IP that continue to fire ad tracking. GPC non-compliance is immediately enforceable without prior warning under CA CPPA guidance.
 
@@ -70,19 +70,19 @@ Both are required. Some sites check the HTTP header server-side; others check th
 
 ## Three-Phase Capture Model (CNIL / EU Methodology)
 
-EU regulatory auditors (CNIL, ICO, EDPB) use a three-phase model that our S3 primarily covers phase 3 of:
+EU regulatory auditors (CNIL, ICO, EDPB) use a three-phase model that our primary opt-out pass primarily covers phase 3 of:
 
 | Phase | Description | What to capture |
 |---|---|---|
 | **Phase 1** — Pre-banner | Page loads, banner not yet visible | Any tracking requests firing before user sees consent UI |
 | **Phase 2** — Banner visible, no interaction | Banner displayed, user hasn't acted | Tracking that fires while banner is on screen |
-| **Phase 3** — Post-rejection | User clicks Reject All | Whether tracking stops (our primary S3 check) |
+| **Phase 3** — Post-rejection | User clicks Reject All | Whether tracking stops (our primary opt-out check) |
 
 **CNIL specific:** Requires capturing localStorage, sessionStorage, and IndexedDB — not just HTTP cookies. Under ePrivacy Article 5(3), "reading or writing to terminal" in any storage is in scope.
 
 **ICO 2025 finding:** 30% of top 1,000 UK sites set advertising cookies without consent (Phase 1 violation). ICO requires "Reject all" on layer 1 (not buried in settings) and equal visual prominence to "Accept all."
 
-**Scanner enhancement needed:** Phase 1 and Phase 2 capture is not yet implemented. Currently all captures are Phase 3 (S3 methodology). Phase 1 would require a separate scan without any consent injection.
+**Scanner enhancement needed:** Phase 1 and Phase 2 capture is not yet implemented. Currently all captures are Phase 3 (opt-out methodology). Phase 1 would require a separate scan without any consent injection.
 
 ---
 
@@ -123,7 +123,7 @@ When Advanced Consent Mode is active and user has denied consent, Google tags st
 
 **Detection rule:** Google Analytics/Ads domain request + `gcs` denial state (`0` in position 3 or 4) + no persistent tracking cookie (`_ga`, `_gcl_au`) = ACM ping, not a violation.
 
-**Violation flag:** Google domain request + `gcs=G111` (both granted) in an S3 opted-out test = CMP integration failure. Flag this.
+**Violation flag:** Google domain request + `gcs=G111` (both granted) in an opt-out test = CMP integration failure. Flag this.
 
 ### 2. Consent Initialization Trigger
 
@@ -180,7 +180,7 @@ Some CMPs show different banners to different geographies. A site compliant for 
 
 ## Known Scan Accuracy Limitations
 
-1. **Phase 1 capture not implemented** — Pre-consent traffic (before banner is visible) is not captured in S3. This is what EU regulators primarily check. Add as a distinct S0/S1 scan mode.
+1. **Phase 1 capture not implemented** — Pre-consent traffic (before banner is visible) is not captured by the primary opt-out pass. This is what EU regulators primarily check. A separate baseline pass without consent injection would close the gap.
 
 2. **Full request payload not logged** — Currently capturing URLs only, not decoded POST bodies. GA4 `collect` calls use POST; `dl` and `dp` params are in the POST body, not URL. CIPA evidence requires full payload.
 

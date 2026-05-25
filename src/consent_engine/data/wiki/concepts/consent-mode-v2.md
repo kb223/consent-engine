@@ -25,11 +25,11 @@ Format: `G1AB` where `A` = ad_storage, `B` = analytics_storage. `0` = denied, `1
 | `G1--` | unset | unset | Consent Mode present but signals not yet set (timing/race condition) |
 | No gcs= | n/a | n/a | Basic Consent Mode (tag blocked entirely) or no Consent Mode |
 
-**Key audit signals for S3 opt-out tests:**
+**Key audit signals for opt-out tests:**
 - `G100` = ACM correctly implemented — cookieless pings only, correct response to opt-out
 - `G101` = **Partial CCPA compliance** — ad_storage denied but analytics_storage still granted. Under CCPA, "Do Not Sell" must cover analytics profiling, not just ad delivery. This is a compliance gap.
 - `G110` = Partial compliance (inverse — rare in practice)
-- `G111` in S3 test = CMP integration failure — opt-out not propagating to Consent Mode at all
+- `G111` in an opt-out test = CMP integration failure — opt-out not propagating to Consent Mode at all
 
 **Key audit signal:** If `gcs=G100` appears in network requests → the tag FIRED despite denied consent. This is Advanced Consent Mode — the tag is not blocked, it sends a cookieless ping.
 
@@ -174,7 +174,7 @@ consent, but the fix paths differ and the report copy reflects that.
 Two distinct cookie-behavior questions exist under ACM with denied consent:
 
 1. **Fresh-context denied — "should cookies be SET?"**
-   *Answer per Google: no.* Tested by this scanner via the S3 methodology
+   *Answer per Google: no.* Tested by this scanner via the primary opt-out methodology
    (fresh browser context, denial pre-injected, page loaded). `_ga` + GCS=G100
    here = the cookie-suppression layer of ACM is broken.
 
@@ -185,7 +185,7 @@ Two distinct cookie-behavior questions exist under ACM with denied consent:
    delete the stored information." Without `ads_data_redaction`, prior cookies
    persist on disk but are not used.
 
-The current scanner tests question #1 only (fresh-context S3). Question #2
+The current scanner tests question #1 only (fresh-context opt-out scan). Question #2
 requires a session-continuity scan mode — granted → revoked mid-session —
 that has not been built yet. Per the project's `concepts/consent-mode-v2.md`,
 this distinction is recorded so buyers can interpret the scope correctly:

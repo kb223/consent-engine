@@ -48,7 +48,7 @@ Total pages: 15
 | [technical/google-tag-gateway.md](technical/google-tag-gateway.md) | GTG vs custom SSGTM — how to distinguish compliant from non-compliant server-side setup |
 | [technical/consent-mode-impact.md](technical/consent-mode-impact.md) | Data loss estimates (30–50%), ROAS impact, modeling reality (23% vs 65% promise) |
 | [technical/cmp-profiles.md](technical/cmp-profiles.md) | 35+ CMP technical profiles — JS globals, cookie names, JS APIs, shadow DOM, injection values (April 2026) |
-| [technical/scanner-methodology.md](technical/scanner-methodology.md) | S1/S2/S3 scan methodology, false positive patterns, GPC testing, EU vs US scanner differences |
+| [technical/scanner-methodology.md](technical/scanner-methodology.md) | Pre-set opted-out scan methodology, baseline vs opt-out vs GPC passes, false positive patterns, EU vs US scanner differences |
 
 ---
 
