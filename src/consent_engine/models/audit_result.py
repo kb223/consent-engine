@@ -105,6 +105,58 @@ class VendorFinding(BaseModel):
     notes: str = ""
 
 
+class CMPRuntimeConfig(BaseModel):
+    """What the CMP's own runtime API reports about itself.
+
+    Populated by `tool_cmp_runtime_introspect` after the page loads and the
+    CMP SDK initializes. Lets the audit compare "what the CMP THINKS it is
+    doing" (this object) against "what actually happens" (network capture
+    + cookies). Mismatches are the most material forensic finding type
+    because they prove the CMP is misconfigured, not that the operator is
+    making a judgment call about gray-area enforcement.
+
+    Currently OneTrust-only; per-CMP extractors planned for v0.5.8+
+    (Cookiebot, CookieYes, Didomi, Usercentrics, TrustArc, Sourcepoint).
+    """
+
+    cmp_name: str
+    template_name: str | None = None
+    geolocation_rule: str | None = None  # e.g. "Global Audience (loi 25-GDPR)"
+    geolocation_country: str | None = None  # e.g. "CA"
+    consent_model: Literal["opt-in", "opt-out", "implicit", "unknown"] = "unknown"
+    expected_cookies_by_category: dict[str, list[str]] = {}
+    expected_vendor_ids: list[str] = []
+    script_version: str | None = None
+    domain_id: str | None = None
+    raw_dump: str | None = None  # truncated raw output for forensic record
+
+
+class ConsentEvent(BaseModel):
+    """Single consent-related dataLayer push captured during the scan.
+
+    Filtered narrowly to consent signals (gtag consent commands, CMP-specific
+    events like OneTrustGroupsUpdated, custom consent events) — not the full
+    dataLayer stream. Order is preserved via `index_in_stream` so race-
+    condition forensics (CMP loads after first GA hit, etc.) are possible.
+    """
+
+    index_in_stream: int  # position in window.dataLayer
+    source: Literal[
+        "gtag_consent_default",
+        "gtag_consent_update",
+        "onetrust_groups_updated",
+        "onetrust_loaded",
+        "cookieyes_consent",
+        "cookiebot",
+        "didomi",
+        "usercentrics",
+        "tcfapi",
+        "custom_consent",
+    ]
+    event_name: str | None = None  # raw 'event' key from the dataLayer entry
+    params: dict[str, str] = {}  # flattened key-value pairs
+
+
 class AuditResult(BaseModel):
     audit_id: str
     url: str
@@ -150,3 +202,8 @@ class AuditResult(BaseModel):
     ] = []  # Network-level pixel endpoint detections (plaintiff evidence)
     open_gaps: list[str] = []
     remediation: list[str] = []
+    # CMP runtime introspection — what the CMP reports about itself via its
+    # JS API. None when the CMP doesn't expose an API we know how to call.
+    cmp_runtime_config: CMPRuntimeConfig | None = None
+    # Consent-event dataLayer pushes — narrowed to consent signals only.
+    consent_events: list[ConsentEvent] = []

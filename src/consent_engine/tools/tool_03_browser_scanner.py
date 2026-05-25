@@ -1556,6 +1556,18 @@ async def scan_page_fast(
         except (TimeoutError, Exception):
             cmp_profile = None
 
+        # CMP runtime introspection — what the CMP itself reports via JS API
+        # (OneTrust template name, geolocation rule, consent model, expected
+        # cookies). Currently OneTrust-only; other CMPs land in v0.5.8+.
+        # Both extractors are safe-by-default: timeout + exception swallowed.
+        from consent_engine.tools.cmp_runtime_introspect import (
+            extract_consent_events,
+            extract_onetrust_runtime,
+        )
+
+        cmp_runtime_config = await extract_onetrust_runtime(page)
+        consent_events_captured = await extract_consent_events(page)
+
         raw_cookies = await context.cookies()
 
         # Capture page HTML for og:image / favicon / jurisdiction detection
@@ -1676,6 +1688,8 @@ async def scan_page_fast(
         bot_detection_encountered=bot_detection_encountered,
         scan_mode_used="playwright",
         har_path=None,
+        cmp_runtime_config=cmp_runtime_config,
+        consent_events=consent_events_captured,
     )
 
     # Retry via Scrapling's Camoufox-backed stealthy fetcher when the primary

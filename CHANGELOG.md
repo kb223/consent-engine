@@ -3,6 +3,64 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.7] — 2026-05-25 — CMP runtime introspection + consent-event stream capture
+
+First introspection release. Reads what the CMP itself reports via its
+JavaScript API, captures the consent-only dataLayer pushes, and surfaces
+both in the report + deck. Turns the audit from "we observed X" into
+"the CMP **said** it was doing X, here is what actually happened" —
+which is the framing that holds up under cross-examination.
+
+### Added
+- **`tools/cmp_runtime_introspect.py`** — new module with two extractors:
+  - `extract_onetrust_runtime(page)` calls `OneTrust.testLog()` via a
+    Playwright console listener (catches everything testLog logs verbatim,
+    survives SDK-version wording changes), then parses out `template_name`
+    (e.g. `Loi-25v1.1`), `geolocation_rule` (e.g. `Global Audience (loi 25-GDPR)`),
+    `geolocation_country`, `consent_model` (opt-in / opt-out / implicit),
+    `script_version`. Also pulls structured data from `OneTrust.GetDomainData()`
+    for `expected_cookies_by_category` (4 OneTrust categories, all declared
+    cookies) and `expected_vendor_ids`. Five-second timeout, fails closed.
+  - `extract_consent_events(page)` snapshots `window.dataLayer` and filters
+    to consent-only pushes: `gtag('consent', 'default', ...)`,
+    `gtag('consent', 'update', ...)`, `OneTrustGroupsUpdated`,
+    `OneTrustLoaded`, Cookiebot / CookieYes / Didomi / Usercentrics native
+    events, `__tcfapi` callbacks, and any custom event whose name contains
+    "consent". Preserves firing order via `index_in_stream` for race-condition
+    forensics.
+- **New Pydantic models** `CMPRuntimeConfig` and `ConsentEvent` on
+  `AuditResult.cmp_runtime_config` + `AuditResult.consent_events`.
+  Plumbed through `ScanResult` → `AuditResult` → `audit_result.json`.
+- **Report:** new "CMP Runtime Configuration" section showing template,
+  geo rule, geo country, consent model, script version, and the
+  expected-cookies-by-category map. New "Consent Event Stream" section
+  showing the ordered consent pushes with their params. New "CMP Template"
+  signal card in the top dashboard.
+- **Deck:** new "CMP Self-Report · Ground Truth" slide rendering the
+  same template / geo / consent-model table.
+- **RAG retriever:** when `cmp_runtime_config.template_name` or
+  `geolocation_rule` contains "GDPR" and jurisdiction is CA, also pulls
+  `regulations/gdpr.md` so reports for Law 25 + GDPR hybrid templates
+  (the Hydro-Québec pattern) cite both frameworks. Surfaced as 21+ Quebec
+  / PIPEDA / Law 25 / GDPR cross-references in a representative report.
+- **Vendor library + 5:** Qualtrics SiteIntercept, YouTube embed cookies
+  (VISITOR_INFO1_LIVE, VISITOR_PRIVACY_METADATA, YSC, __Secure-3PSIDCC, …),
+  Facebook page-set cookies (ps_n, nextId, TESTCOOKIESENABLED), generic
+  Google cookies (NID, CONSENT, 1P_JAR), and Cloudflare bot-mgmt (`__cf_bm`,
+  classified essential C0001 to avoid false-positive). All with full
+  CCPA / GDPR / CIPA risk annotations.
+
+### Smoke-tested on
+- `hydroquebec.com` (CA, OneTrust, Law 25-GDPR template) — full runtime
+  config extracted, 3 consent events captured (`gtag_consent_update`,
+  `OneTrustLoaded`, `OneTrustGroupsUpdated`), report cites Quebec Law 25
+  + PIPEDA + GDPR.
+
+### Coverage roadmap (deferred)
+- v0.5.8: Cookiebot + CookieYes runtime introspection
+- v0.5.9: Didomi + Usercentrics + TrustArc
+- v0.6.0: Sourcepoint + CookieInformation + Klaro
+
 ## [0.5.6] — 2026-05-25 — CMP detection robustness + `--jurisdiction` override
 
 Same-day patch addressing two findings from a live audit of `hydroquebec.com`.

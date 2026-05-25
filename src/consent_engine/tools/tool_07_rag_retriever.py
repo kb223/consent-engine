@@ -192,6 +192,19 @@ def _select_page_keys(audit_result: AuditResult) -> list[str]:
         # floor. Pull both. The report writer surfaces Law 25 first.
         keys.append("quebec")
 
+    # If the CMP itself reports a GDPR template (common pattern: Canadian
+    # orgs serving the stricter Law 25 + GDPR hybrid template, EU orgs on
+    # .com domains, anyone applying GDPR as the global default), also pull
+    # the EU regulatory pages so the report cites both frameworks. This is
+    # additive — runs alongside the jurisdiction keys above.
+    rc = audit_result.cmp_runtime_config
+    if rc is not None:
+        cmp_signals = " ".join(
+            s for s in (rc.template_name, rc.geolocation_rule) if s
+        ).lower()
+        if "gdpr" in cmp_signals and "eu_jurisdiction" not in keys:
+            keys.append("eu_jurisdiction")
+
     # GPC signal
     if audit_result.gpc_tested and has_violations:
         keys.append("gpc_violation")

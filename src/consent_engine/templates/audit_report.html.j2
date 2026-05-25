@@ -966,6 +966,13 @@
       <div class="signal-sub">{{ (result.cmp_detection_confidence|capitalize) ~ ' confidence' if result.cmp_detection_confidence else 'Auto-detected' }}</div>
     </div>
     {% endif %}
+    {% if result.cmp_runtime_config and result.cmp_runtime_config.template_name %}
+    <div class="signal-card">
+      <div class="signal-label">CMP Template</div>
+      <div class="signal-value" style="font-size: 1.05em;">{{ result.cmp_runtime_config.template_name }}</div>
+      <div class="signal-sub">{{ result.cmp_runtime_config.consent_model|capitalize }} model{% if result.cmp_runtime_config.geolocation_country %} · {{ result.cmp_runtime_config.geolocation_country }}{% endif %}</div>
+    </div>
+    {% endif %}
     {% if result.bot_detection_encountered %}
     <div class="signal-card">
       <div class="signal-label">Detection</div>
@@ -1135,6 +1142,75 @@
           {% endfor %}
         </tbody>
       </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.cmp_runtime_config %}
+  <div class="section">
+    <div class="section-header">
+      <h2>CMP Runtime Configuration <span style="font-size:0.75rem;font-weight:400;color:#6b7280;margin-left:8px;">what the CMP itself reports</span></h2>
+    </div>
+    <p style="font-size:0.9em;color:var(--muted);margin:0 0 12px 0;">Captured directly from the CMP's JavaScript API during the scan. This is ground truth for what the CMP <em>thinks</em> it is doing. Mismatches between this and observed network behavior (below) are forensic evidence of CMP misconfiguration, not gray-area judgment calls.</p>
+    <div class="scroll-table-wrap">
+    <table class="evidence-table" style="min-width: 520px;">
+      <tbody>
+        <tr><th style="text-align:left;white-space:nowrap;">CMP</th><td>{{ result.cmp_runtime_config.cmp_name }}</td></tr>
+        {% if result.cmp_runtime_config.template_name %}
+        <tr><th style="text-align:left;white-space:nowrap;">Template</th><td><code>{{ result.cmp_runtime_config.template_name }}</code></td></tr>
+        {% endif %}
+        {% if result.cmp_runtime_config.geolocation_rule %}
+        <tr><th style="text-align:left;white-space:nowrap;">Geolocation Rule</th><td>{{ result.cmp_runtime_config.geolocation_rule }}</td></tr>
+        {% endif %}
+        {% if result.cmp_runtime_config.geolocation_country %}
+        <tr><th style="text-align:left;white-space:nowrap;">Geo Country</th><td>{{ result.cmp_runtime_config.geolocation_country }}</td></tr>
+        {% endif %}
+        <tr><th style="text-align:left;white-space:nowrap;">Consent Model</th><td>{{ result.cmp_runtime_config.consent_model|capitalize }}</td></tr>
+        {% if result.cmp_runtime_config.script_version %}
+        <tr><th style="text-align:left;white-space:nowrap;">Script Version</th><td><code>{{ result.cmp_runtime_config.script_version }}</code></td></tr>
+        {% endif %}
+        {% if result.cmp_runtime_config.expected_cookies_by_category %}
+        <tr><th style="text-align:left;white-space:nowrap;vertical-align:top;">Expected Cookies (by category)</th><td>
+          {% for cat, cookies in result.cmp_runtime_config.expected_cookies_by_category.items() %}
+          <div style="margin-bottom:4px;"><strong>{{ cat }}</strong>: <span style="color:var(--muted);font-size:0.85em;">{{ cookies|length }} cookies declared</span></div>
+          {% endfor %}
+        </td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.consent_events %}
+  <div class="section">
+    <div class="section-header">
+      <h2>Consent Event Stream <span style="font-size:0.75rem;font-weight:400;color:#6b7280;margin-left:8px;">dataLayer pushes (consent-only)</span></h2>
+    </div>
+    <p style="font-size:0.9em;color:var(--muted);margin:0 0 12px 0;">Consent-related pushes captured from <code>window.dataLayer</code>, in firing order. Race conditions (CMP loading after the first GA hit, default-granted defaults that should be denied) surface here. Non-consent events (page_view, click, ecommerce) are intentionally filtered out.</p>
+    <div class="scroll-table-wrap">
+    <table class="evidence-table" style="min-width: 720px;">
+      <thead>
+        <tr>
+          <th style="white-space:nowrap;">#</th>
+          <th>Source</th>
+          <th>Event</th>
+          <th>Params</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ev in result.consent_events %}
+        <tr>
+          <td>{{ ev.index_in_stream }}</td>
+          <td><code>{{ ev.source }}</code></td>
+          <td>{{ ev.event_name or '—' }}</td>
+          <td style="font-size:0.85em;">
+            {% for k, v in ev.params.items() %}<div><code>{{ k }}</code>: {{ v }}</div>{% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
     </div>
   </div>
   {% endif %}

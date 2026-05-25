@@ -1498,6 +1498,44 @@ def generate_marp_slides(
             "</div></div>"
         )
 
+    # CMP Self-Report slide — what the CMP says about itself via its JS API.
+    # Renders only when the introspector got a hit (template + geolocation).
+    _cmp_runtime_slide_md = ""
+    _rc = audit_result.cmp_runtime_config
+    if _rc and (_rc.template_name or _rc.geolocation_rule):
+        _rc_rows = [
+            ("CMP", _rc.cmp_name),
+        ]
+        if _rc.template_name:
+            _rc_rows.append(("Template", _rc.template_name))
+        if _rc.geolocation_rule:
+            _rc_rows.append(("Geo Rule", _rc.geolocation_rule))
+        if _rc.geolocation_country:
+            _rc_rows.append(("Geo Country", _rc.geolocation_country))
+        _rc_rows.append(("Consent Model", _rc.consent_model.capitalize()))
+        if _rc.script_version:
+            _rc_rows.append(("Script Version", _rc.script_version))
+        _rc_rows_html = "\n".join(
+            f"  <tr><td style='padding:6px 14px;color:#4b5563;font-weight:600;'>{k}</td>"
+            f"<td style='padding:6px 14px;color:#14182b;'>{v}</td></tr>"
+            for k, v in _rc_rows
+        )
+        _cmp_runtime_slide_md = (
+            "---\n\n"
+            "<!-- _class: compact -->\n\n"
+            "### CMP SELF-REPORT · GROUND TRUTH\n\n"
+            "# What the CMP Says It Does\n\n"
+            "<p style='font-size:0.42em;color:#4b5563;margin-top:-6px;'>"
+            "Captured directly from the CMP's JavaScript API during the scan. "
+            "This is the configuration the CMP <em>believes</em> it is enforcing. "
+            "Compare against the observed network behavior below to surface "
+            "misconfigurations.</p>\n\n"
+            "<table style='border-collapse:collapse;font-size:0.5em;margin-top:12px;'>"
+            "<tbody>\n"
+            f"{_rc_rows_html}\n"
+            "</tbody></table>\n"
+        )
+
     # GPC Compliance slide — dedicated evidence block for screenshot sharing
     _gpc_slide_md = ""
     if audit_result.gpc_tested:
@@ -1675,7 +1713,7 @@ def generate_marp_slides(
     _audit_id_full = audit_result.audit_id
     _meta_date = audit_result.timestamp.strftime("%B %d, %Y")
     _meta_method = (
-        "Consent Enforcement Test"
+        "Consent Enforcement"
         if audit_result.methodology
         in (MethodologyFlag.S3, MethodologyFlag.S3_CONSENT_WIRING_BROKEN)
         else "Baseline Scan"
@@ -1926,6 +1964,8 @@ style: |
 {"---" + chr(10) + chr(10) + "<!-- _class: compact -->" + chr(10) + chr(10) + "### RISK QUANTIFICATION" + chr(10) + chr(10) + "# Financial Exposure Estimate" + chr(10) + chr(10) + _exposure_html if (violations or pixel_violations) else ""}
 
 {_gpc_slide_md}
+
+{_cmp_runtime_slide_md}
 
 ---
 

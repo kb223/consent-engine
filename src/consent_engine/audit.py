@@ -543,6 +543,8 @@ async def run_audit(
         gpc_vendors_after_signal=gpc_vendors_after_signal,
         gpc_pixel_count_baseline=gpc_pixel_count_baseline,
         gpc_pixel_count_with_gpc=gpc_pixel_count_with_gpc,
+        cmp_runtime_config=scan.cmp_runtime_config,
+        consent_events=scan.consent_events,
     )
 
     # 5b. Derive concrete remediation steps + open gaps from the assembled

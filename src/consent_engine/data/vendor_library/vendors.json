@@ -1,5 +1,50 @@
 [
   {
+    "name": "Qualtrics SiteIntercept",
+    "domains": ["siteintercept.qualtrics.com", "qualtrics.com", "*.qualtrics.com"],
+    "cookie_names": ["QSI_SI_xxx_intercept", "QSI_HistorySession", "QSI_S_xxx", "QSI_SessionID", "cookietest"],
+    "category": "functional",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0003",
+    "notes": "Qualtrics SiteIntercept (XM Survey targeting). Reads session history + URL referrer + visit count to fingerprint and target survey prompts. Classified as behavioral targeting by CPPA when used to inform marketing decisions. Pre-consent firing surfaces in CCPA opt-out enforcement (see Tractor Supply 2025)."
+  },
+  {
+    "name": "YouTube (embed)",
+    "domains": ["youtube.com", "www.youtube.com", "youtube-nocookie.com"],
+    "cookie_names": ["VISITOR_INFO1_LIVE", "VISITOR_PRIVACY_METADATA", "YSC", "__Secure-3PSIDCC", "__Secure-3PAPISID", "__Secure-3PSID", "__Secure-ROLLOUT_TOKEN", "PREF", "GPS"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "YouTube video embeds set 3P advertising cookies on iframe load. Classic CIPA wiretap claim surface — the embedded player communicates viewing history to Google before consent. Use youtube-nocookie.com (privacy-enhanced mode) to suppress. Pre-consent embed = CCPA sale (Disney CA AG 2026 precedent extends here)."
+  },
+  {
+    "name": "Facebook (page-set cookies)",
+    "domains": ["facebook.com", "www.facebook.com", "connect.facebook.net"],
+    "cookie_names": ["ps_n", "ps_l", "nextId", "TESTCOOKIESENABLED", "datr", "sb", "wd"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Facebook/Meta cookies set when the page loads connect.facebook.net (Pixel, Login-with-Facebook button, social plugins). ps_n is a fingerprinting cookie set by facebook.com during pixel calls. Same pixel-as-sale theory as the main Meta Pixel finding — Sephora $1.2M, ongoing CIPA class actions."
+  },
+  {
+    "name": "Google (general)",
+    "domains": ["google.com", "google.ca", "www.google.com"],
+    "cookie_names": ["NID", "ANID", "1P_JAR", "CONSENT", "SOCS"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Google ecosystem cookies set when the page calls google.com (Google Fonts, reCAPTCHA, embedded Google Maps, Google Tag Manager script load). NID is Google's preference cookie that doubles as a cross-site identifier; CONSENT carries Consent Mode signals. Borderline-targeting category; surfaces in CPPA enforcement when not disclosed in vendor list."
+  },
+  {
+    "name": "Cloudflare (bot management)",
+    "domains": ["cloudflare.com"],
+    "cookie_names": ["__cf_bm", "__cflb", "__cfruid", "cf_clearance"],
+    "category": "essential",
+    "legal_exposure": "low",
+    "onetrust_category": "C0001",
+    "notes": "Cloudflare bot management cookie. Set by the Cloudflare edge to distinguish bots from humans for the next 30 minutes. Classified strictly essential (security/anti-fraud); does NOT require consent under GDPR/CCPA/Law 25. Listed here so the scanner classifies it as essential rather than flagging as unknown."
+  },
+  {
     "name": "NextRoll",
     "domains": ["adroll.com", "nextroll.com", "d.adroll.com"],
     "cookie_names": ["__adroll", "__ar_v4", "__adroll_fpc"],

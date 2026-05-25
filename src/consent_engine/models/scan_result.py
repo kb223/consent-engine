@@ -8,7 +8,13 @@ from typing import Literal
 from pydantic import BaseModel
 
 from .audit_request import ConsentState
-from .audit_result import GCSValue, GTMExtractionMethod, MethodologyFlag
+from .audit_result import (
+    CMPRuntimeConfig,
+    ConsentEvent,
+    GCSValue,
+    GTMExtractionMethod,
+    MethodologyFlag,
+)
 
 ScanMode = Literal["playwright", "stealthy"]
 
@@ -82,3 +88,8 @@ class ScanResult(BaseModel):
     # "playwright" = primary Chromium scan; "stealthy" = Scrapling/Camoufox fallback
     # engaged after the primary scan hit a WAF/bot challenge
     har_path: str | None = None  # path to auto-captured HAR file (written by Tool 3)
+    cmp_runtime_config: CMPRuntimeConfig | None = None
+    # CMP self-report (template, geolocation, consent model, expected cookies).
+    # Populated by tool_cmp_runtime_introspect when the CMP exposes a known API.
+    consent_events: list[ConsentEvent] = []
+    # Consent-only dataLayer pushes captured during the scan.
