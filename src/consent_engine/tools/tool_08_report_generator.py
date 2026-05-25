@@ -88,13 +88,13 @@ _RSC_ICON_B64: str = (
 )
 
 _METHODOLOGY_LABELS: dict[str, str] = {
-    MethodologyFlag.S1: "S1 — Baseline (Public Privacy Gap Check)",
-    MethodologyFlag.S3: "S3 — Definitive (Privacy Logic Enforcement Test)",
+    MethodologyFlag.S1: "Baseline (Public Privacy Gap Check)",
+    MethodologyFlag.S3: "Definitive (Privacy Logic Enforcement)",
     MethodologyFlag.S3_CONSENT_WIRING_BROKEN: (
-        "S3 — Definitive (Consent Wiring Broken: tags fire regardless of CMP state)"
+        "Definitive (Consent Wiring Broken: tags fire regardless of CMP state)"
     ),
     MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP: (
-        "S3 — Inconclusive (CMP not recognised, injection unverified)"
+        "Inconclusive (CMP not recognised, injection unverified)"
     ),
 }
 
@@ -364,7 +364,7 @@ def estimate_exposure_usd(
 
     Tiers are additive: baseline CCPA for any confirmed violation, CIPA pixel wiretap
     when Meta/TikTok/LinkedIn pixel leakage is present, sGTM premium for first-party
-    forwarding. S3-definitive evidence of broken consent wiring amplifies the high
+    forwarding. Definitive evidence of broken consent wiring amplifies the high
     band 1.5x (intentionality finding → statutory max more likely).
     """
     violations = [f for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED]
@@ -451,7 +451,7 @@ def estimate_exposure_usd(
         high = int(high * 1.5)
         components.append(
             {
-                "statute": "Aggravated — S3 evidence of intentional violation",
+                "statute": "Aggravated (evidence of intentional violation)",
                 "low_usd": 0,
                 "high_usd": 0,
                 "anchor": "Tags fire regardless of CMP state: supports intentionality finding",
@@ -1542,7 +1542,7 @@ def generate_marp_slides(
         )
         _gpc_rows += _findings_row("Site honored GPC signal", _gpc_honored_text, _gpc_honored_icon)
         _gpc_rows += _findings_row(
-            "Baseline pixel firings (S3 opt-out)",
+            "Baseline pixel firings (post opt-out)",
             f"<code>{audit_result.gpc_pixel_count_baseline}</code>",
             _SVG_DASH,
         )
@@ -1969,7 +1969,7 @@ style: |
 
 # Kenneth Buchanan
 
-## kennethjbuchanan.com
+<p style="font-size:0.72em;color:#6b7280;margin:-8px 0 0 0;">Independent forensic audit · <a href="https://kennethjbuchanan.com" style="color:#3d6abb;text-decoration:none;">kennethjbuchanan.com</a></p>
 
 <div style="display:flex;gap:10px;margin-top:28px;">
   <div style="flex:1;background:var(--s);border-radius:10px;padding:20px;border-top:2px solid var(--a);">

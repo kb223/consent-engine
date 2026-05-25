@@ -95,9 +95,21 @@ follow-up questions grounded in the captured evidence.
 ### 3. MCP server
 
 ```sh
-uvx consent-engine-mcp
-# Then add to Claude Desktop config:
-#   "consent-engine": { "command": "uvx", "args": ["consent-engine-mcp"] }
+# Note the [mcp] extra — the MCP SDK is an optional dependency.
+uvx --from 'consent-engine[mcp]' consent-engine-mcp
+```
+
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "consent-engine": {
+      "command": "uvx",
+      "args": ["--from", "consent-engine[mcp]", "consent-engine-mcp"]
+    }
+  }
+}
 ```
 
 Exposes `audit_url`, `read_audit_result`, and `query_evidence` as MCP tools.

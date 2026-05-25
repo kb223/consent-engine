@@ -4,15 +4,15 @@ Exposes the audit pipeline as Model Context Protocol tools so Claude Desktop
 (and any other MCP host) can run an audit, read the result, and query the
 captured evidence from a conversation.
 
-Run standalone:
-    uvx consent-engine-mcp
+Run standalone (the [mcp] extra is required):
+    uvx --from 'consent-engine[mcp]' consent-engine-mcp
 
 Register in Claude Desktop config:
     {
       "mcpServers": {
         "consent-engine": {
           "command": "uvx",
-          "args": ["consent-engine-mcp"]
+          "args": ["--from", "consent-engine[mcp]", "consent-engine-mcp"]
         }
       }
     }
@@ -53,8 +53,10 @@ try:
     from mcp.types import TextContent, Tool
 except ImportError as e:                                          # pragma: no cover
     raise SystemExit(
-        "MCP support requires the optional [mcp] extra:\n"
-        "  pip install 'consent-engine[mcp]'\n"
+        "MCP support requires the optional [mcp] extra. Install with one of:\n"
+        "  uvx --from 'consent-engine[mcp]' consent-engine-mcp   (recommended, no global install)\n"
+        "  pip install 'consent-engine[mcp]'                    (global install)\n"
+        "  uv pip install 'consent-engine[mcp]'                 (uv-managed env)\n"
     ) from e
 
 

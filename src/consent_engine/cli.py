@@ -8,10 +8,11 @@ Usage:
     consent-engine chat <audit_id>
     consent-engine version
 
-Every audit runs two passes: primary S3 opt-out (consent denied via cookie
-injection) + GPC (Sec-GPC: 1 header + navigator.globalPrivacyControl). The
-pair lets the report distinguish CMP-honored opt-outs from CCPA/CPRA-
-non-compliant sites that ignore the browser-level GPC signal.
+Every audit runs two passes: a primary opt-out pass (fresh browser context,
+consent denied via cookie injection before page load) and a GPC pass
+(Sec-GPC: 1 header + navigator.globalPrivacyControl). The pair lets the
+report distinguish CMP-honored opt-outs from CCPA/CPRA-non-compliant sites
+that ignore the browser-level GPC signal.
 
 `--variant signal --monthly-ad-spend N` activates the recoverable-revenue
 math block (signal recovery framing for the CMO buyer). `--firm-name`
@@ -54,7 +55,7 @@ def _audit_command(args: argparse.Namespace) -> int:
     firm_name = getattr(args, "firm_name", None)
     variant = getattr(args, "variant", "compliance")
     monthly_ad_spend = getattr(args, "monthly_ad_spend", None)
-    print(f"Scanning {url} (two-pass S3 + GPC, ~60s)…", flush=True)
+    print(f"Scanning {url} (two-pass opt-out + GPC, ~60s)…", flush=True)
     bundle = asyncio.run(
         run_audit(
             url,

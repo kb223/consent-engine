@@ -3,6 +3,57 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.5] — 2026-05-25 — Canadian jurisdiction, public-launch polish
+
+First post-launch polish pass. Drops internal-jargon ("S3" methodology
+prefix) from user-facing report and deck labels, fixes the Quebec-on-`.com`
+jurisdiction case, fills in Canadian regulatory coverage, and corrects the
+MCP install command in README + error message.
+
+### Fixed
+- **MCP install** — `uvx consent-engine-mcp` does not install the optional
+  `[mcp]` extra; the command silently failed with the wrong error. README
+  and the `SystemExit` message now both show the correct form:
+  `uvx --from 'consent-engine[mcp]' consent-engine-mcp`. The Claude Desktop
+  config snippet in the README was updated to match.
+- **Quebec jurisdiction on `.com`** — `hydroquebec.com` (and any other
+  Quebec organization with a `.com` and `lang="fr"` but no `-CA` country
+  subtag) was returning `EU` because the lang signal alone is indistinguishable
+  from a France site. New `_canadian_content_signal` heuristic checks for
+  Quebec/Canadian markers (Québec, Montréal, Loi 25, Canadian postal codes,
+  named Canadian cities) and promotes the verdict to `CA` when found.
+  Conservative: only consulted when the lang signal would otherwise lock in
+  `EU` — no false positives on actual French sites.
+
+### Changed
+- **Methodology labels** — `"S3 — Definitive (Privacy Logic Enforcement Test)"`
+  → `"Definitive (Privacy Logic Enforcement)"`. The "S3" prefix and "Test"
+  word were holdovers from the original S1/S2/S3 scenario nomenclature that
+  no longer adds information in the public report (only opt-out + GPC are
+  actually run). Internal `MethodologyFlag.S3` identifier preserved for
+  backward compatibility in `audit_result.json`.
+- **Final deck slide** — `kennethjbuchanan.com` demoted from H2 display
+  block to an inline hyperlink under the "Prepared by" name. Less
+  self-promotional; matches the HTML report's already-subtle branding.
+
+### Added
+- **`wiki/regulations/pipeda.md`** — Federal Canadian Personal Information
+  Protection and Electronic Documents Act. Opt-in consent model, OPC
+  enforcement, BC and Alberta provincial PIPA references, and the
+  CPPA-died-with-prorogation context. Cross-linked from the wiki index
+  and the RAG retriever (`quebec` and new `canada_federal` key both pull
+  Quebec Law 25 + PIPEDA together).
+- **`wiki/enforcement/us-enforcement.md` additions** — Tilting Point Media
+  CPPA $500K (July 2025, children's privacy + GPC), Honda CPPA $632.5K
+  (March 2024, opt-out friction + verification gates), DoorDash CA AG
+  $375K (Feb 2024, non-monetary "sale" via mailing-list exchange), Todd
+  Snyder CPPA $345K (May 2024, opt-out form friction + cookie persistence
+  failure). New "CPPA 2024–2026 Enforcement Pattern" section synthesizes
+  the five recurring violation types every audit should map to.
+
+### Internal
+- Version bumped to 0.5.5 in `pyproject.toml` and `__init__.py`.
+
 ## [0.5.4] — 2026-05-19 — mypy strict-clean, 4 new eval cases, more CMP URLs
 
 Continued pre-launch polish toward the Thursday LinkedIn announcement.

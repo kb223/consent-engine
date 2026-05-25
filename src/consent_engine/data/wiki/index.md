@@ -14,6 +14,7 @@ Total pages: 15
 | [regulations/us-state-laws.md](regulations/us-state-laws.md) | 20+ US state laws — GPC mandate states, 2026 amendments, fine schedule by state |
 | [regulations/tcf.md](regulations/tcf.md) | IAB TCF 2.2 — TC String, Purpose 1 consent requirement, ePrivacy |
 | [regulations/quebec-law25.md](regulations/quebec-law25.md) | Quebec Law 25 — strictest NA law, opt-in required, CAD 10M fines, extraterritorial |
+| [regulations/pipeda.md](regulations/pipeda.md) | PIPEDA — Canadian federal floor, opt-in for sensitive data, OPC enforcement, CPPA reform dead |
 
 ---
 
@@ -63,7 +64,8 @@ Total pages: 15
 | CMP JS API fails / shadow DOM | cmp-profiles → cmp-failures |
 | SSGTM detected | ssgtm-risk → google-tag-gateway → emerging-trends |
 | EU jurisdiction | gdpr → tcf → gdpr-fines |
-| Quebec / Canada | quebec-law25 → consent-mode-v2 |
+| Quebec / Canada | quebec-law25 → pipeda → consent-mode-v2 |
+| Canada (non-Quebec, federal floor) | pipeda → quebec-law25 → consent-mode-v2 |
 | Meta/TikTok pixel violations | cipa-vppa → us-enforcement → emerging-trends |
 | Health-adjacent site | cipa-vppa → emerging-trends → ccpa |
 | Video content + pixels | cipa-vppa → us-enforcement |

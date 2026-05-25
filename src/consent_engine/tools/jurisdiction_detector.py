@@ -173,6 +173,33 @@ _OG_LOCALE_ALT_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Quebec/Canadian content markers. Used to disambiguate the "lang='fr' on .com"
+# case — a French-language site on a generic TLD is otherwise indistinguishable
+# from a France site by the lang-signal alone. Hydro-Québec (hydroquebec.com) is
+# the canonical case the old "lang='fr' → EU" rule got wrong.
+_CANADIAN_CONTENT_RE = re.compile(
+    r"(qu[ée]bec|montr[ée]al|hydro[\s-]qu[ée]bec|ottawa|toronto|vancouver|"
+    r"calgary|edmonton|winnipeg|halifax|"
+    r"commission d.acc[èe]s|loi\s*25|law\s*25|pipeda|"
+    r"\bcanad(?:a|ian|ienne?)\b|"
+    r"[A-Z]\d[A-Z][\s-]?\d[A-Z]\d)",  # Canadian postal code (A1A 1A1)
+    re.IGNORECASE,
+)
+
+
+def _canadian_content_signal(html: str) -> bool:
+    """Heuristic: returns True if HTML has Canadian/Quebec content markers.
+
+    Conservative signal — only checked when other signals are ambiguous (e.g.
+    lang='fr' without country subtag on a .com domain). A French-language site
+    that mentions "Québec", "Montréal", a Canadian postal code, or Loi 25 is
+    almost certainly Canadian, not French. Examples this catches that the old
+    logic missed: hydroquebec.com, desjardins.com (when on .com), banque-laurentienne.com.
+    """
+    if not html:
+        return False
+    return bool(_CANADIAN_CONTENT_RE.search(html))
+
 
 # ---------------------------------------------------------------------------
 # Signal extractors
@@ -308,6 +335,12 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
                 return "CA"
             any_eu = any_eu or is_eu
         if any_eu:
+            # Last-ditch Quebec disambiguation: a French-language signal on a
+            # .com is ambiguous (France vs Quebec). Promote to CA if the page
+            # body contains Canadian markers (Hydro-Québec, Loi 25, postal
+            # codes, named Canadian cities, etc.). Defaults to EU otherwise.
+            if _canadian_content_signal(page_html):
+                return "CA"
             return "EU"
         return "US"
 
@@ -324,5 +357,7 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
     if any_ca:
         return "CA"
     if any_eu:
+        if _canadian_content_signal(page_html):
+            return "CA"
         return "EU"
     return "US"

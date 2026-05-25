@@ -55,6 +55,12 @@ _FINDING_PAGE_MAP: dict[str, list[str]] = {
     ],
     "quebec": [
         "regulations/quebec-law25.md",
+        "regulations/pipeda.md",
+        "concepts/consent-mode-v2.md",
+    ],
+    "canada_federal": [
+        "regulations/pipeda.md",
+        "regulations/quebec-law25.md",
         "concepts/consent-mode-v2.md",
     ],
     "meta_tiktok_pixel": [
@@ -181,7 +187,10 @@ def _select_page_keys(audit_result: AuditResult) -> list[str]:
     elif "QC" in jurisdiction or "QUEBEC" in jurisdiction:
         keys.append("quebec")
     elif jurisdiction in ("CA", "CANADA"):
-        keys.append("us_violation")  # CCPA is primary analog; add CA-specific if needed
+        # Quebec Law 25 is the binding ceiling for nearly all CA-facing sites
+        # (extraterritorial + de facto Canadian baseline). PIPEDA is the federal
+        # floor. Pull both. The report writer surfaces Law 25 first.
+        keys.append("quebec")
 
     # GPC signal
     if audit_result.gpc_tested and has_violations:
