@@ -402,6 +402,44 @@ async def run_audit(
     if with_gpc:
         gpc_scan, _ = await scan_page_fast(url=url, opted_out=True, gpc=True)
 
+    # 1c. Final CMP refinement using BOTH scans + cookie names. Sites that
+    #     load their CMP via GTM or other deferred mechanisms can miss the
+    #     primary scan's networkidle window — Hydro-Québec is the canonical
+    #     case: OneTrust loads ~3s after networkidle, so neither the in-scan
+    #     JS-global check nor the primary network-URL pass sees it, but the
+    #     GPC scan (which runs after) does. Pool both scans' URLs + cookies
+    #     for the backstop check so a flaky primary doesn't leak through.
+    if not scan.detected_cmp or scan.cmp_detection_confidence == "low":
+        combined_urls = list(scan.network_requests)
+        if gpc_scan is not None:
+            combined_urls.extend(gpc_scan.network_requests)
+        net_cmp = detect_cmp_from_network_only(combined_urls)
+        if net_cmp is not None and net_cmp.name != "unknown":
+            scan.detected_cmp = net_cmp.name
+            scan.cmp_detection_confidence = net_cmp.confidence
+
+    # 1d. Cookie-name backstop. Some CMPs (notably OneTrust on slow-loading
+    #     pages) set their state cookie before their JS API mounts, so cookie
+    #     evidence outlasts the network/JS evidence. Map well-known cookie
+    #     names to their CMP so the report doesn't say "unknown CMP" when we
+    #     can clearly see OptanonConsent in the jar.
+    if not scan.detected_cmp:
+        _COOKIE_TO_CMP = {
+            "OptanonConsent": "OneTrust",
+            "OptanonAlertBoxClosed": "OneTrust",
+            "CookieConsent": "Cookiebot",
+            "cookieyes-consent": "CookieYes",
+            "didomi_token": "Didomi",
+            "euconsent-v2": "IAB TCF",
+            "OTAdditionalConsentString": "OneTrust",
+        }
+        all_cookies = list(scan.cookies) + (list(gpc_scan.cookies) if gpc_scan else [])
+        for cookie in all_cookies:
+            if cookie.name in _COOKIE_TO_CMP:
+                scan.detected_cmp = _COOKIE_TO_CMP[cookie.name]
+                scan.cmp_detection_confidence = "medium"
+                break
+
     # 2. Per-vendor classification on observed cookies. Deduplicate by vendor
     #    name; accumulate cookies under each finding.
     findings: list[VendorFinding] = []

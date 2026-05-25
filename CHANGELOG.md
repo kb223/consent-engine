@@ -3,6 +3,36 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.6] — 2026-05-25 — CMP detection robustness + `--jurisdiction` override
+
+Same-day patch addressing two findings from a live audit of `hydroquebec.com`.
+
+### Fixed
+- **OneTrust missed on slow-loading sites** — CMP detection was flaky when
+  OneTrust loaded via deferred GTM injection (the SDK fired its first
+  cookielaw.org request well after the primary scan's `networkidle` window
+  closed). The post-scan refinement pass only saw the primary scan's URL
+  list, so the late-arriving cookielaw URLs in the GPC scan were ignored.
+  Three new backstops:
+  1. Post-scan URL pattern check now pools URLs from **both** primary and
+     GPC scans before running `detect_cmp_from_network_only`.
+  2. New cookie-name backstop maps well-known CMP state cookies to their
+     vendor (OptanonConsent → OneTrust, CookieConsent → Cookiebot,
+     cookieyes-consent → CookieYes, didomi_token → Didomi, etc.) so
+     cookie evidence outlasts JS/network evidence.
+  3. Cookie-name backstop runs against pooled cookies from both scans.
+
+### Added
+- **`--jurisdiction US|EU|CA`** CLI flag to force jurisdiction when
+  auto-detection is wrong. Maps through to `run_audit(jurisdiction=...)`
+  which already existed but wasn't exposed.
+
+### Removed
+- **Dead template `audit_deck.marp.md.j2`** — superseded by Python-generated
+  deck in `tool_08_report_generator.py` since v0.5.0 light-theme refactor.
+  Still referenced "Founder, KJB" voice violation. Zero remaining
+  references in source, tests, or docs.
+
 ## [0.5.5] — 2026-05-25 — Canadian jurisdiction, public-launch polish
 
 First post-launch polish pass. Drops internal-jargon ("S3" methodology

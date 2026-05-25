@@ -55,7 +55,11 @@ def _audit_command(args: argparse.Namespace) -> int:
     firm_name = getattr(args, "firm_name", None)
     variant = getattr(args, "variant", "compliance")
     monthly_ad_spend = getattr(args, "monthly_ad_spend", None)
-    print(f"Scanning {url} (two-pass opt-out + GPC, ~60s)…", flush=True)
+    jurisdiction_override = getattr(args, "jurisdiction", None)
+    if jurisdiction_override:
+        print(f"Scanning {url} (two-pass opt-out + GPC, ~60s, jurisdiction forced to {jurisdiction_override})…", flush=True)
+    else:
+        print(f"Scanning {url} (two-pass opt-out + GPC, ~60s)…", flush=True)
     bundle = asyncio.run(
         run_audit(
             url,
@@ -63,6 +67,7 @@ def _audit_command(args: argparse.Namespace) -> int:
             firm_name=firm_name,
             report_variant=variant,
             monthly_ad_spend_usd=monthly_ad_spend,
+            jurisdiction=jurisdiction_override,
         )
     )
 
@@ -295,6 +300,13 @@ def main(argv: list[str] | None = None) -> int:
         dest="no_open",
         action="store_true",
         help="Don't auto-open report.html + deck.html in the default browser after the audit.",
+    )
+    p_audit.add_argument(
+        "--jurisdiction",
+        choices=("US", "EU", "CA"),
+        help="Force jurisdiction instead of auto-detecting from TLD/content. "
+        "Useful when the auto-detector is wrong (e.g. a US-targeted .com mistakenly "
+        "tagged EU because of a French-language hreflang). Accepted: US, EU, CA.",
     )
     p_audit.set_defaults(func=_audit_command)
 
