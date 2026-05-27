@@ -47,6 +47,81 @@ from consent_engine.tools.tool_08_report_generator import (
     generate_report,
 )
 
+# CMP-specific state cookie names. When one of these is in the cookie jar
+# but the detected CMP is something else, the cookie is legacy/stale and
+# should NOT surface as a vendor finding. It surfaces under "Open Gaps" as
+# a migration-cleanup signal instead.
+_CMP_OWN_COOKIES: dict[str, str] = {
+    # OneTrust
+    "OptanonConsent": "OneTrust",
+    "OptanonAlertBoxClosed": "OneTrust",
+    "OptanonChoice": "OneTrust",
+    "OTAdditionalConsentString": "OneTrust",
+    # Cookiebot
+    "CookieConsent": "Cookiebot",
+    "CookieConsentBulkSetting-v2": "Cookiebot",
+    # CookieYes
+    "cookieyes-consent": "CookieYes",
+    "cookieyesID": "CookieYes",
+    # Didomi
+    "didomi_token": "Didomi",
+    # Usercentrics
+    "usercentrics-rcpv2": "Usercentrics",
+    "uc_settings": "Usercentrics",
+    "uc_user_interaction": "Usercentrics",
+    # TrustArc
+    "notice_preferences": "TrustArc",
+    "notice_gdpr_prefs": "TrustArc",
+    "cmapi_cookie_privacy": "TrustArc",
+    "cmapi_gtm_bl": "TrustArc",
+    # CookieInformation
+    "CookieInformationConsent": "CookieInformation",
+    # Klaro
+    "klaro": "Klaro",
+    # Borlabs
+    "borlabs-cookie": "Borlabs",
+    # Sourcepoint
+    "consentUUID": "Sourcepoint",
+    "_sp_v1_p": "Sourcepoint",
+    "_sp_v1_uid": "Sourcepoint",
+    # Truyo
+    "truyo_consent": "Truyo",
+    "truyoConsent": "Truyo",
+    # IAB TCF (any CMP)
+    "euconsent-v2": "IAB TCF",
+}
+
+# Lookup-side guard: vendor lookups that return one of these names get
+# filtered against the detected CMP. Mirrors the cookie-side filter above.
+_CMP_NAMES_FOR_FILTER: frozenset[str] = frozenset({
+    "OneTrust", "Cookiebot", "CookieYes", "Didomi", "Usercentrics",
+    "TrustArc", "Sourcepoint", "CookieInformation", "Klaro", "Borlabs",
+    "Truyo", "IAB TCF",
+})
+
+# Cookies that are infrastructure-essential (session state, CDN bot
+# management, CSRF) and should never appear in a vendor findings table.
+# All classified as OneTrust C0001 by privacy reviewers.
+_SESSION_CDN_ESSENTIAL_COOKIES: frozenset[str] = frozenset({
+    # Application server session cookies — Java, PHP, .NET, Python
+    "JSESSIONID", "PHPSESSID", "ASP.NET_SessionId", "SESS", "sessionid",
+    "connect.sid", "express.sid", "ci_session", "laravel_session",
+    "sails.sid", "django-session",
+    # Akamai bot management
+    "AKA_A2", "ak_bmsc", "bm_sv", "bm_mi", "bm_so", "_abck", "bm_lso",
+    "_akamai_bot_score",
+    # Cloudflare bot management (also in vendors.json as essential, dual-listed
+    # so the filter trips even if the vendor-lookup path doesn't hit)
+    "__cf_bm", "__cflb", "__cfruid", "cf_clearance",
+    # AWS / Akamai load balancing
+    "AWSALB", "AWSALBCORS", "AWSELB",
+    # CSRF + framework essentials
+    "XSRF-TOKEN", "csrftoken", "csrf_token", "_csrf",
+    # Generic
+    "incap_ses_", "visid_incap_", "nlbi_",  # Imperva
+})
+
+
 _METADATA_HOSTS: frozenset[str] = frozenset(
     {
         "169.254.169.254",        # AWS / GCP / Oracle Cloud IMDSv1
@@ -442,13 +517,38 @@ async def run_audit(
 
     # 2. Per-vendor classification on observed cookies. Deduplicate by vendor
     #    name; accumulate cookies under each finding.
+    #
+    # Accuracy: Vendor findings must surface tracking, not infrastructure.
+    # Three classes of cookies that DO NOT belong in the findings table:
+    #   1. CMP state cookies (OptanonConsent, didomi_token, CookieConsent…)
+    #      from a CMP other than the detected one — these are legacy / stale
+    #      and surface under "Open Gaps" instead.
+    #   2. Java/PHP/.NET session cookies (JSESSIONID, PHPSESSID, ASP.NET_SessionId)
+    #      — essential web framework session state, never a third-party tracker.
+    #   3. CDN bot-management cookies (Akamai bm_*, Cloudflare __cf_*) —
+    #      essential security infrastructure, never a third-party tracker.
     findings: list[VendorFinding] = []
     seen: set[str] = set()
+    legacy_cmp_cookies: list[tuple[str, str]] = []  # (cmp_name, cookie_name)
     for cookie in scan.cookies:
+        # Filter: CMP-own cookies for OTHER CMPs surface as legacy, not as vendor findings.
+        cmp_owner = _CMP_OWN_COOKIES.get(cookie.name)
+        if cmp_owner and cmp_owner != scan.detected_cmp:
+            legacy_cmp_cookies.append((cmp_owner, cookie.name))
+            continue
+        # Filter: session/CDN-essential cookies are infrastructure, not vendors.
+        if cookie.name in _SESSION_CDN_ESSENTIAL_COOKIES:
+            continue
+
         vendor = lookup_vendor(cookie.name, cookie_domain=cookie.domain) or lookup_vendor(
             cookie.domain.lstrip(".")
         )
         if not vendor:
+            continue
+        # Belt-and-suspenders: if the vendor lookup returned a CMP name that
+        # doesn't match the detected CMP, and the observed cookie IS a CMP
+        # state cookie, skip — already handled above but defensive.
+        if vendor.name in _CMP_NAMES_FOR_FILTER and vendor.name != scan.detected_cmp:
             continue
         if vendor.name in seen:
             for f in findings:
@@ -553,6 +653,30 @@ async def run_audit(
     audit_result.remediation, audit_result.open_gaps = _derive_action_items(
         audit_result, scan
     )
+
+    # 5c. Surface legacy CMP cookies (collected during the per-vendor filter
+    #     in section 2) as Open Gaps. These are cookies from a CMP OTHER
+    #     than the one currently active — typically a prior CMP was
+    #     uninstalled but its state cookies survived in returning users'
+    #     browsers. Audited on oreillyauto.com (Truyo) where legacy OneTrust
+    #     cookies still ship.
+    if legacy_cmp_cookies and scan.detected_cmp:
+        by_cmp: dict[str, list[str]] = {}
+        for cmp_name, cookie_name in legacy_cmp_cookies:
+            by_cmp.setdefault(cmp_name, []).append(cookie_name)
+        for cmp_name, cookies in by_cmp.items():
+            unique_cookies = sorted(set(cookies))
+            cookie_list = ", ".join(f"<code>{c}</code>" for c in unique_cookies)
+            audit_result.open_gaps.append(
+                f"Legacy {cmp_name} state cookies are still being set on this site "
+                f"({cookie_list}), but the active CMP is "
+                f"<strong>{scan.detected_cmp}</strong>. This typically means a prior CMP "
+                f"migration left cookie-set logic behind. Verify whether the {cmp_name} "
+                "SDK is still loaded (and dropping these cookies despite the new CMP) "
+                "or whether the cookies are simply stale on returning visitors. The "
+                "stale-cookie case is not a violation; the dual-SDK case is a "
+                "consent-architecture defect."
+            )
 
     # 6. Wiki context retrieval (markdown KB, no vector DB).
     wiki_pages = await retrieve_context(audit_result)
