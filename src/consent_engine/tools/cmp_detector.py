@@ -231,6 +231,87 @@ _JS_GLOBAL_RULES: list[tuple[str, str, str, str, bool]] = [
         "headless_api",
         False,  # no deny-all JS method; server-side managed
     ),
+    # CookieFirst — used by mid-market EU+UK enterprises
+    (
+        "typeof window.CookieFirst !== 'undefined'",
+        "CookieFirst",
+        "high",
+        "standard",
+        True,  # CookieFirst.acceptCategory() / rejectAll()
+    ),
+    # TermsFeed (Cookie Consent by TermsFeed) — popular WP/SMB CMP
+    (
+        "typeof window.cookieconsent !== 'undefined' && typeof window.cookieconsent.initialise === 'function'",
+        "TermsFeed",
+        "high",
+        "standard",
+        True,
+    ),
+    # WireWheel (enterprise privacy platform, formerly Concord)
+    (
+        "typeof window.WireWheel !== 'undefined' || typeof window.__ww_consent !== 'undefined'",
+        "WireWheel",
+        "high",
+        "standard",
+        False,
+    ),
+    # Termageddon — US-focused legal compliance CMP
+    (
+        "typeof window.Termageddon !== 'undefined' || typeof window.__termageddon !== 'undefined'",
+        "Termageddon",
+        "high",
+        "standard",
+        False,
+    ),
+    # Privacy Consent (https://github.com/privacy-consent) — open-source SDK
+    (
+        "typeof window.PrivacyConsent !== 'undefined'",
+        "PrivacyConsent",
+        "high",
+        "standard",
+        False,
+    ),
+    # Cassie (UK-based enterprise consent platform — Marston, Capita customers)
+    (
+        "typeof window.SyrenisConsent !== 'undefined' || typeof window.Cassie !== 'undefined'",
+        "Cassie",
+        "high",
+        "standard",
+        False,
+    ),
+    # CookiePro (legacy OneTrust product — surfaces as OneTrust on most sites
+    # but some standalone deploys keep the CookiePro brand)
+    (
+        "typeof window.CookiePro !== 'undefined' && typeof window.OneTrust === 'undefined'",
+        "CookiePro",
+        "high",
+        "standard",
+        True,
+    ),
+    # Tealium AudienceStream Consent Manager
+    (
+        "typeof window.utag_main !== 'undefined' && typeof window.utag !== 'undefined' && typeof window.utag.gdpr !== 'undefined'",
+        "Tealium",
+        "high",
+        "standard",
+        True,  # utag.gdpr.setConsentValue(...)
+    ),
+    # InMobi Consent (formerly Quantcast Choice acquisition)
+    (
+        "typeof window.__inmobiCmp !== 'undefined'",
+        "InMobi",
+        "high",
+        "standard",
+        False,
+    ),
+    # Sirdata (FR-focused IAB TCF CMP)
+    (
+        "typeof window.sd_cmp !== 'undefined' || typeof window.__sd_cmp !== 'undefined'",
+        "Sirdata",
+        "high",
+        "standard",
+        False,
+    ),
     # IAB TCF generic — must come after all CMP-specific globals to avoid masking them.
     # Quantcast, CookieHub etc. all expose __tcfapi but also have specific globals above.
     ("typeof window.__tcfapi === 'function'", "IAB TCF", "high", "standard", False),
@@ -301,6 +382,23 @@ _SCRIPT_URL_RULES: list[tuple[str, str]] = [
     ("api.privacy-mgmt.com", "Sourcepoint"),
     (".sp-prod.net/", "Sourcepoint"),
     ("sdks.shopifycdn.com/consent", "Shopify"),  # Shopify Customer Privacy
+    # v0.6.0 additions — mid-market + enterprise CMPs from broader survey
+    ("consent.cookiefirst.com", "CookieFirst"),
+    ("cdn.cookiefirst.com", "CookieFirst"),
+    ("cookieconsent-prod.tagmanager.tinypass.com", "Piano"),  # Piano (Tealium-style)
+    ("cdn.wirewheel.io", "WireWheel"),
+    ("app.termageddon.com", "Termageddon"),
+    ("ozeu.cassie.com", "Cassie"),
+    ("cassie.syrenis.com", "Cassie"),
+    ("cookiepro.com", "CookiePro"),
+    ("cdn.cookiepro.com", "CookiePro"),
+    ("tags.tiqcdn.com", "Tealium"),  # Tealium iQ TMS + Consent Manager
+    ("cmp.inmobi.com", "InMobi"),
+    ("choice.consensu.org", "InMobi"),  # Quantcast Choice (now InMobi)
+    ("sddan.com", "Sirdata"),
+    ("cmp.sirdata.io", "Sirdata"),
+    ("cdn.usefathom.com", "Fathom"),  # Fathom Analytics (no-cookie, but appears as analytics)
+    ("plausible.io/js", "Plausible"),  # Plausible Analytics (no-cookie)
 ]
 
 # DOM selector fallbacks
@@ -365,6 +463,20 @@ _CMP_META: dict[str, tuple[str, str, bool]] = {
     "Wix": ("medium", "headless_api", False),
     "IAB TCF": ("high", "standard", False),
     "GPC/GPP": ("medium", "standard", False),
+    # v0.6.0 additions
+    "CookieFirst": ("medium", "standard", True),
+    "TermsFeed": ("medium", "standard", True),
+    "WireWheel": ("medium", "standard", False),
+    "Termageddon": ("medium", "standard", False),
+    "PrivacyConsent": ("medium", "standard", False),
+    "Cassie": ("medium", "standard", False),
+    "CookiePro": ("medium", "standard", True),
+    "Tealium": ("medium", "standard", True),
+    "InMobi": ("medium", "standard", False),
+    "Sirdata": ("medium", "standard", False),
+    "Piano": ("medium", "standard", False),
+    "Fathom": ("medium", "standard", False),  # cookieless analytics — not really a CMP, but worth detecting
+    "Plausible": ("medium", "standard", False),  # cookieless analytics
     # Added in v0.5.4 — caught by URL pattern only (no JS-global yet).
     "CookieInformation": ("medium", "standard", False),
     "CookieReports": ("medium", "standard", False),

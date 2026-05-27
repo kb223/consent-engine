@@ -1,5 +1,167 @@
 [
   {
+    "name": "Adobe Analytics",
+    "domains": ["omtrdc.net", "2o7.net", "demdex.net", "*.sc.omtrdc.net"],
+    "cookie_names": ["s_cc", "s_sq", "s_fid", "s_vi", "s_ecid", "s_ppv", "s_ips", "AMCVS_", "AMCV_"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Adobe Analytics (formerly SiteCatalyst). Visit ID cookies (s_vi, s_ecid) are persistent identifiers shared across the Adobe Marketing Cloud. Frequently invisible in CCPA opt-out implementations because the consent module is configured separately from CMP. Pre-consent firing surfaces in pixel-as-sale enforcement (Sephora theory extends here)."
+  },
+  {
+    "name": "Adobe Target",
+    "domains": ["tt.omtrdc.net", "demdex.net"],
+    "cookie_names": ["mbox", "mboxEdgeCluster", "mboxSession"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Adobe Target (A/B testing and personalization). The mbox cookie persists user assignment to test groups; profile data is uploaded to Adobe Marketing Cloud and joined with Analytics + AAM. Sharing audiences via Adobe is functionally a CCPA sale under the Sephora pixel-as-sale theory."
+  },
+  {
+    "name": "Adobe Audience Manager",
+    "domains": ["demdex.net"],
+    "cookie_names": ["demdex", "dpm", "aam_uuid"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "Adobe Audience Manager (DMP). The demdex.net domain is Adobe's universal user-sync endpoint — a single ID joins Analytics, Target, and ad-platform audience exports. Direct CCPA sale; broad sharing of identifiers with third-party DSPs. Pre-consent firing is a high-exposure violation."
+  },
+  {
+    "name": "Hotjar",
+    "domains": ["hotjar.com", "static.hotjar.com", "vars.hotjar.com", "script.hotjar.com"],
+    "cookie_names": ["_hjSessionUser_", "_hjid", "_hjAbsoluteSessionInProgress", "_hjFirstSeen", "_hjIncludedInSessionSample", "_hjIncludedInPageviewSample", "_hjTLDTest", "_hjSession_"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Hotjar session replay, heatmaps, surveys. Records mouse movement, clicks, scroll, form input. The session replay product is a textbook CIPA §631 wiretap surface — multiple class actions in 2024-2025 named Hotjar specifically. Pre-consent firing is the canonical CIPA fact pattern."
+  },
+  {
+    "name": "Microsoft Clarity",
+    "domains": ["clarity.ms", "c.clarity.ms"],
+    "cookie_names": ["_clck", "_clsk", "CLID", "ANONCHK", "MR", "MUID", "SM"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Microsoft Clarity session replay (free Hotjar alternative — widely adopted because of zero cost). Same CIPA §631 wiretap exposure as Hotjar. Microsoft surfaces the data to Bing Ads automatically if Bing Ads is also installed, which doubles the exposure to CCPA sale claims."
+  },
+  {
+    "name": "Mixpanel",
+    "domains": ["mixpanel.com", "api.mixpanel.com", "cdn.mxpnl.com"],
+    "cookie_names": ["mp_", "__mp_opt_in_out_", "$device", "distinct_id"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Mixpanel product analytics. Tracks every user event with persistent distinct_id. Identify() calls send PII (email, name, phone) to Mixpanel for behavioral profiling. CCPA covers if PII is included. CIPA exposure when behavioral events are recorded pre-consent."
+  },
+  {
+    "name": "Heap Analytics",
+    "domains": ["heapanalytics.com", "heap-api.com", "heap.io", "cdn.heapanalytics.com"],
+    "cookie_names": ["_hp2_id", "_hp2_ses_props", "_hp2_props"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Heap Analytics. Auto-captures every click, page view, form interaction. Same risk profile as Mixpanel. The autocapture mode pulls more data than most CMP configs anticipate — privacy review often missed during deployment."
+  },
+  {
+    "name": "Amplitude",
+    "domains": ["amplitude.com", "api.amplitude.com", "cdn.amplitude.com", "api2.amplitude.com"],
+    "cookie_names": ["amp_", "AMP_TOKEN", "AMP_MKTG_"],
+    "category": "analytics",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0002",
+    "notes": "Amplitude product analytics. Similar exposure profile to Mixpanel and Heap. Pre-consent firing of user_id-tied events is a CCPA disclosure issue, especially for product-led growth (PLG) SaaS with email-as-identifier."
+  },
+  {
+    "name": "Segment",
+    "domains": ["segment.io", "api.segment.io", "cdn.segment.com", "segment.com"],
+    "cookie_names": ["ajs_anonymous_id", "ajs_user_id", "ajs_group_id"],
+    "category": "analytics",
+    "legal_exposure": "high",
+    "onetrust_category": "C0002",
+    "notes": "Segment Customer Data Platform (now Twilio). Forwards event data to dozens of downstream destinations including Meta, Google, LinkedIn. A single Segment install is functionally an aggregator of every CCPA-sale risk on the site. Disclosure should explicitly enumerate destinations enabled in Segment's pipeline."
+  },
+  {
+    "name": "HubSpot",
+    "domains": ["hubspot.com", "hsforms.com", "hs-scripts.com", "hsadspixel.net"],
+    "cookie_names": ["hubspotutk", "__hssrc", "__hssc", "__hstc", "messagesUtk", "__cfruid"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "HubSpot CRM + Marketing Hub tracking. hubspotutk is the persistent visitor identifier joined to the contact record on form submission, enabling cross-session marketing automation. Pre-consent firing in EU/Quebec is a clear GDPR/Law 25 violation; CCPA disclosure required for the visitor-to-contact join."
+  },
+  {
+    "name": "Marketo",
+    "domains": ["marketo.net", "mkto-ab030092.com", "munchkin.marketo.net"],
+    "cookie_names": ["_mkto_trk"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Marketo Engage (Adobe-owned, B2B marketing automation). _mkto_trk joins anonymous visits to known contacts post-form-submission. Same risk profile as HubSpot but typically in regulated industries (financial services, healthcare) where the joining surfaces additional sector-specific exposure."
+  },
+  {
+    "name": "Pardot",
+    "domains": ["pardot.com", "go.pardot.com"],
+    "cookie_names": ["visitor_id", "pi_opt_in", "lpv"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Salesforce Pardot (B2B marketing automation, now Marketing Cloud Account Engagement). Visitor tracking and form-to-contact join. Same exposure profile as Marketo. Often installed alongside Salesforce CRM which extends the data trail to the company's CRM database."
+  },
+  {
+    "name": "Klaviyo",
+    "domains": ["klaviyo.com", "static.klaviyo.com", "a.klaviyo.com"],
+    "cookie_names": ["__kla_id"],
+    "category": "targeting",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0004",
+    "notes": "Klaviyo email + SMS marketing (Shopify-heavy ecosystem). __kla_id is a persistent visitor identifier joined to a subscriber record on email capture or purchase, enabling cross-session and cross-device targeting. Pre-consent firing is a CCPA disclosure issue and an EU GDPR violation."
+  },
+  {
+    "name": "Drift",
+    "domains": ["drift.com", "js.driftt.com", "api.drift.com"],
+    "cookie_names": ["driftt_aid", "drift_eid", "drift_aid", "driftt_sid"],
+    "category": "functional",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0003",
+    "notes": "Drift conversational marketing / chatbot. Records visitor and (when identified) email-to-conversation linkage. CIPA exposure for transcript recording without consent — the chat widget records the human-side conversation, which class actions in 2024 framed as wiretapping."
+  },
+  {
+    "name": "Intercom",
+    "domains": ["intercom.io", "intercomcdn.com", "intercom.com"],
+    "cookie_names": ["intercom-id-", "intercom-session-", "intercom-device-id-"],
+    "category": "functional",
+    "legal_exposure": "medium",
+    "onetrust_category": "C0003",
+    "notes": "Intercom messaging platform. Same CIPA exposure profile as Drift — chat transcript recording without consent is the named claim in multiple 2024-2025 class actions. Cookie classification typically C0003 (functional) but the recording itself triggers wiretap liability."
+  },
+  {
+    "name": "Zendesk",
+    "domains": ["zendesk.com", "static.zdassets.com", "ekr.zdassets.com"],
+    "cookie_names": ["_help_center_session", "_zendesk_authenticated", "_zendesk_shared_session", "_zendesk_session"],
+    "category": "functional",
+    "legal_exposure": "low",
+    "onetrust_category": "C0003",
+    "notes": "Zendesk customer support. Session cookies for the help center and authenticated portal. Lower exposure than Drift/Intercom (no chat recording in the base product), but Zendesk Chat + Sunshine Conversations add the same CIPA risk surface."
+  },
+  {
+    "name": "LiveRamp",
+    "domains": ["liveramp.com", "id.rlcdn.com", "idsync.rlcdn.com"],
+    "cookie_names": ["_rampId", "rampID", "_pubcid"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "LiveRamp identity resolution (universal-ID provider). Joins email-based identifiers to a cross-site rampID, enabling cookieless tracking across publisher networks. Functionally a CCPA sale — the entire product is identity sharing with the ad ecosystem. Pre-consent firing is direct exposure."
+  },
+  {
+    "name": "LiveIntent",
+    "domains": ["liveintent.com", "i.liadm.com"],
+    "cookie_names": ["_lc2_fpi", "_lc2_fpi_meta", "_lc2_fpi_js"],
+    "category": "targeting",
+    "legal_exposure": "high",
+    "onetrust_category": "C0004",
+    "notes": "LiveIntent identity resolution (email-based universal ID). Same exposure profile as LiveRamp. The product hashes email addresses, then joins to a cross-site identifier for ad targeting. Disclosure must explicitly name the email-hash-as-ID mechanism for CCPA compliance."
+  },
+  {
     "name": "Qualtrics SiteIntercept",
     "domains": ["siteintercept.qualtrics.com", "qualtrics.com", "*.qualtrics.com"],
     "cookie_names": ["QSI_SI_xxx_intercept", "QSI_HistorySession", "QSI_S_xxx", "QSI_SessionID", "cookietest"],

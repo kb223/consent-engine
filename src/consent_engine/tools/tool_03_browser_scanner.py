@@ -1557,15 +1557,17 @@ async def scan_page_fast(
             cmp_profile = None
 
         # CMP runtime introspection — what the CMP itself reports via JS API
-        # (OneTrust template name, geolocation rule, consent model, expected
-        # cookies). Currently OneTrust-only; other CMPs land in v0.5.8+.
-        # Both extractors are safe-by-default: timeout + exception swallowed.
+        # (template name, geolocation rule, consent model, expected cookies).
+        # v0.6.0 covers OneTrust, Cookiebot, CookieYes, Didomi, Usercentrics,
+        # Truyo. The dispatcher picks the right extractor based on the
+        # CMP detected earlier in this scan.
         from consent_engine.tools.cmp_runtime_introspect import (
+            extract_cmp_runtime,
             extract_consent_events,
-            extract_onetrust_runtime,
         )
 
-        cmp_runtime_config = await extract_onetrust_runtime(page)
+        _detected_cmp_name = cmp_profile.name if cmp_profile and cmp_profile.name != "unknown" else None
+        cmp_runtime_config = await extract_cmp_runtime(page, _detected_cmp_name)
         consent_events_captured = await extract_consent_events(page)
 
         raw_cookies = await context.cookies()

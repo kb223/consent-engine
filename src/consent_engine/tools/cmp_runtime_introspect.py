@@ -36,10 +36,9 @@ changed shape between SDK versions.
 
 ## CMP coverage roadmap
 
-- v0.5.7: OneTrust (this file)
-- v0.5.8: Cookiebot, CookieYes
-- v0.5.9: Didomi, Usercentrics, TrustArc
-- v0.6.0: Sourcepoint, CookieInformation, Klaro
+- v0.5.7: OneTrust
+- v0.6.0: + Truyo, Cookiebot, CookieYes, Didomi, Usercentrics  (this file)
+- v0.6.1: TrustArc, Sourcepoint, CookieInformation, Klaro, Borlabs
 """
 
 from __future__ import annotations
@@ -261,11 +260,20 @@ _CONSENT_EVENT_EXTRACT_JS = """
     // Order matters here: more specific checks first.
     const ONETRUST_GROUPS_UPDATED = /^OneTrustGroupsUpdated$/i;
     const ONETRUST_LOADED = /^OneTrustLoaded$/i;
-    const COOKIEYES = /^cookieyes_consent_update$|^cky_consent$/i;
-    const COOKIEBOT = /^Cookiebot/i;
+    const COOKIEYES = /^cookieyes_consent_update$|^cky_consent$|^ckyConsentEvent$/i;
+    const COOKIEBOT = /^Cookiebot|^CookieConsentDeclaration/i;
     const DIDOMI = /^didomi/i;
-    const USERCENTRICS = /^uc_(?:consent|ui)|^usercentrics/i;
-    const TCF_API = /^tcfapi/i;
+    const USERCENTRICS = /^uc_(?:consent|ui)|^usercentrics|^UC_/i;
+    const TCF_API = /^tcfapi|__tcfapi/i;
+    const TRUYO = /^truyo|^Truyo/i;
+    const KETCH = /^ketch_consent|^ketch\./i;
+    const SHOPIFY_PRIVACY = /^shopify_privacy|^trekkie\.ready|^trekkie\.config/i;
+    const TEALIUM_CONSENT = /^utag\.gdpr|^utag_gdpr|^tealium_consent/i;
+    const SOURCEPOINT = /^sp_consent|^_sp_consent/i;
+    const TRUSTARC = /^TrustArc|^truste_consent/i;
+    const COOKIEFIRST = /^CookieFirst|^cookiefirst_consent/i;
+    const KLARO = /^klaro_/i;
+    const IUBENDA = /^iubenda_consent/i;
     const CONSENT_FALLBACK = /consent/i;
 
     function classify(eventName, entry) {
@@ -289,6 +297,15 @@ _CONSENT_EVENT_EXTRACT_JS = """
       if (DIDOMI.test(eventName)) return 'didomi';
       if (USERCENTRICS.test(eventName)) return 'usercentrics';
       if (TCF_API.test(eventName)) return 'tcfapi';
+      if (TRUYO.test(eventName)) return 'custom_consent';     // map to custom_consent
+      if (KETCH.test(eventName)) return 'custom_consent';
+      if (SHOPIFY_PRIVACY.test(eventName)) return 'custom_consent';
+      if (TEALIUM_CONSENT.test(eventName)) return 'custom_consent';
+      if (SOURCEPOINT.test(eventName)) return 'custom_consent';
+      if (TRUSTARC.test(eventName)) return 'custom_consent';
+      if (COOKIEFIRST.test(eventName)) return 'custom_consent';
+      if (KLARO.test(eventName)) return 'custom_consent';
+      if (IUBENDA.test(eventName)) return 'custom_consent';
       if (CONSENT_FALLBACK.test(eventName)) return 'custom_consent';
       return null;
     }
@@ -366,9 +383,429 @@ async def extract_consent_events(page: Page) -> list[ConsentEvent]:
     return events
 
 
+# ============================================================================
+# Cookiebot
+# ============================================================================
+#
+# Cookiebot exposes `window.Cookiebot` after the SDK initializes. The runtime
+# config we want lives on Cookiebot.consent (current state), Cookiebot.consents
+# (per-category booleans), Cookiebot.regulations (which legal framework
+# Cookiebot decided to apply), and Cookiebot.declaredCookies (the expected
+# vendor cookie list, mirrors OneTrust's GetDomainData().Groups).
+_COOKIEBOT_INTROSPECT_JS = """
+(() => {
+  try {
+    if (typeof window.Cookiebot === 'undefined') return null;
+    const cb = window.Cookiebot;
+    const consent = cb.consent || {};
+    const regulations = cb.regulations || {};
+
+    // Cookiebot.regulations.gdprApplies | ccpaApplies | lgpdApplies
+    let template = null;
+    const regs = [];
+    if (regulations.gdprApplies) regs.push('GDPR');
+    if (regulations.ccpaApplies) regs.push('CCPA');
+    if (regulations.lgpdApplies) regs.push('LGPD');
+    if (regs.length) template = regs.join('+');
+
+    // Cookiebot is always opt-in under GDPR; opt-out only if pure CCPA
+    let consentModel = 'opt-in';
+    if (regulations.ccpaApplies && !regulations.gdprApplies) {
+      consentModel = 'opt-out';
+    }
+
+    // Expected cookies map: Cookiebot.declaredCookies is an array of
+    // {Name, Provider, Purpose, Category, Lifetime} objects.
+    const expectedCookies = {};
+    if (Array.isArray(cb.declaredCookies)) {
+      for (const c of cb.declaredCookies) {
+        const cat = c.Category || 'unknown';
+        if (!expectedCookies[cat]) expectedCookies[cat] = [];
+        if (c.Name) expectedCookies[cat].push(c.Name);
+      }
+    }
+
+    return {
+      cmp_name: 'Cookiebot',
+      template_name: template,
+      geolocation_rule: regulations ? JSON.stringify(regulations).slice(0, 200) : null,
+      geolocation_country: cb.country || null,
+      consent_model: consentModel,
+      expected_cookies_by_category: expectedCookies,
+      expected_vendor_ids: [],
+      script_version: cb.serial || null,
+      domain_id: cb.dbid || null,
+      raw_dump: JSON.stringify({
+        consent: consent,
+        regulations: regulations,
+        country: cb.country,
+        cbid: cb.cbid,
+        dbid: cb.dbid,
+      }).slice(0, 4000),
+    };
+  } catch (e) { return null; }
+})()
+"""
+
+
+async def extract_cookiebot_runtime(page: Page) -> CMPRuntimeConfig | None:
+    """Return Cookiebot's self-reported runtime config, or None."""
+    try:
+        result = await asyncio.wait_for(page.evaluate(_COOKIEBOT_INTROSPECT_JS), timeout=5.0)
+    except (TimeoutError, Exception):  # noqa: BLE001
+        return None
+    if not result or not isinstance(result, dict):
+        return None
+    try:
+        return CMPRuntimeConfig.model_validate(result)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+# ============================================================================
+# CookieYes
+# ============================================================================
+#
+# CookieYes exposes its API via `window.getCkyConsent()` returning the current
+# consent decision dict, plus `window.cky_*` configuration globals. The
+# `_ckyConsent` cookie carries the persisted state.
+_COOKIEYES_INTROSPECT_JS = """
+(() => {
+  try {
+    const has = typeof window.getCkyConsent === 'function'
+             || typeof window.CookieYes !== 'undefined'
+             || typeof window._cky_config !== 'undefined';
+    if (!has) return null;
+
+    let consent = null;
+    if (typeof window.getCkyConsent === 'function') {
+      try { consent = window.getCkyConsent(); } catch (e) {}
+    }
+
+    // CookieYes templates: GDPR (default), CCPA, LGPD. Inferred from config
+    // when present, otherwise from the consent.regulation field.
+    const cfg = window._cky_config || window.CookieYes || {};
+    const regulation = (consent && consent.regulation) || cfg.regulation || null;
+
+    let template = null;
+    let consentModel = 'opt-in';
+    if (regulation) {
+      const r = String(regulation).toUpperCase();
+      if (r.includes('CCPA')) { template = 'CCPA'; consentModel = 'opt-out'; }
+      else if (r.includes('GDPR')) { template = 'GDPR'; }
+      else if (r.includes('LGPD')) { template = 'LGPD'; }
+      else { template = r; }
+    }
+
+    // Expected cookies by category — CookieYes stores in cfg.categories
+    const expectedCookies = {};
+    if (cfg.categories && typeof cfg.categories === 'object') {
+      for (const [cat, info] of Object.entries(cfg.categories)) {
+        if (info && Array.isArray(info.cookies)) {
+          expectedCookies[cat] = info.cookies.map(c => c.name || c).filter(Boolean);
+        }
+      }
+    }
+
+    return {
+      cmp_name: 'CookieYes',
+      template_name: template,
+      geolocation_rule: regulation,
+      geolocation_country: (consent && consent.country) || null,
+      consent_model: consentModel,
+      expected_cookies_by_category: expectedCookies,
+      expected_vendor_ids: [],
+      script_version: cfg.version || null,
+      domain_id: cfg.domainId || cfg.siteId || null,
+      raw_dump: JSON.stringify({consent: consent, cfg_keys: Object.keys(cfg).slice(0, 40)}).slice(0, 4000),
+    };
+  } catch (e) { return null; }
+})()
+"""
+
+
+async def extract_cookieyes_runtime(page: Page) -> CMPRuntimeConfig | None:
+    """Return CookieYes's self-reported runtime config, or None."""
+    try:
+        result = await asyncio.wait_for(page.evaluate(_COOKIEYES_INTROSPECT_JS), timeout=5.0)
+    except (TimeoutError, Exception):  # noqa: BLE001
+        return None
+    if not result or not isinstance(result, dict):
+        return None
+    try:
+        return CMPRuntimeConfig.model_validate(result)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+# ============================================================================
+# Didomi
+# ============================================================================
+#
+# Didomi exposes `window.Didomi.getCurrentUserStatus()` (consent decision),
+# `Didomi.getVendors()` (vendor list), and `Didomi.getConfig()` (template +
+# geolocation). The opt-in/opt-out model depends on the regulation applied.
+_DIDOMI_INTROSPECT_JS = """
+(() => {
+  try {
+    if (typeof window.Didomi === 'undefined') return null;
+    const d = window.Didomi;
+
+    let userStatus = null;
+    let config = null;
+    try { userStatus = (typeof d.getCurrentUserStatus === 'function') ? d.getCurrentUserStatus() : null; } catch (e) {}
+    try { config = (typeof d.getConfig === 'function') ? d.getConfig() : null; } catch (e) {}
+
+    // Template / regulation
+    let template = null;
+    const reg = config && config.regulation;
+    if (reg) {
+      const r = String(reg).toLowerCase();
+      if (r.includes('gdpr')) template = 'GDPR';
+      else if (r.includes('ccpa')) template = 'CCPA';
+      else if (r.includes('lgpd')) template = 'LGPD';
+      else if (r.includes('none')) template = 'NONE';
+      else template = String(reg);
+    }
+
+    let consentModel = 'opt-in';
+    if (template === 'CCPA' || template === 'NONE') consentModel = 'opt-out';
+
+    // Geolocation
+    let geoCountry = null;
+    let geoRule = null;
+    try {
+      const loc = (typeof d.getUserCountryCode === 'function') ? d.getUserCountryCode() : null;
+      if (loc) geoCountry = loc;
+    } catch (e) {}
+    if (config && config.user && config.user.country) geoCountry = config.user.country;
+    if (config && config.app && config.app.name) geoRule = config.app.name;
+
+    // Expected cookies: Didomi maps purposes to vendors → cookies. We surface
+    // the purpose list since the cookie list is harder to reach without iterating.
+    const expectedCookies = {};
+    if (config && config.app && Array.isArray(config.app.vendors)) {
+      expectedCookies['enabled_vendors'] = config.app.vendors.slice(0, 50).map(String);
+    }
+
+    // Vendor IDs
+    const vendorIds = [];
+    try {
+      const vs = (typeof d.getVendors === 'function') ? d.getVendors() : null;
+      if (Array.isArray(vs)) {
+        for (const v of vs.slice(0, 50)) {
+          if (v && v.id !== undefined) vendorIds.push(String(v.id));
+        }
+      }
+    } catch (e) {}
+
+    return {
+      cmp_name: 'Didomi',
+      template_name: template,
+      geolocation_rule: geoRule,
+      geolocation_country: geoCountry,
+      consent_model: consentModel,
+      expected_cookies_by_category: expectedCookies,
+      expected_vendor_ids: vendorIds,
+      script_version: (config && config.app && config.app.apiVersion) || null,
+      domain_id: (config && config.app && config.app.apiKey) || null,
+      raw_dump: JSON.stringify({user_status: userStatus, app_name: config && config.app && config.app.name}).slice(0, 4000),
+    };
+  } catch (e) { return null; }
+})()
+"""
+
+
+async def extract_didomi_runtime(page: Page) -> CMPRuntimeConfig | None:
+    """Return Didomi's self-reported runtime config, or None."""
+    try:
+        result = await asyncio.wait_for(page.evaluate(_DIDOMI_INTROSPECT_JS), timeout=5.0)
+    except (TimeoutError, Exception):  # noqa: BLE001
+        return None
+    if not result or not isinstance(result, dict):
+        return None
+    try:
+        return CMPRuntimeConfig.model_validate(result)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+# ============================================================================
+# Usercentrics
+# ============================================================================
+#
+# Usercentrics exposes `window.__ucCmp` (Cmp v2) or `window.UC_UI` (legacy v1).
+# The v2 API gives us getConsents(), getSettings(), getDocumentLanguage(), etc.
+_USERCENTRICS_INTROSPECT_JS = """
+(() => {
+  try {
+    const ucCmp = window.__ucCmp;
+    const ucUI = window.UC_UI;
+    if (!ucCmp && !ucUI) return null;
+
+    let settings = null;
+    let consents = null;
+    if (ucCmp) {
+      try { settings = (typeof ucCmp.getSettings === 'function') ? ucCmp.getSettings() : null; } catch (e) {}
+      try { consents = (typeof ucCmp.getConsents === 'function') ? ucCmp.getConsents() : null; } catch (e) {}
+    } else if (ucUI) {
+      try { settings = (typeof ucUI.getSettingsId === 'function') ? { settingsId: ucUI.getSettingsId() } : null; } catch (e) {}
+      try { consents = (typeof ucUI.getServicesBaseInfo === 'function') ? ucUI.getServicesBaseInfo() : null; } catch (e) {}
+    }
+
+    // Template — Usercentrics calls it "regulation" or "settings.consentSection"
+    let template = null;
+    let consentModel = 'opt-in';
+    if (settings && settings.regulation) {
+      template = String(settings.regulation).toUpperCase();
+      if (template.includes('CCPA') || template === 'US') consentModel = 'opt-out';
+    } else if (settings && settings.consent && settings.consent.legalFramework) {
+      template = String(settings.consent.legalFramework).toUpperCase();
+    }
+
+    // Expected services / vendors
+    const vendorIds = [];
+    if (Array.isArray(consents)) {
+      for (const c of consents.slice(0, 50)) {
+        const id = c.id || c.templateId || c.serviceId;
+        if (id) vendorIds.push(String(id));
+      }
+    }
+
+    return {
+      cmp_name: 'Usercentrics',
+      template_name: template,
+      geolocation_rule: (settings && (settings.controllerId || settings.country)) || null,
+      geolocation_country: (settings && settings.country) || null,
+      consent_model: consentModel,
+      expected_cookies_by_category: {},
+      expected_vendor_ids: vendorIds,
+      script_version: (settings && settings.version) || null,
+      domain_id: (settings && (settings.settingsId || settings.settingsID)) || null,
+      raw_dump: JSON.stringify({
+        settings_keys: settings ? Object.keys(settings).slice(0, 30) : null,
+        consent_count: Array.isArray(consents) ? consents.length : 0,
+      }).slice(0, 4000),
+    };
+  } catch (e) { return null; }
+})()
+"""
+
+
+async def extract_usercentrics_runtime(page: Page) -> CMPRuntimeConfig | None:
+    """Return Usercentrics's self-reported runtime config, or None."""
+    try:
+        result = await asyncio.wait_for(page.evaluate(_USERCENTRICS_INTROSPECT_JS), timeout=5.0)
+    except (TimeoutError, Exception):  # noqa: BLE001
+        return None
+    if not result or not isinstance(result, dict):
+        return None
+    try:
+        return CMPRuntimeConfig.model_validate(result)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+# ============================================================================
+# Truyo
+# ============================================================================
+#
+# Truyo (Intertrust) is a US-focused CCPA CMP. Exposes window.Truyo or
+# window._truyo, with consent decisions stored on Truyo.consent or
+# Truyo.preferences. Less documented than the others — we read what's
+# available and surface a minimal config when present.
+_TRUYO_INTROSPECT_JS = """
+(() => {
+  try {
+    const t = window.Truyo || window._truyo;
+    if (!t) return null;
+
+    const consent = t.consent || t.preferences || t.privacyState || null;
+    const config = t.config || t.settings || null;
+
+    // Truyo is fundamentally a CCPA opt-out platform. Some deployments also
+    // serve GDPR templates for EU users — that lives on config.regulation.
+    let template = 'CCPA';
+    let consentModel = 'opt-out';
+    if (config && config.regulation) {
+      const r = String(config.regulation).toUpperCase();
+      template = r;
+      if (r.includes('GDPR') || r.includes('LGPD')) consentModel = 'opt-in';
+    }
+
+    return {
+      cmp_name: 'Truyo',
+      template_name: template,
+      geolocation_rule: (config && config.geolocation) || null,
+      geolocation_country: (config && config.country) || null,
+      consent_model: consentModel,
+      expected_cookies_by_category: {},
+      expected_vendor_ids: [],
+      script_version: (config && config.version) || (t.version) || null,
+      domain_id: (config && (config.domainId || config.tenantId)) || null,
+      raw_dump: JSON.stringify({
+        config_keys: config ? Object.keys(config).slice(0, 30) : null,
+        consent_keys: consent ? Object.keys(consent).slice(0, 30) : null,
+      }).slice(0, 4000),
+    };
+  } catch (e) { return null; }
+})()
+"""
+
+
+async def extract_truyo_runtime(page: Page) -> CMPRuntimeConfig | None:
+    """Return Truyo's self-reported runtime config, or None."""
+    try:
+        result = await asyncio.wait_for(page.evaluate(_TRUYO_INTROSPECT_JS), timeout=5.0)
+    except (TimeoutError, Exception):  # noqa: BLE001
+        return None
+    if not result or not isinstance(result, dict):
+        return None
+    try:
+        return CMPRuntimeConfig.model_validate(result)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+# ============================================================================
+# Dispatcher
+# ============================================================================
+
+
+async def extract_cmp_runtime(page: Page, detected_cmp: str | None) -> CMPRuntimeConfig | None:
+    """Dispatch to the per-CMP extractor based on the detected CMP name.
+
+    Each extractor checks for the relevant JS globals; if the detected CMP
+    matches a known extractor we call it directly. Otherwise we fall through
+    to OneTrust (the most widely deployed and the one that originally
+    motivated the introspect layer).
+    """
+    if detected_cmp == "OneTrust":
+        return await extract_onetrust_runtime(page)
+    if detected_cmp == "Cookiebot":
+        return await extract_cookiebot_runtime(page)
+    if detected_cmp == "CookieYes":
+        return await extract_cookieyes_runtime(page)
+    if detected_cmp == "Didomi":
+        return await extract_didomi_runtime(page)
+    if detected_cmp == "Usercentrics":
+        return await extract_usercentrics_runtime(page)
+    if detected_cmp == "Truyo":
+        return await extract_truyo_runtime(page)
+    # Unknown / unrecognized CMP — try OneTrust as the legacy default since
+    # many sites still ship OneTrust globals even after migrating away.
+    return await extract_onetrust_runtime(page)
+
+
 __all__ = [
+    "extract_cmp_runtime",
     "extract_consent_events",
+    "extract_cookiebot_runtime",
+    "extract_cookieyes_runtime",
+    "extract_didomi_runtime",
     "extract_onetrust_runtime",
+    "extract_truyo_runtime",
+    "extract_usercentrics_runtime",
 ]
 
 

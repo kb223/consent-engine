@@ -3,6 +3,72 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0] — 2026-05-26 — Accuracy sprint: false-positive cleanup, 6 CMP introspectors, +18 enterprise vendors
+
+A precision pass. Triggered by an audit of `oreillyauto.com` (Truyo) that
+showed OneTrust, J2EE session cookies, and Akamai bot-management cookies
+as "vendor findings" — false positives that diluted the signal in the
+report. v0.6.0 fixes those and expands the per-CMP runtime introspection
+coverage from 1 CMP to 6.
+
+### Fixed
+- **False positives in vendor findings table.** Three categories of cookies
+  that should never appear as third-party vendor findings are now filtered
+  out at the classification stage:
+  1. CMP-own state cookies from a CMP **other than** the detected one
+     (OptanonConsent on a Truyo site, didomi_token on a Cookiebot site, etc.)
+     now surface as **Open Gaps** with migration-cleanup guidance.
+  2. Application server session cookies (JSESSIONID, PHPSESSID,
+     ASP.NET_SessionId, Express sid, Laravel session, Django session, etc.)
+     skipped entirely — they're infrastructure, not trackers.
+  3. CDN bot-management + load-balancing cookies (Akamai bm_*, AKA_A2,
+     _abck, AWSALB, Imperva incap_ses_, etc.) skipped entirely — same.
+  Smoke on oreillyauto.com: vendor findings dropped from 9 → 5, with all
+  5 being real tracking violations (Dynatrace, Meta, Google Analytics,
+  Google, FullStory). The 4 false-positive entries gone; legacy OneTrust
+  cookies correctly surfaced as "Open Gap".
+
+### Added
+- **5 more CMP runtime introspectors** in `cmp_runtime_introspect.py`:
+  `extract_cookiebot_runtime`, `extract_cookieyes_runtime`,
+  `extract_didomi_runtime`, `extract_usercentrics_runtime`,
+  `extract_truyo_runtime`. New `extract_cmp_runtime(page, cmp_name)`
+  dispatcher routes to the right extractor based on the scan's detected
+  CMP. Pattern is consistent: each extractor calls the CMP's own JS API,
+  pulls template_name + geolocation_rule + consent_model + expected
+  cookies + vendor IDs, validates into the `CMPRuntimeConfig` model.
+- **10 new CMP detection rules** (JS globals + URL patterns + meta):
+  CookieFirst, TermsFeed, WireWheel (Concord successor), Termageddon,
+  PrivacyConsent, Cassie (UK enterprise), CookiePro (legacy OneTrust
+  brand), Tealium AudienceStream Consent Manager, InMobi (Quantcast
+  Choice successor), Sirdata. Plus Piano, Fathom, Plausible as
+  cookieless-analytics URL patterns.
+- **9 new consent-event recognizers** in the dataLayer extractor: Truyo,
+  Ketch, Shopify privacy, Tealium, Sourcepoint, TrustArc, CookieFirst,
+  Klaro, iubenda native event patterns.
+- **18 new enterprise vendor entries** in `vendors.json` — high-impact
+  vendors most often missed in CCPA/CIPA audits. Each has full
+  legal-exposure + OneTrust-category annotations:
+  - Adobe Marketing Cloud trio: Analytics, Target, Audience Manager
+  - Session replay: Hotjar, Microsoft Clarity (both flagged as CIPA
+    §631 wiretap surfaces with class-action precedent)
+  - Product analytics: Mixpanel, Heap, Amplitude
+  - Customer data platform: Segment (flagged as aggregator of
+    downstream destination risk)
+  - Marketing automation: HubSpot, Marketo (Adobe), Pardot (Salesforce),
+    Klaviyo (Shopify-heavy)
+  - Conversational: Drift, Intercom (both with CIPA chat-recording
+    exposure), Zendesk
+  - Identity resolution: LiveRamp, LiveIntent (both flagged as direct
+    CCPA sale due to cross-site identifier joining)
+
+### Stats
+- vendors.json: 82 → 100 entries (+18, all with legal annotations)
+- CMP detection rules: ~40 → ~50 (+10)
+- CMP runtime introspectors: 1 → 6
+- Consent event recognizers: 9 → 18 categories
+- 70 tests still pass + 1 skipped, ruff + mypy strict-clean
+
 ## [0.5.7] — 2026-05-25 — CMP runtime introspection + consent-event stream capture
 
 First introspection release. Reads what the CMP itself reports via its
