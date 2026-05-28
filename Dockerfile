@@ -28,17 +28,21 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Install Python dependencies (cached layer)
-COPY pyproject.toml ./
+# Install Python dependencies (cached layer). README.md is required because
+# pyproject.toml declares `readme = "README.md"` — without it any `uv run`
+# that builds the project fails with "Readme file does not exist".
+COPY pyproject.toml README.md ./
 RUN uv sync --no-dev --no-install-project
 
-# Install Playwright Chromium browser only
-RUN uv run playwright install chromium
-
-# Copy application source. The vendor library (data/) and Jinja2 templates/
-# live under src/consent_engine/, so this single COPY brings them in too.
+# Copy application source BEFORE the playwright step. `uv run` below installs
+# the project (it was skipped above via --no-install-project), which needs
+# both src/ and README.md present. The vendor library (data/) and Jinja2
+# templates/ live under src/consent_engine/, so this single COPY brings them
+# in too.
 COPY src/ src/
-COPY README.md ./
+
+# Install Playwright Chromium browser only.
+RUN uv run playwright install chromium
 
 ENV PYTHONPATH=/app/src
 
