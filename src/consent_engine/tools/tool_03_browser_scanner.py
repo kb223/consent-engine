@@ -24,7 +24,47 @@ from playwright.async_api import Page, ProxySettings, Request, Route, async_play
 from consent_engine.models.audit_request import ConsentState
 from consent_engine.models.audit_result import GCSValue, GTMExtractionMethod, MethodologyFlag
 from consent_engine.models.scan_result import CookieSnapshot, NetworkRequest, ScanResult
+from consent_engine.security import is_blocked_host
 from consent_engine.tools.cmp_clicker import _banner_present, attempt_cmp_decline
+
+# Heavy resources that don't affect tracking detection or screenshots.
+# Fonts + media are blocked; images + CSS kept so banner screenshots render.
+_HEAVY_RESOURCE_RE = re.compile(
+    r"\.(?:woff2?|ttf|eot|mp4|webm|mp3|ogg|wav)(?:\?|$)", re.IGNORECASE
+)
+
+
+async def _ssrf_guarded_route(route: Route, *, block_heavy: bool = True) -> None:
+    """Single Playwright route handler combining the SSRF guard + resource block.
+
+    SSRF: aborts ANY request (including redirects and subresources, not just
+    the initial URL) whose host resolves to a private / loopback / link-local /
+    reserved / multicast / metadata IP. Closes the gap where a public URL
+    30x-redirects to 169.254.169.254 or pulls a subresource from an internal
+    host. Honors CONSENT_ENGINE_ALLOW_INTERNAL=1 via is_blocked_host.
+
+    Resource block (when block_heavy=True): aborts fonts + media that don't
+    affect tracking detection or the banner screenshot.
+
+    Merged into one handler (rather than two page.route registrations) to avoid
+    Playwright's reverse-order route-resolution ambiguity.
+    """
+    req_url = route.request.url
+    host = urlparse(req_url).hostname
+    if is_blocked_host(host) is not None:
+        with contextlib.suppress(Exception):
+            await route.abort()
+        return
+    if block_heavy and _HEAVY_RESOURCE_RE.search(req_url):
+        with contextlib.suppress(Exception):
+            await route.abort()
+        return
+    # fallback() (not continue_) so any other route handler registered on this
+    # page still gets a chance to run. When this is the only handler, Playwright
+    # continues the request as if unrouted. This keeps the guard composable with
+    # the per-CMP / blocked-pattern routes some scan paths register.
+    with contextlib.suppress(Exception):
+        await route.fallback()
 
 
 def _capture_request(
@@ -524,6 +564,19 @@ async def _block_shopify_cart_routes(page: Any) -> None:
         lambda url: any(pat in url for pat in _BLOCKED_PATTERNS),
         _safe_abort,
     )
+
+    # SSRF guard — applies to EVERY request + redirect, not just the initial
+    # URL. Aborts hosts that resolve to private / loopback / link-local /
+    # reserved / multicast / metadata IPs. Registered after the pattern route
+    # so it runs first (Playwright resolves routes in reverse order); allowed
+    # hosts fall back to the pattern route. block_heavy=False keeps images +
+    # CSS so banner screenshots still render. Every audit path calls this
+    # helper, so this one registration covers _scan_s1, _scan_s3, the CCPA
+    # fallback, and scan_page_fast.
+    async def _ssrf_only(route: Route) -> None:
+        await _ssrf_guarded_route(route, block_heavy=False)
+
+    await page.route("**/*", _ssrf_only)
 
 
 async def _scan_s1(url: str, proxy_url: str | None = None) -> ScanResult:
@@ -1533,9 +1586,10 @@ async def scan_page_fast(
         await _block_shopify_cart_routes(page)
         await _apply_geoip_spoofing(page)
 
-        # Block heavy resources — fonts and media don't affect tracking detection
+        # Heavy-resource block — fonts and media don't affect tracking detection
         # OR the final screenshot. Images and CSS are kept so banner screenshots
-        # render correctly (no broken logos, no layout collapse).
+        # render correctly. (SSRF guard is installed by _block_shopify_cart_routes
+        # above, which every audit path calls.)
         await page.route(
             "**/*.{woff,woff2,ttf,eot,mp4,webm,mp3,ogg,wav}",
             lambda route: route.abort(),
