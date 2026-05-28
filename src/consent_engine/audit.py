@@ -35,6 +35,9 @@ from consent_engine.tools.cmp_detector import detect_cmp_from_network_only
 from consent_engine.tools.jurisdiction_detector import detect_jurisdiction
 from consent_engine.tools.tool_01_gtm_parser import parse_gtm_container
 from consent_engine.tools.tool_02_violation_classifier import classify_finding
+from consent_engine.tools.tool_03_browser_scanner import (
+    INJECTED_CONSENT_COOKIES as _INJECTED_CONSENT_COOKIES,
+)
 from consent_engine.tools.tool_03_browser_scanner import scan_page_fast
 from consent_engine.tools.tool_04_har_analyzer import analyze_har
 from consent_engine.tools.tool_05_vendor_library import lookup_vendor
@@ -375,11 +378,16 @@ def _derive_action_items(
             )
 
     # Open gaps — items that need a human eye, not an auto-fix.
-    cmp_cookies = {"OptanonConsent", "OptanonAlertBoxClosed", "OneTrust"}
+    # NOTE: OptanonConsent + OptanonAlertBoxClosed are INJECTED by the scanner
+    # as opt-out state, so they're present on every scan and cannot signal a
+    # genuine OneTrust install. Only OTAdditionalConsentString (which we do not
+    # inject) is a real "OneTrust loaded but we missed it" signal.
+    cmp_cookies = {"OTAdditionalConsentString"}
     has_cmp_cookies = any(c.name in cmp_cookies for c in scan.cookies)
     if has_cmp_cookies and not audit_result.detected_cmp:
         open_gaps.append(
-            "OneTrust cookies (<code>OptanonConsent</code>) were observed but the OneTrust JS API "
+            "OneTrust cookies (<code>OTAdditionalConsentString</code>) were observed but the "
+            "OneTrust JS API "
             "was not detected during the scan window. The CMP is likely loading asynchronously "
             "past the networkidle threshold. Manually verify by inspecting "
             "<code>window.OneTrust</code> in browser DevTools, then consider re-scanning with a "
@@ -493,23 +501,32 @@ async def run_audit(
             scan.detected_cmp = net_cmp.name
             scan.cmp_detection_confidence = net_cmp.confidence
 
-    # 1d. Cookie-name backstop. Some CMPs (notably OneTrust on slow-loading
-    #     pages) set their state cookie before their JS API mounts, so cookie
-    #     evidence outlasts the network/JS evidence. Map well-known cookie
-    #     names to their CMP so the report doesn't say "unknown CMP" when we
-    #     can clearly see OptanonConsent in the jar.
+    # 1d. Cookie-name backstop. Some CMPs set their state cookie before their
+    #     JS API mounts, so cookie evidence can outlast network/JS evidence.
+    #     Map well-known cookie names to their CMP so the report doesn't say
+    #     "unknown CMP" when a real CMP state cookie is in the jar.
+    #
+    #     CRITICAL: this map must NOT contain any cookie the scanner injects
+    #     itself as opt-out state. The scanner pre-injects OptanonConsent +
+    #     OptanonAlertBoxClosed before navigation (see tool_03_browser_scanner
+    #     build_onetrust_consent_cookie), so those cookies are ALWAYS present
+    #     and are worthless as detection evidence — keying off them made every
+    #     clean site (example.com included) falsely report OneTrust. Real
+    #     OneTrust is still caught by the JS-global check (window.OneTrust) and
+    #     the cdn.cookielaw.org URL pattern. OTAdditionalConsentString is the
+    #     one OneTrust cookie we do NOT inject, so it remains a valid signal.
     if not scan.detected_cmp:
         _COOKIE_TO_CMP = {
-            "OptanonConsent": "OneTrust",
-            "OptanonAlertBoxClosed": "OneTrust",
             "CookieConsent": "Cookiebot",
             "cookieyes-consent": "CookieYes",
             "didomi_token": "Didomi",
             "euconsent-v2": "IAB TCF",
-            "OTAdditionalConsentString": "OneTrust",
+            "OTAdditionalConsentString": "OneTrust",  # not injected by the scanner
         }
         all_cookies = list(scan.cookies) + (list(gpc_scan.cookies) if gpc_scan else [])
         for cookie in all_cookies:
+            if cookie.name in _INJECTED_CONSENT_COOKIES:
+                continue  # never use our own injected cookies as evidence
             if cookie.name in _COOKIE_TO_CMP:
                 scan.detected_cmp = _COOKIE_TO_CMP[cookie.name]
                 scan.cmp_detection_confidence = "medium"
@@ -531,6 +548,12 @@ async def run_audit(
     seen: set[str] = set()
     legacy_cmp_cookies: list[tuple[str, str]] = []  # (cmp_name, cookie_name)
     for cookie in scan.cookies:
+        # Filter: skip cookies the scanner injected itself (OptanonConsent,
+        # OptanonAlertBoxClosed). They're our opt-out-state injection, present
+        # on every scan — not site evidence. Without this, a clean non-OneTrust
+        # site would falsely report "legacy OneTrust cookies" in Open Gaps.
+        if cookie.name in _INJECTED_CONSENT_COOKIES:
+            continue
         # Filter: CMP-own cookies for OTHER CMPs surface as legacy, not as vendor findings.
         cmp_owner = _CMP_OWN_COOKIES.get(cookie.name)
         if cmp_owner and cmp_owner != scan.detected_cmp:

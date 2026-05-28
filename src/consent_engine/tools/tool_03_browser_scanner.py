@@ -397,6 +397,16 @@ def extract_gtm_id_from_html(html_or_js: str) -> str | None:
     return match.group(0) if match else None
 
 
+# Consent cookies the scanner injects before navigation to assert the
+# opted-out state. These are ALWAYS present after a scan, so they must never
+# be used as CMP-detection evidence (doing so made every clean site falsely
+# report OneTrust). audit.py imports this set to exclude them from the
+# cookie-name detection backstop.
+INJECTED_CONSENT_COOKIES: frozenset[str] = frozenset(
+    {"OptanonConsent", "OptanonAlertBoxClosed"}
+)
+
+
 def build_onetrust_consent_cookie(opted_out: bool) -> str:
     """Build an OptanonConsent cookie value for OneTrust consent injection.
 
