@@ -28,3 +28,6 @@ Thumbs.db
 build/
 dist/
 *.egg
+
+# Playwright MCP browser debug artifacts
+.playwright-mcp/
