@@ -31,8 +31,8 @@ WORKDIR /app
 # Install Python dependencies (cached layer). README.md is required because
 # pyproject.toml declares `readme = "README.md"` — without it any `uv run`
 # that builds the project fails with "Readme file does not exist".
-COPY pyproject.toml README.md ./
-RUN uv sync --no-dev --no-install-project
+COPY pyproject.toml uv.lock README.md ./
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy application source BEFORE the playwright step. `uv run` below installs
 # the project (it was skipped above via --no-install-project), which needs

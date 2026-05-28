@@ -484,6 +484,33 @@ _CMP_META: dict[str, tuple[str, str, bool]] = {
 }
 
 
+# Base-layer globals that many CMPs expose in addition to their own. When a more
+# specific CMP global is present at the same time, these are DEMOTED so a Truyo or
+# CookiePro site (both built on OneTrust infrastructure, both expose
+# window.OneTrust) is labeled correctly instead of collapsing to "OneTrust", and a
+# CMP that merely implements the IAB __tcfapi isn't misreported as bare "IAB TCF".
+_GENERIC_CMP_GLOBALS: frozenset[str] = frozenset({"OneTrust", "IAB TCF"})
+
+
+def _match_cmp_urls(network_requests: list[str]) -> str | None:
+    """Resolve a CMP from script-URL patterns, preferring the most specific.
+
+    Collects every CMP whose URL pattern appears in the request log (not just the
+    first), then demotes the generic base-layer globals in _GENERIC_CMP_GLOBALS so
+    a Truyo site loading both ``.truyo.com`` and ``cdn.cookielaw.org`` (OneTrust's
+    CDN) resolves to Truyo, not OneTrust. Returns the chosen name or None.
+    """
+    matches: list[str] = []
+    for url in network_requests:
+        for pattern, name in _SCRIPT_URL_RULES:
+            if pattern in url and name not in matches:
+                matches.append(name)
+    if not matches:
+        return None
+    specific = [n for n in matches if n not in _GENERIC_CMP_GLOBALS]
+    return specific[0] if specific else matches[0]
+
+
 async def detect_cmp(page: Page, network_requests: list[str]) -> CMPProfile:
     """Detect the CMP loaded on the page.
 
@@ -496,21 +523,31 @@ async def detect_cmp(page: Page, network_requests: list[str]) -> CMPProfile:
     IMPORTANT: Call this after page.goto(wait_until="networkidle") so that
     deferred and GTM-injected CMP scripts have had time to execute.
     """
-    # --- 1. JS globals: single evaluate with all rules concatenated ---
-    # Build a JS expression that returns the matching CMP name or null.
-    js_checks = " || ".join(
+    # --- 1. JS globals: single evaluate, collect ALL matching rule names ---
+    # We do NOT short-circuit on the first match. OneTrust is rule 0, and
+    # OneTrust-based products (Truyo, CookiePro) plus many CMPs that implement
+    # __tcfapi ALSO expose window.OneTrust / __tcfapi, so a naive first-match
+    # mislabels e.g. a Truyo site as OneTrust. Collect every match (in rule
+    # order), then prefer the most specific CMP, demoting the generic base-layer
+    # globals in _GENERIC_CMP_GLOBALS when a more specific CMP co-matched.
+    js_checks = ", ".join(
         f"(({expr}) ? {repr(name)} : null)" for expr, name, *_ in _JS_GLOBAL_RULES
     )
-    js_expr = f"(() => {{ return {js_checks}; }})()"
+    js_expr = (
+        f"(() => {{ try {{ return [{js_checks}].filter((x) => x !== null); }} "
+        f"catch (e) {{ return []; }} }})()"
+    )
 
     try:
-        matched_name: str | None = await page.evaluate(js_expr)
+        matched_names: list[str] = await page.evaluate(js_expr)
     except Exception:  # noqa: BLE001
-        matched_name = None
+        matched_names = []
 
-    if matched_name:
+    if matched_names:
+        specific = [n for n in matched_names if n not in _GENERIC_CMP_GLOBALS]
+        chosen = specific[0] if specific else matched_names[0]
         for _expr, name, confidence, dom_type, js_api in _JS_GLOBAL_RULES:
-            if name == matched_name:
+            if name == chosen:
                 return CMPProfile(
                     name=name,
                     confidence=confidence,
@@ -518,17 +555,16 @@ async def detect_cmp(page: Page, network_requests: list[str]) -> CMPProfile:
                     js_api=js_api,
                 )
 
-    # --- 2. Script URL pattern match ---
-    for url in network_requests:
-        for pattern, name in _SCRIPT_URL_RULES:
-            if pattern in url:
-                confidence, dom_type, js_api = _CMP_META.get(name, ("medium", "standard", False))
-                return CMPProfile(
-                    name=name,
-                    confidence="medium",
-                    dom_type=dom_type,
-                    js_api=js_api,
-                )
+    # --- 2. Script URL pattern match (collect all, prefer specific) ---
+    url_cmp = _match_cmp_urls(network_requests)
+    if url_cmp is not None:
+        _, dom_type, js_api = _CMP_META.get(url_cmp, ("medium", "standard", False))
+        return CMPProfile(
+            name=url_cmp,
+            confidence="medium",
+            dom_type=dom_type,
+            js_api=js_api,
+        )
 
     # --- 3. DOM selector fallback ---
     for selector, name in _DOM_SELECTOR_RULES:
@@ -559,14 +595,13 @@ def detect_cmp_from_network_only(network_requests: list[str]) -> CMPProfile | No
 
     Returns None when no CMP URL pattern matches.
     """
-    for url in network_requests:
-        for pattern, name in _SCRIPT_URL_RULES:
-            if pattern in url:
-                confidence, dom_type, js_api = _CMP_META.get(name, ("medium", "standard", False))
-                return CMPProfile(
-                    name=name,
-                    confidence="medium",
-                    dom_type=dom_type,
-                    js_api=js_api,
-                )
-    return None
+    url_cmp = _match_cmp_urls(network_requests)
+    if url_cmp is None:
+        return None
+    _, dom_type, js_api = _CMP_META.get(url_cmp, ("medium", "standard", False))
+    return CMPProfile(
+        name=url_cmp,
+        confidence="medium",
+        dom_type=dom_type,
+        js_api=js_api,
+    )

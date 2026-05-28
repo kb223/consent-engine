@@ -35,9 +35,7 @@ plausibly-correct.
 | Spec | Implicit | Explicit |
 | Testability | Hard to test, hard to prove | Easy to test, debug, verify |
 
-The eight-tool pipeline below is all deterministic. A small agentic chat
-surface (`consent-engine chat`) sits on top for "why is this tag firing"
-follow-up questions, grounded in the audit result + raw network log.
+The eight-tool pipeline below is all deterministic.
 
 ## Architecture
 

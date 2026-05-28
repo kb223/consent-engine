@@ -54,6 +54,15 @@ if TYPE_CHECKING:
     from playwright.async_api import Page
 
 
+# Timeout budget for OneTrust testLog() capture. The trigger call gets its own
+# ceiling; the settle phase polls the console buffer rather than sleeping a
+# fixed amount, and reuses the SAME ceiling so total wait never exceeds the
+# budget the function already used (3s trigger, 5s full introspection).
+_TESTLOG_TRIGGER_TIMEOUT_S = 3.0
+_TESTLOG_SETTLE_BUDGET_S = _TESTLOG_TRIGGER_TIMEOUT_S  # poll ceiling, reuses trigger budget
+_TESTLOG_POLL_INTERVAL_S = 0.25  # ~250ms between buffer checks
+
+
 # Per-CMP introspection JS expressions. Each returns a JSON-serializable
 # dict or `null` if the CMP isn't present. Wrapped in a try/catch on the
 # Python side, so internal CMP-API exceptions don't break the scan.
@@ -72,8 +81,9 @@ _ONETRUST_INTROSPECT_JS = """
     if (typeof ot.testLog === 'function') {
       try { ot.testLog(); } catch (e) {}
     }
-    // Give buffer one tick for any async console output to flush.
-    // (testLog is synchronous in current SDKs but defensive against future.)
+    // The blob is captured Python-side via a console listener and polled until
+    // non-empty (see extract_onetrust_runtime), then injected here. Treated as
+    // ENRICHMENT only — GetDomainData() below is the authoritative source.
     const logBlob = (window.__ce_testlog_blob__ || '');
 
     // Patterns to extract from the testLog output. OneTrust changes the
@@ -93,8 +103,10 @@ _ONETRUST_INTROSPECT_JS = """
     const templateName = match(/TemplateName\\s+is\\s+(\\S+)/i);
 
     // === Step 2: pull structured data from GetDomainData() ===
-    // GetDomainData gives us the expected cookies-by-category map and the
-    // canonical consent model object — fallbacks if testLog wasn't available.
+    // GetDomainData is the AUTHORITATIVE source: the expected cookies-by-category
+    // map and the canonical consent model object. The testLog regex matches
+    // above only enrich fields GetDomainData does not carry (template name,
+    // geolocation rule, script version).
     const domainData = (typeof ot.GetDomainData === 'function') ? ot.GetDomainData() : null;
 
     // Consent model from GetDomainData is a dict like {Name: 'opt-in'}
@@ -107,12 +119,29 @@ _ONETRUST_INTROSPECT_JS = """
       }
     }
 
-    // Reconcile consent model: prefer testLog match, fall back to GetDomainData.
-    let consentModel = 'unknown';
-    const candidate = (consentModelLog || consentModelData || '').toLowerCase();
-    if (candidate.includes('opt-in') || candidate === 'optin') consentModel = 'opt-in';
-    else if (candidate.includes('opt-out') || candidate === 'optout') consentModel = 'opt-out';
-    else if (candidate.includes('implicit')) consentModel = 'implicit';
+    // Reconcile consent model: GetDomainData() is the structured, authoritative
+    // source and is preferred. The testLog console text is ENRICHMENT only —
+    // it only decides the model when GetDomainData carried nothing usable
+    // (e.g. older SDK that omits ConsentModel).
+    function normalizeModel(raw) {
+      const c = (raw || '').toLowerCase();
+      if (c.includes('opt-in') || c === 'optin') return 'opt-in';
+      if (c.includes('opt-out') || c === 'optout') return 'opt-out';
+      if (c.includes('implicit')) return 'implicit';
+      return null;
+    }
+    const consentModel = normalizeModel(consentModelData)
+                      || normalizeModel(consentModelLog)
+                      || 'unknown';
+
+    // Did GetDomainData() yield anything usable? Used Python-side to decide
+    // whether a blob-empty introspection is honest ground truth or a miss.
+    const hasDomainData = !!(domainData && (
+      consentModelData !== null ||
+      (Array.isArray(domainData.Groups) && domainData.Groups.length > 0) ||
+      (Array.isArray(domainData.GeneralVendorsIds) && domainData.GeneralVendorsIds.length > 0) ||
+      (Array.isArray(domainData.GeneralVendors) && domainData.GeneralVendors.length > 0)
+    ));
 
     // Cookies-by-category map
     const expectedCookies = {};
@@ -167,6 +196,13 @@ _ONETRUST_INTROSPECT_JS = """
       script_version: scriptVersion,
       domain_id: domainId,
       raw_dump: logBlob.slice(0, 4000) || (domainData ? JSON.stringify(domainData).slice(0, 4000) : null),
+      // Internal signal (stripped before Pydantic validation): true when the
+      // testLog console blob arrived non-empty. Lets the caller distinguish a
+      // real capture from a 0.3s-race miss.
+      _has_testlog: logBlob.length > 0,
+      // Internal signal (stripped before validation): true when GetDomainData()
+      // returned structured ground truth (consent model, groups, or vendors).
+      _has_domain_data: hasDomainData,
     };
   } catch (e) {
     return null;
@@ -183,14 +219,28 @@ async def extract_onetrust_runtime(page: Page) -> CMPRuntimeConfig | None:
     timeout so a hung introspection never blocks the audit.
 
     Implementation:
-    1. Attach a Playwright console listener that buffers messages.
+    1. Attach a Playwright console listener that buffers messages — BEFORE
+       `testLog()` is invoked, so no early output is lost.
     2. Trigger `OneTrust.testLog()` to fire console output that exposes
        template_name + geolocation_rule + script_version (fields not
        available on GetDomainData()).
-    3. Inject the captured buffer back into the page as `window.__ce_testlog_blob__`.
-    4. Run the introspection JS which regex-parses the blob + reads
-       GetDomainData() for structured fields.
-    5. Detach the listener.
+    3. Poll the captured buffer (~250ms cadence) until it is non-empty,
+       capped at the existing settle budget, instead of a fixed sleep that
+       races CDP console delivery under load.
+    4. Inject the captured buffer back into the page as `window.__ce_testlog_blob__`.
+    5. Run the introspection JS which reads GetDomainData() for the
+       structured, authoritative fields and treats the regex-parsed testLog
+       blob as ENRICHMENT only.
+    6. Detach the listener.
+
+    Honest-miss semantics: the testLog console output is captured via
+    `console.group`/`console.table`/`%c`-styled `console.log`, so Playwright's
+    `msg.text` is frequently empty or style-arg noise. When, after polling, the
+    captured blob is empty AND `GetDomainData()` yields nothing usable, return
+    `None` — the honest "introspection produced no ground truth" signal —
+    rather than a half-populated config (`consent_model='unknown'`,
+    `template_name=None`) that would be presented to legal counsel as the
+    CMP's self-reported configuration.
     """
     captured: list[str] = []
 
@@ -201,7 +251,8 @@ async def extract_onetrust_runtime(page: Page) -> CMPRuntimeConfig | None:
     page.on("console", _on_console)
     try:
         # First check OneTrust is even present + trigger testLog so the
-        # console listener has something to buffer.
+        # console listener has something to buffer. Listener is already
+        # attached above, so output emitted during this call is captured.
         try:
             await asyncio.wait_for(
                 page.evaluate(
@@ -209,13 +260,19 @@ async def extract_onetrust_runtime(page: Page) -> CMPRuntimeConfig | None:
                     "typeof window.OneTrust.testLog === 'function') { "
                     "try { window.OneTrust.testLog(); } catch (e) {} } }"
                 ),
-                timeout=3.0,
+                timeout=_TESTLOG_TRIGGER_TIMEOUT_S,
             )
         except (TimeoutError, Exception):  # noqa: BLE001
             return None
 
-        # Brief settle for console messages to flush across the CDP wire.
-        await asyncio.sleep(0.3)
+        # Poll for console messages to flush across the CDP wire instead of a
+        # fixed sleep that races delivery under load. Break the instant the
+        # buffer is non-empty; cap total wait at the existing settle budget
+        # (reuses the testLog-trigger ceiling — does not exceed it).
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + _TESTLOG_SETTLE_BUDGET_S
+        while not captured and loop.time() < deadline:
+            await asyncio.sleep(_TESTLOG_POLL_INTERVAL_S)
 
         # Push the captured blob into the page so the introspection JS can
         # regex it. `repr()` would mangle quotes; use json.dumps for safety.
@@ -236,8 +293,18 @@ async def extract_onetrust_runtime(page: Page) -> CMPRuntimeConfig | None:
         if not result or not isinstance(result, dict):
             return None
 
+        # Honest miss: empty testLog blob AND no usable GetDomainData() means
+        # introspection captured no ground truth. Return None rather than a
+        # half-populated shell. These internal signals are not model fields,
+        # so strip them before validation regardless.
+        result_dict = cast(dict[str, Any], result)
+        has_testlog = bool(result_dict.pop("_has_testlog", False))
+        has_domain_data = bool(result_dict.pop("_has_domain_data", False))
+        if not has_testlog and not has_domain_data:
+            return None
+
         try:
-            return CMPRuntimeConfig.model_validate(result)
+            return CMPRuntimeConfig.model_validate(result_dict)
         except Exception:  # noqa: BLE001
             return None
     finally:
@@ -248,7 +315,7 @@ async def extract_onetrust_runtime(page: Page) -> CMPRuntimeConfig | None:
 # Narrow set of consent-related events. Anything else (page_view, click,
 # ecommerce, etc.) is ignored — this is a CONSENT forensics tool, not a
 # generic dataLayer dump.
-_CONSENT_EVENT_EXTRACT_JS = """
+_CONSENT_EVENT_EXTRACT_JS = r"""
 (() => {
   try {
     const dl = window.dataLayer;

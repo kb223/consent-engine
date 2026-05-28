@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "consent-engine"
-version = "0.6.1"
+version = "0.6.2"
 description = "Forensic consent-compliance audit engine. Deterministic by design."
 readme = "README.md"
 license = { text = "MIT" }
@@ -48,7 +48,6 @@ dependencies = [
 
 [project.optional-dependencies]
 mcp = ["mcp>=1.0.0"]
-chat = ["anthropic>=0.40.0"]
 
 [project.urls]
 Homepage = "https://github.com/kb223/consent-engine"
@@ -77,10 +76,8 @@ packages = ["src/consent_engine"]
 
 # Bundle non-Python resources (vendor library, wiki, Jinja2 templates) inside
 # the wheel so a `pip install` / `uvx` deployment is fully self-contained.
-[tool.hatch.build.targets.wheel.shared-data]
-"src/consent_engine/data" = "consent_engine/data"
-"src/consent_engine/templates" = "consent_engine/templates"
-
+# The package-internal copy (shipped via the include globs below) is the one
+# the runtime reads via Path(__file__).parent.parent — no env data scheme needed.
 [tool.hatch.build]
 include = [
   "src/consent_engine/**/*.py",

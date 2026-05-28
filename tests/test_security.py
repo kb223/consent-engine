@@ -82,3 +82,45 @@ def test_override_disables_guard(monkeypatch: pytest.MonkeyPatch) -> None:
     # With the override on, even loopback is allowed (self-hoster use case).
     assert is_blocked_host("127.0.0.1") is None
     validate_audit_url("http://127.0.0.1:8080/")  # must not raise
+
+
+# --- obfuscated IPv4 (parser-differential bypass) -------------------------
+
+
+def test_is_blocked_host_octal_loopback() -> None:
+    # ipaddress.ip_address rejects leading-zero octal, but Chromium canonicalizes
+    # 0177.0.0.1 -> 127.0.0.1 and connects. The guard must block it.
+    assert is_blocked_host("0177.0.0.1") is not None
+
+
+def test_is_blocked_host_hex_and_dotless_loopback() -> None:
+    assert is_blocked_host("0x7f000001") is not None  # hex 127.0.0.1
+    assert is_blocked_host("2130706433") is not None  # dotless 127.0.0.1
+
+
+def test_is_blocked_host_octal_metadata() -> None:
+    # 0251.0376.0251.0376 == 169.254.169.254 (link-local / cloud metadata).
+    assert is_blocked_host("0251.0376.0251.0376") is not None
+
+
+def test_validate_rejects_octal_and_dotless() -> None:
+    with pytest.raises(ValueError):
+        validate_audit_url("http://0177.0.0.1/")
+    with pytest.raises(ValueError):
+        validate_audit_url("http://2130706433/")
+
+
+# --- IPv6 ------------------------------------------------------------------
+
+
+def test_is_blocked_host_ipv6_loopback() -> None:
+    assert is_blocked_host("::1") is not None
+
+
+def test_is_blocked_host_ipv6_ula_and_metadata() -> None:
+    assert is_blocked_host("fc00::1") is not None  # unique-local (private)
+    assert is_blocked_host("fd00:ec2::254") is not None  # AWS IMDSv2 metadata
+
+
+def test_is_blocked_host_allows_public_ipv6() -> None:
+    assert is_blocked_host("2001:4860:4860::8888") is None  # Google public DNS

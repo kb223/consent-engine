@@ -3,6 +3,81 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.2] — 2026-05-28 — Second-review hardening (P0/P1/P2 fixes)
+
+A deeper multi-agent review of the full pipeline (not just the diff) before the
+public launch. Found that the false-positive problem ran deeper than v0.6.1
+closed, plus two genuinely exploitable security holes. Five P0s, nine P1s, eight
+P2s. All fixed; 104 tests pass (22 new), ruff + mypy strict clean.
+
+### Fixed — P0 (launch-blocking)
+- **Stored XSS in the HTML report.** The Jinja env used
+  `autoescape=select_autoescape(["html"])`, but the template is
+  `audit_report.html.j2` — `select_autoescape` keys off the final extension, so
+  `.j2` left autoescape OFF and every `{{ }}` emitted raw HTML. The
+  attacker-controlled audited URL (and cookie names) were reflected unescaped
+  into a report the CLI auto-opens in the operator's browser. Now
+  `autoescape=True` unconditionally; site-derived values flowing into the two
+  `| safe` action-item sinks are `html.escape()`d at construction in
+  `audit.py::_derive_action_items`. (`SECURITY.md` corrected — it had wrongly
+  certified this surface as escaped.)
+- **SSRF metadata exfiltration via brand-logo fetch.** `audit.py::_grab_brand_logo`
+  pulled `og:image`/favicon hrefs from the audited page and fetched them with
+  `httpx(follow_redirects=True)` and no SSRF guard — outside the Playwright route
+  guard. An attacker page with `og:image=http://169.254.169.254/...` got cloud
+  metadata fetched and base64-embedded into the deck. Now each candidate is
+  `validate_audit_url`-checked, `follow_redirects=False`, response size capped.
+- **Fabricated "denied" GCS on compliant sites.** The fast-path geo-override
+  fired off the scanner's own always-injected `OptanonConsent` cookie (flat-set
+  `any(...)` was unconditionally true), rewriting every `G111` (granted) site to
+  `G100` (denied). Now CMP-gated and excludes the injected OneTrust cookie.
+- **Confirmed-violation verdict / statutory exposure under INCONCLUSIVE.** The
+  verdict band, `$1.2M–$18.5M` exposure, executive summary, and deck keyed off
+  `status == CONFIRMED` with no methodology check, so a compliant site on an
+  un-injectable CMP (Didomi, Usercentrics, Sourcepoint, Ketch…) got a red
+  "Consent Violation Detected" verdict. New centralized `_confirmed_violations()`
+  gate + zero-exposure short-circuit; report gains a neutral "Consent Enforcement
+  Not Verified" verdict state for inconclusive scans.
+- **`S3_CONSENT_WIRING_BROKEN` claimed for CMPs never injected against.** The fast
+  path only injects OneTrust's cookies but labeled ~12 CMPs "legally defensible."
+  Now `classify_fast_methodology()` restricts that verdict to OneTrust; all others
+  are `INCONCLUSIVE_UNKNOWN_CMP`.
+
+### Fixed — P1
+- **Truyo (and CookiePro) mislabeled as OneTrust.** CMP detection short-circuited
+  on the first matching JS global (OneTrust is rule 0) / URL pattern, and
+  OneTrust-based products also expose `window.OneTrust` + `cdn.cookielaw.org`.
+  Detection now collects all matches and demotes the generic base-layer globals
+  (`OneTrust`, `IAB TCF`) when a more specific CMP co-matches.
+- **SSRF octal/hex/dotless IP bypass.** `0177.0.0.1` (= 127.0.0.1) slipped past
+  the guard (ipaddress rejects octal; DNS didn't canonicalize) but Chromium
+  connects to loopback. New `_canonical_ipv4()` mirrors the browser/`inet_aton`
+  parser before classifying.
+- **SSRF via the ssGTM detector's httpx fetch** (`follow_redirects=True`, no
+  guard) — now validated + no-redirect.
+- **Vendor false attribution from generic short cookie names** (`C`, `uid`, `sp`,
+  `tp`, `dpm`, `fr`…). Tier-1 ignored the cookie domain; Tier-2 let blank-domain
+  OCD rows through. Generic names now require a positive domain match.
+- **`consent-engine chat` documented but not implemented** — removed the claim
+  and the dead `[chat]` extra.
+
+### Fixed — P2
+- Jinja prompt-injection surface: the audited URL is sanitized (query/fragment
+  stripped, truncated) before interpolation into the LLM executive-summary prompt.
+- Playwright contexts set `accept_downloads=False`.
+- OneTrust `testLog()` capture polls (was a fixed 0.3s race) and returns `None`
+  rather than a half-populated config on a miss.
+- Wheel no longer ships package data twice (removed the stray `shared-data`
+  table, ~567 KB); Docker build pins `uv.lock --frozen`; MCP output dir honors
+  `CONSENT_ENGINE_OUT_DIR` instead of CWD-relative `./out`; `tldextract` uses the
+  bundled public-suffix snapshot (no first-run network fetch).
+
+### Known limitation
+- DNS-rebinding TOCTOU (guard resolves a public IP, Chromium re-resolves to a
+  private one) is not fully closed; it needs socket-level IP pinning. The
+  multi-IP answer set is still blocked if any address is private. Tracked for a
+  follow-up.
+
 ## [0.6.1] — 2026-05-26 — Peer-review hardening (P0/P1/P2 fixes)
 
 Addresses an external code review (Codex 5.5) before the public LinkedIn

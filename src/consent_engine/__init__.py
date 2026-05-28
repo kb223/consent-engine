@@ -17,4 +17,4 @@ import os as _os
 _os.environ.setdefault("LITELLM_LOG", "ERROR")
 _os.environ.setdefault("LITELLM_DROP_PARAMS", "true")
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"

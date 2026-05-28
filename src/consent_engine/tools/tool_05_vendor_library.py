@@ -162,10 +162,50 @@ def _load_ocd_index() -> OCDIndex:
 # ---------------------------------------------------------------------------
 
 
-def _tier1_lookup(q: str) -> Vendor | None:
-    """Check custom vendors.json (exact cookie name or domain, case-insensitive)."""
+# Short / common cookie names that unrelated FIRST-PARTY sites routinely set.
+# A literal first-party cookie named "C" or "uid" must NOT be attributed to a
+# tracking vendor on name alone, or it surfaces as a confirmed targeting
+# violation with statutory-exposure dollars — a false positive in a
+# litigation-facing tool. These are gated on domain below.
+_TIER1_GENERIC_NAMES: frozenset[str] = frozenset(
+    {"c", "uid", "sp", "tp", "sb", "wd", "mr", "sm", "id", "dpm", "fr", "aid", "pref"}
+)
+
+
+def _is_generic_cookie_name(name: str) -> bool:
+    """A cookie name is 'generic' if it is short (<5 chars) or explicitly listed.
+
+    Generic names collide with first-party cookies on unrelated sites, so a
+    Tier-1 attribution on such a name is only trusted when the observed cookie
+    domain also matches the vendor's domains.
+    """
+    low = name.lower()
+    return len(name) < 5 or low in _TIER1_GENERIC_NAMES
+
+
+def _tier1_lookup(q: str, cookie_domain: str | None = None) -> Vendor | None:
+    """Check custom vendors.json (exact cookie name or domain, case-insensitive).
+
+    For a matched vendor, generic cookie names (short or denylisted — see
+    `_is_generic_cookie_name`) are domain-gated when `cookie_domain` is provided:
+    the observed cookie domain must match one of the vendor's `domains` (same
+    suffix logic Tier-2 uses) or the match is discarded and we fall through.
+    This kills false positives where a first-party cookie literally named e.g.
+    "C", "uid", "sp", or "fr" gets attributed to Adform/Snowplow/Meta. Longer,
+    distinctive names (>=5 chars, not denylisted) are genuinely third-party, so
+    exact-name matching for them is kept and loses no true positives.
+
+    The domain-match branch is inherently self-validating and is left untouched,
+    so the domain-query fallback in audit.py still resolves vendors by domain.
+    """
     for vendor in _load_vendors():
-        if any(q == name.lower() for name in vendor.cookie_names):
+        for name in vendor.cookie_names:
+            if q != name.lower():
+                continue
+            if cookie_domain and _is_generic_cookie_name(name):
+                if any(_domain_matches(cookie_domain, dom) for dom in vendor.domains):
+                    return vendor
+                break  # generic name, domain mismatch — try next vendor
             return vendor
         if any(q == dom.lower() for dom in vendor.domains):
             return vendor
@@ -183,12 +223,32 @@ def _domain_matches(cookie_domain: str, ocd_domain: str) -> bool:
     return cd == od or cd.endswith("." + od)
 
 
+def _ocd_domain_ok(name: str, cookie_domain: str | None, ocd_dom: str) -> bool:
+    """Whether an OCD row may be attributed to the observed cookie.
+
+    Non-generic names keep prior behavior: accept unless a *present* cookie_domain
+    and OCD domain positively mismatch. Generic short names (``C``, ``uid``, ``sp``,
+    ``dpm`` ...) are the false-positive magnets — for those we REQUIRE a positive
+    domain match, so a generic name on a row with a blank/unknown OCD domain (which
+    the old `cookie_domain and ocd_dom and ...` gate let slip through) is refused
+    rather than attributed to a tracking vendor.
+    """
+    if _is_generic_cookie_name(name):
+        return bool(cookie_domain and ocd_dom and _domain_matches(cookie_domain, ocd_dom))
+    # Non-generic: reject only on a positive domain mismatch; otherwise accept.
+    if not (cookie_domain and ocd_dom):
+        return True
+    return _domain_matches(cookie_domain, ocd_dom)
+
+
 def _tier2_lookup(q: str, cookie_domain: str | None = None) -> Vendor | None:
     """Check Open Cookie Database: exact cookie, wildcard prefix, then domain.
 
     When cookie_domain is provided, wildcard matches are only accepted if the
     OCD entry's domain matches the cookie's actual domain. This prevents
     generic prefixes (e.g. '_s', '_ut') from false-matching unrelated vendors.
+    Generic short names additionally require a positive domain match (see
+    `_ocd_domain_ok`) so blank-domain OCD rows can't produce a false attribution.
     """
     idx = _load_ocd_index()
 
@@ -196,17 +256,16 @@ def _tier2_lookup(q: str, cookie_domain: str | None = None) -> Vendor | None:
     row = idx["exact"].get(q)
     if row is not None:
         ocd_dom = row["Domain"].strip()
-        if cookie_domain and ocd_dom and not _domain_matches(cookie_domain, ocd_dom):
-            pass  # Name matched but domain mismatch — skip, try wildcards/domain
-        else:
+        if _ocd_domain_ok(q, cookie_domain, ocd_dom):
             return _ocd_row_to_vendor(row)
+        # else: name matched but domain unvalidated / mismatch — try wildcards/domain
 
     # 2. Wildcard prefix match (domain-gated when cookie_domain is provided)
     for prefix, wrow in idx["wildcards"]:
         if q.startswith(prefix):
             ocd_dom = wrow["Domain"].strip()
-            if cookie_domain and ocd_dom and not _domain_matches(cookie_domain, ocd_dom):
-                continue  # Prefix matched but wrong domain — skip
+            if not _ocd_domain_ok(q, cookie_domain, ocd_dom):
+                continue  # Prefix matched but domain unvalidated / wrong — skip
             return _ocd_row_to_vendor(wrow)
 
     # 3. Domain match
@@ -235,7 +294,7 @@ def lookup_vendor(query: str, cookie_domain: str | None = None) -> Vendor | None
     """
     q = query.lower().strip()
 
-    result = _tier1_lookup(q)
+    result = _tier1_lookup(q, cookie_domain=cookie_domain)
     if result is not None:
         return result
 

@@ -351,7 +351,8 @@ def parse_gcs_value(gcs_str: str) -> GCSValue:
     Examples:
       G1--  -> denied/denied  (consent denied -- proves Advanced CM if present)
       G111  -> granted/granted
-      G100  -> ad granted, analytics denied
+      G110  -> ad granted, analytics denied
+      G100  -> denied/denied  (ad denied, analytics denied)
     """
 
     def _decode(bit: str) -> str:
@@ -365,6 +366,36 @@ def parse_gcs_value(gcs_str: str) -> GCSValue:
         ad_storage=_decode(gcs_str[2]),
         analytics_storage=_decode(gcs_str[3]),
     )
+
+
+def classify_fast_methodology(
+    gcs_value: GCSValue | None, cmp_name: str | None
+) -> MethodologyFlag:
+    """Methodology label for the fast scan path (pure function; unit-testable).
+
+    The fast path injects ONLY OneTrust's OptanonConsent/OptanonAlertBoxClosed
+    cookies (it does not run build_injection_plan), so the only CMP it genuinely
+    applies a denial payload against is OneTrust. Therefore:
+
+      1. Denied GCS actually observed        -> S3 (denial propagated; definitive)
+      2. OneTrust detected, GCS never denied -> S3_CONSENT_WIRING_BROKEN
+         (we injected the right payload for a CMP we recognize and it didn't take)
+      3. Anything else                       -> INCONCLUSIVE_UNKNOWN_CMP
+         (unrecognized CMP, or a CMP we did NOT inject against — we cannot call a
+         still-granted result definitive)
+
+    Asserting S3_CONSENT_WIRING_BROKEN for a non-OneTrust CMP would claim "we
+    applied the correct denial payload" when the fast path never did — a false
+    "legally defensible" verdict. Keep it OneTrust-only here.
+    """
+    gcs_denied = gcs_value is not None and (
+        gcs_value.ad_storage == "denied" or gcs_value.analytics_storage == "denied"
+    )
+    if gcs_denied:
+        return MethodologyFlag.S3
+    if cmp_name == "OneTrust":
+        return MethodologyFlag.S3_CONSENT_WIRING_BROKEN
+    return MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP
 
 
 def extract_gcs_from_url(url: str) -> str | None:
@@ -593,6 +624,7 @@ async def _scan_s1(url: str, proxy_url: str | None = None) -> ScanResult:
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True, args=_STEALTH_LAUNCH_ARGS)
         context = await browser.new_context(
+            accept_downloads=False,
             proxy=proxy,
             record_har_path=har_path,
             user_agent=_STEALTH_UA,
@@ -877,6 +909,7 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True, args=_STEALTH_LAUNCH_ARGS)
         context = await browser.new_context(
+            accept_downloads=False,
             proxy=proxy,
             record_har_path=har_path,
             user_agent=_STEALTH_UA,
@@ -1019,6 +1052,7 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
             os.close(har_fd2)
 
             context2 = await browser.new_context(
+                accept_downloads=False,
                 proxy=proxy,
                 record_har_path=har_path2,
                 user_agent=_STEALTH_UA,
@@ -1343,6 +1377,7 @@ async def _scan_gpc(url: str, proxy_url: str | None = None) -> ScanResult:
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True, args=_STEALTH_LAUNCH_ARGS)
         context = await browser.new_context(
+            accept_downloads=False,
             extra_http_headers={"Sec-GPC": "1"},
             proxy=proxy,
             record_har_path=har_path,
@@ -1548,6 +1583,7 @@ async def scan_page_fast(
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True, args=_STEALTH_LAUNCH_ARGS)
         context = await browser.new_context(
+            accept_downloads=False,
             user_agent=_STEALTH_UA,
             viewport={"width": 1280, "height": 800},
             locale="en-US",
@@ -1703,52 +1739,44 @@ async def scan_page_fast(
         denied_gcd = [gcd for gcd in gcd_records if is_gcd_denied_state(gcd)]
         gcd_raw = denied_gcd[0] if denied_gcd else gcd_records[-1]
 
-    # GCS geo-targeting override — same logic as full scan.
-    # US-targeted CMPs report GCS G111 even when denied cookies are set.
-    # If we injected opt-out cookies and they're present, override to G100.
-    _denied_cookie_names = {
-        "OptanonConsent",  # OneTrust
-        "cookieyes-consent",  # CookieYes
-        "CookieConsent",  # Cookiebot
-        "cmplz_consent",  # Complianz
+    # Resolve the detected CMP first — both the geo-override and the methodology
+    # classification below depend on it.
+    _cmp_name = cmp_profile.name if cmp_profile and cmp_profile.name != "unknown" else None
+    _cmp_conf = cmp_profile.confidence if cmp_profile and cmp_profile.name != "unknown" else None
+
+    # GCS geo-targeting override. A US-targeted CMP can report G111 even after
+    # writing its denial cookie; if the DETECTED CMP's OWN denial cookie is
+    # present, the all-granted GCS is a US-geo artifact and the true opted-out
+    # value is G100 (what an EU visitor sees after reject-all).
+    # CRITICAL: this map must EXCLUDE OneTrust's OptanonConsent. The fast path
+    # INJECTS OptanonConsent on every opted-out scan, so its presence proves
+    # nothing — keying the override off it (the old flat-set + `any` did) forced
+    # EVERY granted site to a fabricated G100 "denied". A genuinely-OneTrust site
+    # that respects our injection reports denied GCS on its own (-> S3 below);
+    # one that ignores it stays granted (-> S3_CONSENT_WIRING_BROKEN), never a
+    # fake G100. The cookies below are NOT injected by the fast path, so their
+    # presence is real evidence the CMP itself wrote a denial.
+    _geo_denial_cookies = {
+        "CookieYes": "cookieyes-consent",
+        "Cookiebot": "CookieConsent",
+        "Complianz": "cmplz_consent",
     }
+    _expected_geo_cookie = _geo_denial_cookies.get(_cmp_name) if _cmp_name else None
     if (
         opted_out
         and gcs_value
         and gcs_value.ad_storage == "granted"
         and gcs_value.analytics_storage == "granted"
-        and any(c.name in _denied_cookie_names for c in cookies)
+        and _expected_geo_cookie is not None
+        and any(c.name == _expected_geo_cookie for c in cookies)
     ):
         gcs_value = parse_gcs_value("G100")
 
-    _cmp_name = cmp_profile.name if cmp_profile and cmp_profile.name != "unknown" else None
-    _cmp_conf = cmp_profile.confidence if cmp_profile and cmp_profile.name != "unknown" else None
-
-    # Methodology classification — same safeguard logic as the full _scan_s3
-    # path. Without this, the fast path mislabeled EVERY scan as S3-definitive,
-    # even when the injected opt-out cookie was ignored (unknown CMP that
-    # doesn't read OptanonConsent). Three outcomes:
-    #   1. Denied GCS observed                         -> S3 (definitive: denial propagated)
-    #   2. Known CMP + injection plan existed          -> S3_CONSENT_WIRING_BROKEN
-    #      (definitive: we injected the right denial payload, GCS never flipped
-    #      = proof the site's tag wiring fires regardless of CMP state)
-    #   3. Unknown CMP / no injection plan             -> INCONCLUSIVE_UNKNOWN_CMP
-    #      (we injected OptanonConsent but a non-OneTrust CMP likely ignored it,
-    #      so we cannot call the result definitive)
-    from consent_engine.tools.cmp_injector import has_plan_for
-
-    _gcs_denied_observed = gcs_value is not None and (
-        gcs_value.ad_storage == "denied" or gcs_value.analytics_storage == "denied"
-    )
-    _cmp_detected = _cmp_name is not None
-    _injection_plan_existed = has_plan_for(_cmp_name)
-
-    if _gcs_denied_observed:
-        _fast_methodology: MethodologyFlag = MethodologyFlag.S3
-    elif _cmp_detected and _injection_plan_existed:
-        _fast_methodology = MethodologyFlag.S3_CONSENT_WIRING_BROKEN
-    else:
-        _fast_methodology = MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP
+    # Methodology classification — pure logic lives in classify_fast_methodology
+    # (unit-tested). The fast path only injects against OneTrust, so only OneTrust
+    # can yield the definitive S3_CONSENT_WIRING_BROKEN; everything else is
+    # INCONCLUSIVE unless denial actually propagated (GCS denied -> S3).
+    _fast_methodology = classify_fast_methodology(gcs_value, _cmp_name)
 
     # Extract GTM container ID from gtm.js network request. The full JS body
     # isn't needed for the fast path — the ID alone populates the report card.
@@ -2004,6 +2032,7 @@ async def check_gpc_fast(url: str, baseline_pixel_count: int) -> bool:
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True, args=_STEALTH_LAUNCH_ARGS)
         context = await browser.new_context(
+            accept_downloads=False,
             user_agent=_STEALTH_UA,
             viewport={"width": 1280, "height": 800},
             locale="en-US",

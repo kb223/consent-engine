@@ -16,6 +16,11 @@ import re
 
 import tldextract
 
+# Single module-level TLDExtract instance using the packaged public-suffix
+# snapshot. An empty ``suffix_list_urls`` suppresses the lazy network fetch of
+# the Mozilla list on first use, keeping this forensic tool offline-deterministic.
+_TLD_EXTRACT = tldextract.TLDExtract(suffix_list_urls=())
+
 # ---------------------------------------------------------------------------
 # Signal sets
 # ---------------------------------------------------------------------------
@@ -277,7 +282,7 @@ def _tld_signals(url: str) -> tuple[bool, bool]:
     """Return (is_eu, is_ca) from URL TLD via tldextract."""
     if not url:
         return False, False
-    ext = tldextract.extract(url)
+    ext = _TLD_EXTRACT(url)
     suffix = ext.suffix.lower()  # e.g. "co.uk", "de", "ca", "com"
     is_eu = suffix in _EU_TLDS
     is_ca = suffix in _CA_TLDS
@@ -307,7 +312,7 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
         "EU" | "CA" | "US"
     """
     # 1. TLD takes precedence when it is an unambiguous regional signal.
-    ext = tldextract.extract(url) if url else None
+    ext = _TLD_EXTRACT(url) if url else None
     suffix = ext.suffix.lower() if ext else ""
 
     if suffix in _EU_TLDS:

@@ -16,9 +16,16 @@ import httpx
 import tldextract
 from pydantic import BaseModel
 
+from consent_engine.security import validate_audit_url
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
+
+# Single module-level TLDExtract instance using the packaged public-suffix
+# snapshot. An empty ``suffix_list_urls`` suppresses the lazy network fetch of
+# the Mozilla list on first use, keeping this forensic tool offline-deterministic.
+_TLD_EXTRACT = tldextract.TLDExtract(suffix_list_urls=())
 
 _GTM_ID_RE = re.compile(r"GTM-[A-Z0-9]+")
 _BODY_LIMIT_CHARS = 20_480  # 20 KB — sufficient to catch fingerprints in loader preamble (applied to str, not bytes)
@@ -64,7 +71,7 @@ class SSGTMResult(BaseModel):
 
 def _registered_domain(url: str) -> str:
     """Return the registrable domain (e.g. 'kennethjbuchanan.com') for a URL."""
-    ext = tldextract.extract(url)
+    ext = _TLD_EXTRACT(url)
     return f"{ext.domain}.{ext.suffix}" if ext.suffix else ext.domain
 
 
@@ -75,7 +82,7 @@ def _is_first_party(url: str, target_url: str) -> bool:
     if not url_domain or not target_domain:
         return False
     # Also reject known third-party tracking domains regardless of registered domain
-    ext = tldextract.extract(url)
+    ext = _TLD_EXTRACT(url)
     full_domain = f"{ext.domain}.{ext.suffix}"
     if full_domain in _THIRD_PARTY_DOMAINS:
         return False
@@ -167,7 +174,7 @@ async def detect_ssgtm(network_requests: list[str], target_url: str) -> SSGTMRes
     _collect_re = re.compile(r"/g/collect\b")
     for url in network_requests:
         if _is_first_party(url, target_url) and _collect_re.search(url) and "gcs=" in url:
-            ext = tldextract.extract(url)
+            ext = _TLD_EXTRACT(url)
             domain = f"{ext.subdomain}.{ext.domain}.{ext.suffix}".lstrip(".")
             # Extract GTM container ID from the gtm= parameter if present
             gtm_match = re.search(r"[?&]gtm=([^&]+)", url)
@@ -188,18 +195,26 @@ async def detect_ssgtm(network_requests: list[str], target_url: str) -> SSGTMRes
         url for url in network_requests if _is_first_party(url, target_url) and _looks_like_js(url)
     ]
 
-    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+    # follow_redirects=False: these are separate httpx calls the Playwright route
+    # guard never sees, so a same-domain candidate could 30x to an internal IP
+    # (e.g. http://169.254.169.254/). We refuse redirects and SSRF-check every
+    # candidate URL up front via validate_audit_url.
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
         for url in candidates:
+            try:
+                validate_audit_url(url)
+            except ValueError:
+                continue  # blocked/unsafe candidate (e.g. resolves to internal IP)
             try:
                 resp = await client.get(url, headers={"Accept": "application/javascript"})
                 if resp.status_code != 200:
-                    continue
+                    continue  # non-200 (incl. 30x redirects) — treat as non-match
 
                 body = resp.text[:_BODY_LIMIT_CHARS]
                 confidence, container_id, evidence = _fingerprint_body(body)
 
                 if confidence in ("high", "medium"):
-                    ext = tldextract.extract(url)
+                    ext = _TLD_EXTRACT(url)
                     domain = f"{ext.subdomain}.{ext.domain}.{ext.suffix}".lstrip(".")
                     return SSGTMResult(
                         detected=True,

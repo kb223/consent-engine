@@ -45,9 +45,9 @@ Accepted token headers:
 
 Constant-time compare via `secrets.compare_digest`.
 
-### XSS — Jinja2 `autoescape=select_autoescape(['html'])`
+### XSS — Jinja2 `autoescape=True`
 
-The template environment in `tool_08_report_generator.py` enables HTML autoescape for all `*.html` templates. The only filter that bypasses autoescape is `| markdown` and it's only applied to package-bundled wiki content (`data/wiki/*.md`), which is trusted at build time. User inputs (`firm_name`, `result.url`, `executive_summary`) all flow through `{{ ... }}` escape.
+The template environment in `tool_08_report_generator.py` sets `autoescape=True` unconditionally, so every `{{ ... }}` expression is HTML-escaped. (Earlier versions used `select_autoescape(['html'])`, which keys off the final filename extension — the template is `audit_report.html.j2`, so the `.j2` suffix left autoescape OFF. Fixed in v0.6.2.) User inputs (`firm_name`, `result.url`, `executive_summary`, cookie names, observed notes) all flow through `{{ ... }}` escape. Two sinks render trusted HTML: the `| markdown` filter returns `markupsafe.Markup` and is only applied to package-bundled wiki content (`data/wiki/*.md`), and the action-item lists (`remediation` / `open_gaps`) are rendered `| safe` — those strings are built in `audit.py::_derive_action_items`, where every site-derived value interpolated into them (cookie names, GCS raw, vendor name, ssGTM domain) is escaped with `html.escape()` at construction.
 
 ### Dependency hygiene
 

@@ -5,7 +5,6 @@ Usage:
                                [--monthly-ad-spend N] [--firm-name "Acme LLC"]
                                [--output-dir DIR] [--no-open]
     consent-engine render-deck <audit_id> [--output-dir DIR]
-    consent-engine chat <audit_id>
     consent-engine version
 
 Every audit runs two passes: a primary opt-out pass (fresh browser context,
@@ -23,10 +22,6 @@ evidence.jsonl, deck.marp.md) to ./out/<audit_id>/.
 
 The `render-deck` command turns that deck.marp.md into a browsable deck.html
 via @marp-team/marp-cli (shells out to `npx`; requires Node.js on PATH).
-
-The `chat` command opens a per-audit Claude conversation grounded in the
-captured evidence + audit result + wiki context cited by the audit. Closes
-the loop on Fred Pike's glass-box principle.
 """
 
 from __future__ import annotations

@@ -78,6 +78,7 @@
   }
   .verdict.violation { border-left-color: var(--red); background: var(--red-soft); border-color: #e9c9c0; }
   .verdict.clean     { border-left-color: var(--green); background: var(--green-soft); border-color: #c8e0cd; }
+  .verdict.inconclusive { border-left-color: var(--amber); background: var(--amber-soft); border-color: #ecdcb6; }
   .verdict-title {
     font-family: 'Source Serif 4', Georgia, serif;
     font-size: 1.35rem; font-weight: 500; margin: 0 0 6px;
@@ -85,6 +86,7 @@
   }
   .verdict.violation .verdict-title { color: var(--red); }
   .verdict.clean     .verdict-title { color: var(--green); }
+  .verdict.inconclusive .verdict-title { color: var(--amber); }
   .verdict-sub { font-size: 0.85rem; color: var(--muted); margin: 0; }
 
   /* Executive summary */
@@ -647,16 +649,20 @@
   {% set _methodology_str = result.methodology.value if result.methodology is not string else result.methodology %}
   {% set is_inconclusive = _methodology_str == 's3_inconclusive_unknown_cmp' %}
   {% set is_wiring_broken = _methodology_str == 's3_consent_wiring_broken' %}
-  <div class="verdict {{ 'violation' if has_violation else 'clean' }}">
+  <div class="verdict {{ 'violation' if has_violation else ('inconclusive' if is_inconclusive else 'clean') }}">
     <p class="verdict-title">
       {% if report_variant == 'signal' %}
-        {{ 'Signal Gap Detected' if has_violation else 'AI-Ready Measurement Stack' }}
+        {{ 'Signal Gap Detected' if has_violation else ('Signal Check Inconclusive' if is_inconclusive else 'AI-Ready Measurement Stack') }}
       {% else %}
-        {{ 'Consent Violation Detected' if has_violation else 'No Consent Violations Detected' }}
+        {{ 'Consent Violation Detected' if has_violation else ('Consent Enforcement Not Verified' if is_inconclusive else 'No Consent Violations Detected') }}
       {% endif %}
     </p>
     <p class="verdict-sub">
-      {% if report_variant == 'signal' %}
+      {% if is_inconclusive %}
+        {{ result.findings | length }} vendor{{ 's' if result.findings | length != 1 else '' }} observed (indicative) &nbsp;·&nbsp;
+        consent enforcement could not be verified &nbsp;·&nbsp;
+        {{ result.methodology }}
+      {% elif report_variant == 'signal' %}
         {{ findings_with_violations | length }} vendor{{ 's' if findings_with_violations | length != 1 else '' }} leaking post-consent signal &nbsp;·&nbsp;
         {{ result.findings | length }} vendor{{ 's' if result.findings | length != 1 else '' }} analyzed &nbsp;·&nbsp;
         {{ result.methodology }}
@@ -952,7 +958,7 @@
     <div class="signal-card">
       <div class="signal-label">Server-Side GTM</div>
       <div class="signal-value">{{ 'Detected' if result.ssgtm_detected else 'Not detected' }}</div>
-      <div class="signal-sub">{{ result.ssgtm_domain or '&mdash;' }}</div>
+      <div class="signal-sub">{{ result.ssgtm_domain or '—' }}</div>
     </div>
     <div class="signal-card">
       <div class="signal-label">GPC Tested</div>
@@ -1036,7 +1042,7 @@
                 <span class="badge badge-green">Passed</span>
               {% endif %}
             </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">{{ finding.notes or '&mdash;' }}</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">{{ finding.notes or '—' }}</td>
           </tr>
           {% endfor %}
         </tbody>

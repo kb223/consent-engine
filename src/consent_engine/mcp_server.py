@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -29,19 +30,33 @@ from typing import Any
 _AUDIT_ID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 
+def _output_base() -> Path:
+    """Resolve the audit-output base directory, creating it if needed.
+
+    Under Claude Desktop the host CWD is arbitrary (often read-only), so a
+    CWD-relative `./out` is unreliable. Honor `CONSENT_ENGINE_OUT_DIR` if set,
+    otherwise fall back to `~/.consent-engine/out`. Both the write path and
+    `_safe_audit_dir` (read path) go through here so they stay consistent.
+    """
+    env = os.environ.get("CONSENT_ENGINE_OUT_DIR")
+    base = Path(env) if env else Path.home() / ".consent-engine" / "out"
+    base.mkdir(parents=True, exist_ok=True)
+    return base.resolve()
+
+
 def _safe_audit_dir(audit_id: str) -> Path:
-    """Resolve `./out/<audit_id>` after rejecting non-UUID inputs.
+    """Resolve `<output base>/<audit_id>` after rejecting non-UUID inputs.
 
     Closes the MCP-side path-traversal vector — an MCP host could pass an
-    untrusted audit_id like `../../../etc` and reach files outside `./out/`.
-    Audit IDs come from `uuid.uuid4()` so we can validate the shape.
+    untrusted audit_id like `../../../etc` and reach files outside the output
+    base. Audit IDs come from `uuid.uuid4()` so we can validate the shape.
     """
     if not _AUDIT_ID_PATTERN.fullmatch(audit_id):
         raise ValueError(f"Invalid audit_id format: {audit_id!r} (expected UUID4)")
-    out = Path("./out").resolve()
+    out = _output_base()
     candidate = (out / audit_id).resolve()
     if not str(candidate).startswith(str(out) + "/"):
-        raise ValueError(f"audit_id resolves outside ./out/: {audit_id!r}")
+        raise ValueError(f"audit_id resolves outside output base: {audit_id!r}")
     return candidate
 
 # `mcp` is an optional dependency. If the user installed
@@ -130,7 +145,7 @@ async def _audit_url(url: str) -> list[TextContent]:
     from consent_engine.audit import run_audit
 
     bundle = await run_audit(url=url)
-    audit_dir = Path("./out") / bundle.audit_id
+    audit_dir = _output_base() / bundle.audit_id
     audit_dir.mkdir(parents=True, exist_ok=True)
     (audit_dir / "audit_result.json").write_text(
         json.dumps(bundle.audit_result.model_dump(mode="json"), indent=2, default=str)
@@ -149,6 +164,7 @@ async def _audit_url(url: str) -> list[TextContent]:
         text=(
             f"Audit complete: {bundle.audit_id}\n"
             f"  URL: {url}\n"
+            f"  Output: {audit_dir}\n"
             f"  Findings: {len(bundle.audit_result.findings)} vendor finding(s)\n\n"
             f"Summary:\n{bundle.executive_summary}"
         ),

@@ -57,6 +57,29 @@ def _ip_is_blocked(addr: str) -> bool:
     )
 
 
+def _canonical_ipv4(host: str) -> str | None:
+    """Canonical dotted-quad for an IPv4 host given in any legacy/obfuscated form
+    a browser URL parser accepts — octal ``0177.0.0.1``, hex ``0x7f000001``,
+    dotless ``2130706433`` — or None when `host` is not numeric IPv4 (a real DNS
+    name).
+
+    Closes a parser-differential SSRF: ``ipaddress.ip_address("0177.0.0.1")``
+    raises (Python rejects leading-zero octal) so the guard's literal-IP branch
+    skipped it and DNS resolution didn't canonicalize it either, yet Chromium's
+    URL parser turns ``0177.0.0.1`` into ``127.0.0.1`` and connects to loopback.
+    We mirror the C/4.3BSD parser (``inet_aton``), which the browser's behavior
+    descends from, and only attempt it for plausibly-numeric hosts so DNS names
+    are left untouched.
+    """
+    h = host.lower()
+    if not h or any(c not in "0123456789abcdefx." for c in h):
+        return None
+    try:
+        return socket.inet_ntoa(socket.inet_aton(h))
+    except OSError:
+        return None
+
+
 def is_blocked_host(host: str | None) -> str | None:
     """Return a human-readable block reason for `host`, or None if allowed.
 
@@ -72,6 +95,13 @@ def is_blocked_host(host: str | None) -> str | None:
     h = host.lower()
     if h in METADATA_HOSTS:
         return f"cloud-metadata host {host}"
+    # Obfuscated IPv4 (octal / hex / dotless) — canonicalize the way the browser
+    # does before classifying, so 0177.0.0.1 etc. can't slip past as a "hostname".
+    canon = _canonical_ipv4(h)
+    if canon is not None:
+        if _ip_is_blocked(canon):
+            return f"internal/private IP {canon} (from {host})"
+        return None
     # Literal IP in the host position — check directly without DNS.
     try:
         ipaddress.ip_address(h)
@@ -113,6 +143,14 @@ def validate_audit_url(url: str) -> None:
     if host.lower() in METADATA_HOSTS:
         raise ValueError(
             f"Refusing to scan known cloud-metadata host: {host}. "
+            "Set CONSENT_ENGINE_ALLOW_INTERNAL=1 to override."
+        )
+    # Obfuscated IPv4 (octal / hex / dotless) — canonicalize like the browser
+    # before DNS, so http://0177.0.0.1/ (= 127.0.0.1) can't bypass the guard.
+    canon = _canonical_ipv4(host.lower())
+    if canon is not None and _ip_is_blocked(canon):
+        raise ValueError(
+            f"Refusing to scan internal/private IP {canon} (from host {host!r}). "
             "Set CONSENT_ENGINE_ALLOW_INTERNAL=1 to override."
         )
     try:

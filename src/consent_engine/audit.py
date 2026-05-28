@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import html
 import os
 import re
 import subprocess
@@ -26,6 +27,7 @@ import httpx
 from consent_engine.models.audit_result import (
     AuditResult,
     HarAnalysis,
+    MethodologyFlag,
     VendorFinding,
 )
 from consent_engine.models.scan_result import ScanResult
@@ -198,6 +200,11 @@ def ensure_chromium_installed() -> None:
         )
 
 
+# Cap on the brand-logo bytes embedded as a data: URL into the deck. Keeps a
+# hostile server from ballooning the output bundle with a multi-MB "image".
+_MAX_LOGO_BYTES = 2_000_000
+
+
 def _grab_brand_logo(url: str, page_html: str) -> str | None:
     """Return a ``data:image/...;base64,...`` URL for the site's brand logo.
 
@@ -253,7 +260,13 @@ def _grab_brand_logo(url: str, page_html: str) -> str | None:
 
     candidates.append(f"https://www.google.com/s2/favicons?domain={parsed.netloc}&sz=128")
 
-    with httpx.Client(timeout=5.0, follow_redirects=True) as client:
+    # SSRF guard: icon hrefs + og:image come from the audited (attacker-
+    # controlled) page, and this httpx fetch is OUTSIDE the Playwright route
+    # guard. Validate each candidate resolves to a public IP before fetching,
+    # and never follow redirects — otherwise an `og:image` pointing at (or 30x
+    # redirecting to) http://169.254.169.254/... would exfiltrate cloud-metadata
+    # bytes straight into the embedded data: URL. Skip any candidate that fails.
+    with httpx.Client(timeout=5.0, follow_redirects=False) as client:
         for raw in candidates:
             try:
                 absolute = (
@@ -261,8 +274,14 @@ def _grab_brand_logo(url: str, page_html: str) -> str | None:
                 )
                 if absolute.startswith("data:"):
                     return absolute
+                try:
+                    _validate_audit_url(absolute)
+                except ValueError:
+                    continue
                 r = client.get(absolute, headers={"User-Agent": "consent-engine/0.3 (+brand-logo)"})
                 if r.status_code != 200 or not r.content:
+                    continue
+                if len(r.content) > _MAX_LOGO_BYTES:
                     continue
                 mime = (r.headers.get("content-type", "image/png").split(";")[0] or "image/png").strip()
                 if not mime.startswith("image/"):
@@ -287,12 +306,28 @@ def _derive_action_items(
     open_gaps: list[str] = []
 
     # Per-finding remediation — vendor-specific where useful, generic otherwise.
+    # Gated on methodology (same gate as the report verdict): under INCONCLUSIVE
+    # we can't confirm the finding is a real violation, so "here's how to fix it"
+    # steps would overclaim. The open-gaps below (re-scan / manual-verify
+    # guidance) are the appropriate output for an inconclusive scan instead.
+    _definitive = audit_result.methodology in (
+        MethodologyFlag.S3,
+        MethodologyFlag.S3_CONSENT_WIRING_BROKEN,
+    )
     for finding in audit_result.findings:
-        if finding.status != "confirmed_violation":
+        if not _definitive or finding.status != "confirmed_violation":
             continue
-        vendor_name = finding.vendor.name
-        cookies = ", ".join(f"<code>{c}</code>" for c in finding.cookies_observed)
-        gcs_raw = audit_result.gcs_value.raw if audit_result.gcs_value else "none"
+        # These strings are rendered with `| safe`, so every site-derived value
+        # (cookie names, GCS raw, vendor name, ssGTM domain) MUST be HTML-escaped
+        # at construction — otherwise a malicious cookie name like
+        # `</code><script>…` is a stored-XSS sink even with template autoescape on.
+        vendor_name = html.escape(finding.vendor.name)
+        cookies = ", ".join(
+            f"<code>{html.escape(c)}</code>" for c in finding.cookies_observed
+        )
+        gcs_raw = html.escape(
+            audit_result.gcs_value.raw if audit_result.gcs_value else "none"
+        )
 
         if vendor_name == "Meta":
             remediation.append(
@@ -363,7 +398,7 @@ def _derive_action_items(
         f for f in audit_result.findings if f.status == "requires_investigation"
     ]
     if requires_investigation:
-        vendors = ", ".join(f.vendor.name for f in requires_investigation)
+        vendors = ", ".join(html.escape(f.vendor.name) for f in requires_investigation)
         open_gaps.append(
             f"GCS=G111 observed on the opted-out scan for: {vendors}. The active CMP may be "
             "overriding our cookie-injection opt-out. Re-run with banner-click methodology to "
@@ -372,7 +407,8 @@ def _derive_action_items(
 
     if audit_result.ssgtm_detected:
         open_gaps.append(
-            f"<strong>Server-side GTM</strong> detected at <code>{audit_result.ssgtm_domain}</code>. "
+            f"<strong>Server-side GTM</strong> detected at "
+            f"<code>{html.escape(audit_result.ssgtm_domain or '')}</code>. "
             "Client-side consent enforcement scripts cannot block server-to-server calls, and the "
             "GPC (<code>Sec-GPC: 1</code>) header is not forwarded to server-side containers. "
             "Audit the sGTM container directly and verify every server tag has explicit consent "

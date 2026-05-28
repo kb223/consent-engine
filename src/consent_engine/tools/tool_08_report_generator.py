@@ -10,14 +10,20 @@ from __future__ import annotations
 import base64
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlparse
 
 import markdown as md_lib
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, FileSystemLoader
 from markupsafe import Markup
 
 from consent_engine.config import get_settings
 from consent_engine.llm.client import LLMClient
-from consent_engine.models.audit_result import AuditResult, MethodologyFlag, ViolationStatus
+from consent_engine.models.audit_result import (
+    AuditResult,
+    MethodologyFlag,
+    VendorFinding,
+    ViolationStatus,
+)
 from consent_engine.tools.tool_07_rag_retriever import WikiPage
 
 ReportVariant = Literal["signal", "compliance"]
@@ -137,13 +143,49 @@ def _reg_excerpt(text: str, max_sections: int = 3) -> str:
 
 
 def _get_jinja_env() -> Environment:
+    # autoescape=True unconditionally. select_autoescape(["html"]) keys off the
+    # final filename extension, and the template is "audit_report.html.j2" — the
+    # ".j2" suffix means select_autoescape returned False, leaving autoescape OFF
+    # and every {{ }} emitting raw HTML (stored XSS via the attacker-controlled
+    # audited URL / cookie names). Force True. Intentional-HTML sinks are
+    # markupsafe.Markup (the `markdown` filter) or explicitly `| safe` in the
+    # template, both of which survive autoescape; site-derived values flowing
+    # into the `| safe` action-item strings are escaped at construction in
+    # audit.py::_derive_action_items.
     env = Environment(
         loader=FileSystemLoader(str(_TEMPLATES_DIR)),
-        autoescape=select_autoescape(["html"]),
+        autoescape=True,
     )
     env.filters["markdown"] = _render_markdown
     env.filters["reg_excerpt"] = _reg_excerpt
     return env
+
+
+# Methodologies under which a CONFIRMED finding is legally defensible as a
+# violation. Under INCONCLUSIVE_UNKNOWN_CMP we could not verify our opt-out
+# injection took effect (unrecognized / un-injectable CMP), so findings are
+# shown in the table as indicative only — they must NOT drive the "Consent
+# Violation Detected" verdict, statutory-exposure dollars, or the executive
+# summary. S1 is a baseline public-gap check, not a definitive enforcement scan.
+_DEFINITIVE_METHODOLOGIES: frozenset[MethodologyFlag] = frozenset(
+    {MethodologyFlag.S3, MethodologyFlag.S3_CONSENT_WIRING_BROKEN}
+)
+
+
+def _confirmed_violations(audit_result: AuditResult) -> list[VendorFinding]:
+    """CONFIRMED findings that count as defensible violations for the verdict.
+
+    Gated on methodology: returns an empty list unless the scan methodology is
+    definitive. This is the single source of truth for "violations that drive a
+    claim" — the verdict band, exposure estimate, executive summary, and deck all
+    route through it so an inconclusive scan can never render a confirmed-violation
+    verdict or a dollar figure. The findings table still iterates
+    ``audit_result.findings`` directly, so observations remain visible as
+    indicative.
+    """
+    if audit_result.methodology not in _DEFINITIVE_METHODOLOGIES:
+        return []
+    return [f for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED]
 
 
 def estimate_recoverable_revenue(
@@ -182,7 +224,7 @@ def estimate_recoverable_revenue(
         else tier_default_spend
     )
 
-    violations = [f for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED]
+    violations = _confirmed_violations(audit_result)
     pixel_violations = [p for p in audit_result.pixel_firings if not p.is_acm_ping]
 
     gcs_state = audit_result.gcs_value.raw if audit_result.gcs_value else ""
@@ -367,7 +409,21 @@ def estimate_exposure_usd(
     forwarding. Definitive evidence of broken consent wiring amplifies the high
     band 1.5x (intentionality finding → statutory max more likely).
     """
-    violations = [f for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED]
+    # Methodology gate: no statutory / class-action exposure is defensible unless
+    # the scan methodology is definitive. Under INCONCLUSIVE we could not verify
+    # consent denial took effect, so neither the CCPA tier (driven by `violations`)
+    # nor the CIPA pixel tier (driven by `pixel_firings`, independent of
+    # `violations`) may emit a dollar figure. Return zero exposure.
+    if audit_result.methodology not in _DEFINITIVE_METHODOLOGIES:
+        return {
+            "has_exposure": False,
+            "total_exposure_low_usd": 0,
+            "total_exposure_high_usd": 0,
+            "components": [],
+            "anchors_sourced_from_wiki": False,
+        }
+
+    violations = _confirmed_violations(audit_result)
     pixel_violations = [p for p in audit_result.pixel_firings if not p.is_acm_ping]
 
     has_pixel_leak = bool(pixel_violations) or any(
@@ -467,13 +523,30 @@ def estimate_exposure_usd(
     }
 
 
+def _safe_prompt_url(url: str) -> str:
+    """Sanitize the audited URL before interpolating it into an LLM prompt.
+
+    The URL is attacker-controlled, and its query/fragment is the natural carrier
+    for a prompt-injection payload (e.g. ``?q=ignore+all+prior+instructions...``).
+    Strip to ``scheme://host/path``, drop query + fragment, collapse newlines, and
+    truncate so a hostile URL cannot steer the model-written executive summary. The
+    deterministic findings are computed in Python and are unaffected regardless.
+    """
+    try:
+        p = urlparse(url)
+    except ValueError:
+        return "(url unavailable)"
+    base = f"{p.scheme}://{p.netloc}{p.path}" if p.scheme and p.netloc else url
+    return base.replace("\n", " ").replace("\r", " ").strip()[:200]
+
+
 def _build_executive_summary_prompt(
     audit_result: AuditResult,
     wiki_pages: list[WikiPage],
     variant: ReportVariant = "compliance",
     recovery: dict[str, int | float | str | bool] | None = None,
 ) -> str:
-    violations = [f for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED]
+    violations = _confirmed_violations(audit_result)
 
     if violations:
         vendors = ", ".join(f.vendor.name for f in violations)
@@ -573,7 +646,7 @@ def _build_executive_summary_prompt(
 Tone: direct, technical, data-driven. Growth framing — ad AI and scale, not legal risk. No filler phrases. No em dashes. No hedging.
 
 AUDIT FACTS:
-- URL: {audit_result.url}
+- URL: {_safe_prompt_url(audit_result.url)}
 - {violation_text}
 - {acm_note}
 - {cmp_note}
@@ -603,7 +676,7 @@ Rules:
 Tone: direct, technical, data-driven. No filler phrases. No em dashes. No hedging.
 
 AUDIT FACTS:
-- URL: {audit_result.url}
+- URL: {_safe_prompt_url(audit_result.url)}
 - Jurisdiction: {audit_result.detected_jurisdiction or 'US'}
 - {violation_text}
 - {acm_note}
@@ -686,9 +759,7 @@ async def generate_executive_summary(
 
     # Deterministic summary path — no LLM, no warnings. Used when the user has
     # not configured any LLM API key (the OSS-default shipping state).
-    violations = [
-        f.vendor.name for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED
-    ]
+    violations = [f.vendor.name for f in _confirmed_violations(audit_result)]
     if variant == "signal":
         if violations:
             rec_suffix = ""
@@ -733,7 +804,7 @@ def _build_manual_validation(audit_result: AuditResult) -> list[dict[str, str]]:
     Only includes steps relevant to what this specific audit found.
     """
     steps: list[dict[str, str]] = []
-    violations = [f for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED]
+    violations = _confirmed_violations(audit_result)
     pixel_violations = [p for p in audit_result.pixel_firings if not p.is_acm_ping]
     pixel_acm_pings = [p for p in audit_result.pixel_firings if p.is_acm_ping]
     gcs_state = audit_result.gcs_value.raw if audit_result.gcs_value else None
@@ -990,9 +1061,7 @@ async def generate_report(
     env = _get_jinja_env()
     template = env.get_template("audit_report.html.j2")
 
-    findings_with_violations = [
-        f for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED
-    ]
+    findings_with_violations = _confirmed_violations(audit_result)
 
     validation_steps = _build_manual_validation(audit_result)
 
@@ -1080,7 +1149,7 @@ def generate_marp_slides(
     Returns:
         Marp markdown string. Save as .md and open with Marp CLI or VS Code Marp extension.
     """
-    violations = [f for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED]
+    violations = _confirmed_violations(audit_result)
     pixel_firings = audit_result.pixel_firings
     # Separate real violations from ACM pings — pings are expected behavior, not evidence
     pixel_violations = [p for p in pixel_firings if not p.is_acm_ping]
