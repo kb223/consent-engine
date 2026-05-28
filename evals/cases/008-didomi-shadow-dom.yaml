@@ -13,7 +13,7 @@ notes: |
      when `og:locale` or `<html lang="fr-FR">` is present.
 expected:
   has_definitive_findings: false
-  consent_state: "OPTED_OUT"
+  consent_state: "opted_out"
   cmp_detected: "didomi"
   cmp_confidence_at_least: "medium"
   jurisdiction: "EU"

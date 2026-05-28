@@ -56,19 +56,31 @@ def _bundle_to_actuals(bundle: Any) -> dict[str, Any]:
     scan = bundle.scan_result
     findings = audit.findings or []
 
-    # has_definitive_findings: any finding with status indicating a confirmed
-    # violation (vs. inconclusive / informational). VendorFinding.status is a
-    # ViolationStatus enum; "definitive"-ish statuses include violation_*.
-    definitive_statuses = {"violation_definitive", "violation_pre_consent"}
+    # has_definitive_findings: any finding with a status indicating a confirmed
+    # violation. VendorFinding.status is a ViolationStatus StrEnum; the current
+    # confirmed value is "confirmed_violation" (was renamed from the old
+    # violation_definitive / violation_pre_consent — those no longer exist).
+    definitive_statuses = {"confirmed_violation"}
     has_definitive = any(
         str(getattr(f, "status", "")).split(".")[-1].lower() in definitive_statuses
         for f in findings
     )
+    confirmed_count = sum(
+        1
+        for f in findings
+        if str(getattr(f, "status", "")).split(".")[-1].lower() in definitive_statuses
+    )
+
+    rc = audit.cmp_runtime_config
 
     return {
         "violations_count": len(findings),
+        "confirmed_violations_count": confirmed_count,
         "has_definitive_findings": has_definitive,
         "cmp_detected": (audit.detected_cmp or "").lower() or None,
+        "cmp_confidence": (audit.cmp_detection_confidence or "").lower() or None,
+        "jurisdiction": (audit.detected_jurisdiction or "").upper() or None,
+        "cmp_template": (rc.template_name if rc else None),
         "consent_state": str(getattr(scan, "consent_state", "")).split(".")[-1],
     }
 
@@ -77,6 +89,7 @@ def _check_expectations(actual: dict[str, Any], expected: dict[str, Any]) -> dic
     """Return {field: (got, want, reason)} for each failed expectation."""
     failures: dict[str, tuple] = {}
 
+    _conf_rank = {"low": 0, "medium": 1, "high": 2}
     for k, want in expected.items():
         if k == "violations_count_at_least":
             got = actual.get("violations_count", 0)
@@ -86,6 +99,16 @@ def _check_expectations(actual: dict[str, Any], expected: dict[str, Any]) -> dic
             got = actual.get("violations_count", 0)
             if got > want:
                 failures[k] = (got, f"<= {want}", "above ceiling")
+        elif k == "confirmed_violations_count_at_least":
+            got = actual.get("confirmed_violations_count", 0)
+            if got < want:
+                failures[k] = (got, f">= {want}", "below floor")
+        elif k == "cmp_confidence_at_least":
+            got_conf = actual.get("cmp_confidence")
+            got_rank = _conf_rank.get(str(got_conf).lower(), -1)
+            want_rank = _conf_rank.get(str(want).lower(), 0)
+            if got_rank < want_rank:
+                failures[k] = (got_conf, f">= {want}", "confidence below floor")
         elif k in actual:
             got = actual[k]
             if got != want:
@@ -175,8 +198,16 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     cases = _load_cases(only=Path(args.case) if args.case else None)
+
     # Run in parallel so a 4-case sweep takes ~one scan's worth of time.
-    results = asyncio.run(asyncio.gather(*(_run_one(c) for c in cases)))
+    # NOTE: asyncio.gather() must be created INSIDE a running event loop —
+    # calling asyncio.run(asyncio.gather(...)) builds the gather future before
+    # the loop exists, which raises on Python 3.12+ and hard-crashes on 3.14.
+    # Wrapping in a coroutine defers gather() construction until the loop runs.
+    async def _run_all() -> list[dict[str, object]]:
+        return await asyncio.gather(*(_run_one(c) for c in cases))
+
+    results = asyncio.run(_run_all())
     return _print_rollup(list(results))
 
 

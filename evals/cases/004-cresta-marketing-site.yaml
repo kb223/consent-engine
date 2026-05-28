@@ -9,5 +9,5 @@ notes: |
   Re-baseline if Cresta's tracking stack changes.
 expected:
   has_definitive_findings: false
-  consent_state: "OPTED_OUT"
+  consent_state: "opted_out"
   violations_count_at_most: 2

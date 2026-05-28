@@ -9,7 +9,7 @@ notes: |
   Re-baseline if their stack changes.
 expected:
   has_definitive_findings: false
-  consent_state: "OPTED_OUT"
+  consent_state: "opted_out"
   # CMP detection is best-effort here — Anthropic uses a custom CMP layer.
   # Accept either onetrust-style or null.
   violations_count_at_most: 1

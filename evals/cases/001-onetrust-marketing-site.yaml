@@ -14,7 +14,7 @@ notes: |
   stays accurate.
 expected:
   has_definitive_findings: true
-  consent_state: "OPTED_OUT"
+  consent_state: "opted_out"
   cmp_detected: "onetrust"
   # Don't assert exact violation count — OneTrust's site changes frequently.
   # The signal we care about is "at least one definitive violation under S3"

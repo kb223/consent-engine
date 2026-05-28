@@ -35,10 +35,10 @@ RUN uv sync --no-dev --no-install-project
 # Install Playwright Chromium browser only
 RUN uv run playwright install chromium
 
-# Copy application source
+# Copy application source. The vendor library (data/) and Jinja2 templates/
+# live under src/consent_engine/, so this single COPY brings them in too.
 COPY src/ src/
-COPY data/ data/
-COPY templates/ templates/
+COPY README.md ./
 
 ENV PYTHONPATH=/app/src
 

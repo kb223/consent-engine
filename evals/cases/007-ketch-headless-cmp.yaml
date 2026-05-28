@@ -15,6 +15,6 @@ notes: |
   Their own marketing site is the cleanest baseline.
 expected:
   has_definitive_findings: false
-  consent_state: "OPTED_OUT"
+  consent_state: "opted_out"
   cmp_detected: "ketch"
   cmp_confidence_at_least: "medium"

@@ -11,4 +11,4 @@ expected:
   has_definitive_findings: false
   violations_count: 0
   cmp_detected: null
-  consent_state: "OPTED_OUT"
+  consent_state: "opted_out"

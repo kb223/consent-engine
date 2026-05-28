@@ -16,7 +16,7 @@ notes: |
   Cookiebot (parent acquired them in 2024).
 expected:
   has_definitive_findings: false
-  consent_state: "OPTED_OUT"
+  consent_state: "opted_out"
   cmp_detected: "cookiebot"
   cmp_confidence_at_least: "medium"
   jurisdiction: "EU"

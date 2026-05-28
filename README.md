@@ -116,12 +116,23 @@ Exposes `audit_url`, `read_audit_result`, and `query_evidence` as MCP tools.
 
 ### 4. FastAPI service
 
+The `/audit` endpoint requires a bearer token. It returns `503` until you set
+`CONSENT_ENGINE_API_TOKEN` (this is deliberate — it refuses to run an
+unauthenticated public audit endpoint).
+
 ```sh
-docker build -t consent-engine . && docker run -p 8080:8080 consent-engine
-# POST http://localhost:8080/audit { "url": "https://example.com" }
+docker build -t consent-engine .
+docker run -p 8080:8080 -e CONSENT_ENGINE_API_TOKEN=your-secret-token consent-engine
+
+# Then call it with the token:
+curl -X POST http://localhost:8080/audit \
+  -H "Authorization: Bearer your-secret-token" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'
 ```
 
-Drop-in Cloud Run / Fly / Railway deployable.
+Drop-in Cloud Run / Fly / Railway deployable. Set `CONSENT_ENGINE_API_TOKEN`
+as a secret in your platform's environment config.
 
 ## Real-world stakes
 
