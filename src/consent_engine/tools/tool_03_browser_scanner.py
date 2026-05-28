@@ -1670,6 +1670,32 @@ async def scan_page_fast(
     _cmp_name = cmp_profile.name if cmp_profile and cmp_profile.name != "unknown" else None
     _cmp_conf = cmp_profile.confidence if cmp_profile and cmp_profile.name != "unknown" else None
 
+    # Methodology classification — same safeguard logic as the full _scan_s3
+    # path. Without this, the fast path mislabeled EVERY scan as S3-definitive,
+    # even when the injected opt-out cookie was ignored (unknown CMP that
+    # doesn't read OptanonConsent). Three outcomes:
+    #   1. Denied GCS observed                         -> S3 (definitive: denial propagated)
+    #   2. Known CMP + injection plan existed          -> S3_CONSENT_WIRING_BROKEN
+    #      (definitive: we injected the right denial payload, GCS never flipped
+    #      = proof the site's tag wiring fires regardless of CMP state)
+    #   3. Unknown CMP / no injection plan             -> INCONCLUSIVE_UNKNOWN_CMP
+    #      (we injected OptanonConsent but a non-OneTrust CMP likely ignored it,
+    #      so we cannot call the result definitive)
+    from consent_engine.tools.cmp_injector import has_plan_for
+
+    _gcs_denied_observed = gcs_value is not None and (
+        gcs_value.ad_storage == "denied" or gcs_value.analytics_storage == "denied"
+    )
+    _cmp_detected = _cmp_name is not None
+    _injection_plan_existed = has_plan_for(_cmp_name)
+
+    if _gcs_denied_observed:
+        _fast_methodology: MethodologyFlag = MethodologyFlag.S3
+    elif _cmp_detected and _injection_plan_existed:
+        _fast_methodology = MethodologyFlag.S3_CONSENT_WIRING_BROKEN
+    else:
+        _fast_methodology = MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP
+
     # Extract GTM container ID from gtm.js network request. The full JS body
     # isn't needed for the fast path — the ID alone populates the report card.
     gtm_id: str | None = None
@@ -1681,7 +1707,7 @@ async def scan_page_fast(
 
     primary_result = ScanResult(
         url=url,
-        methodology=MethodologyFlag.S3,
+        methodology=_fast_methodology,
         consent_state=consent_state,
         timestamp=datetime.now(tz=UTC),
         cookies=cookies,
