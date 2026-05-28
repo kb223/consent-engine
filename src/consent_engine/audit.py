@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import os
 import re
 import subprocess
 import sys
@@ -156,12 +157,29 @@ def ensure_chromium_installed() -> None:
     one-time download into ~/Library/Caches/ms-playwright/) so the user
     never has to.
     """
-    cache_dir = Path.home() / "Library/Caches/ms-playwright"
-    # Heuristic: any chromium folder under the cache means Playwright has
+    # Platform-specific Playwright browser cache locations. Checking the right
+    # one matters: a macOS-only path made Linux/server deploys re-run
+    # `playwright install` on every single audit (the check never hit, so it
+    # always fell through to the install). Honor PLAYWRIGHT_BROWSERS_PATH when
+    # set (Docker images often pin it), else use the per-OS default.
+    env_path = os.environ.get("PLAYWRIGHT_BROWSERS_PATH")
+    if env_path:
+        candidates = [Path(env_path)]
+    elif sys.platform == "darwin":
+        candidates = [Path.home() / "Library/Caches/ms-playwright"]
+    elif sys.platform == "win32":
+        candidates = [Path.home() / "AppData/Local/ms-playwright"]
+    else:  # linux + other unix
+        candidates = [
+            Path.home() / ".cache/ms-playwright",
+            Path("/ms-playwright"),  # common Docker base-image location
+        ]
+    # Heuristic: any chromium folder under a cache dir means Playwright has
     # downloaded at least one Chromium build. Cheaper than launching the
     # browser to test.
-    if cache_dir.exists() and any(cache_dir.glob("chromium*")):
-        return
+    for cache_dir in candidates:
+        if cache_dir.exists() and any(cache_dir.glob("chromium*")):
+            return
 
     print(
         "Chromium not installed. Downloading (~140 MB, one-time)…",

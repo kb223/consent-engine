@@ -305,6 +305,27 @@ class _StaticHandler(BaseHTTPRequestHandler):
         pass  # suppress output during tests
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _allow_internal_scans() -> Generator[None, None, None]:
+    """Allow the scanner's SSRF guard to reach the loopback test server.
+
+    The SSRF guard (consent_engine.security) blocks loopback / private IPs on
+    every request and redirect. The test suite scans a localhost HTTP server,
+    which is exactly the "self-hoster auditing their own internal staging"
+    case the CONSENT_ENGINE_ALLOW_INTERNAL=1 override exists for. Set it for
+    the whole session so the guard permits localhost.
+    """
+    import os
+
+    prior = os.environ.get("CONSENT_ENGINE_ALLOW_INTERNAL")
+    os.environ["CONSENT_ENGINE_ALLOW_INTERNAL"] = "1"
+    yield
+    if prior is None:
+        os.environ.pop("CONSENT_ENGINE_ALLOW_INTERNAL", None)
+    else:
+        os.environ["CONSENT_ENGINE_ALLOW_INTERNAL"] = prior
+
+
 @pytest.fixture(scope="session")
 def local_server() -> Generator[str, None, None]:
     """Start a local HTTP server serving minimal test pages.

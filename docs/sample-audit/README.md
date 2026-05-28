@@ -1,6 +1,12 @@
 # Sample audit — `example.com`
 
-> Captured 2026-05-18 from consent-engine v0.5.1 against `https://example.com`. Committed here so cold readers can see what a clean audit looks like before running the tool themselves.
+> Captured 2026-05-26 from consent-engine v0.6.0 against `https://example.com`. Committed here so cold readers can see what an audit bundle looks like before running the tool themselves.
+>
+> Because `example.com` has no CMP and no trackers, the engine reports
+> `detected_cmp: null` and methodology `s3_inconclusive_unknown_cmp` — it
+> injected an opt-out state but could not verify any CMP honored it, so it
+> declines to call the result definitive. That conservative posture is the
+> point: the tool does not fabricate findings on a site with nothing to find.
 
 ## Files
 
@@ -33,8 +39,8 @@ That's the whole thing. ~30 seconds. The other 5 files are produced by the same 
 For more interesting demo runs (vendor leaks, GPC ignored, multi-jurisdiction), try these on your own machine:
 
 - `https://onetrust.com` — the CMP vendor itself; well-configured, useful baseline
-- `https://canadiantire.ca` — 17 vendors, 11 confirmed violations, jurisdiction CA, OneTrust CMP
-- `https://tesco.com` — UK retailer on `.com`; jurisdiction detected as EU (per the v0.5.1 fix)
+- `https://canadiantire.ca` — jurisdiction CA, OneTrust CMP, multiple confirmed violations
+- `https://tesco.com` — UK retailer on `.com`; content-signal jurisdiction detection
 - `https://apple.com` — large enterprise site, sophisticated stack
 
 Run any of those yourself to see the violation-heavy variant.

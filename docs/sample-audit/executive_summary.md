@@ -1,1 +1,1 @@
-No confirmed consent violations were detected at https://example.com under the s3_fresh_load_optout_preset methodology.
+No confirmed consent violations were detected at https://example.com under the s3_inconclusive_unknown_cmp methodology.

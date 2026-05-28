@@ -635,7 +635,7 @@
   
 
   <h1>Consent Compliance Audit</h1>
-  <p class="meta">https://example.com &nbsp;·&nbsp; 2026-05-19 05:13:11 UTC &nbsp;·&nbsp; S3 — Definitive (Privacy Logic Enforcement Test)</p>
+  <p class="meta">https://example.com &nbsp;·&nbsp; 2026-05-28 17:06:52 UTC &nbsp;·&nbsp; Inconclusive (CMP not recognised, injection unverified)</p>
 
   <!-- SECTION A — EXECUTIVE SUMMARY -->
 
@@ -652,15 +652,15 @@
     <p class="verdict-sub">
       
         0 confirmed violations &nbsp;·&nbsp;
-        1 vendor analyzed &nbsp;·&nbsp;
-        s3_fresh_load_optout_preset
+        0 vendors analyzed &nbsp;·&nbsp;
+        s3_inconclusive_unknown_cmp
       
     </p>
   </div>
 
   <div class="exec-summary">
     <h2>Executive Summary</h2>
-    <p>No confirmed consent violations were detected at https://example.com under the s3_fresh_load_optout_preset methodology.</p>
+    <p>No confirmed consent violations were detected at https://example.com under the s3_inconclusive_unknown_cmp methodology.</p>
   </div>
 
   
@@ -673,6 +673,16 @@
 
   
 
+  
+  <div class="inconclusive-banner">
+    <p style="margin: 0 0 4px;">
+      <span class="lbl">Methodology: Inconclusive</span>
+      <strong>CMP not recognized — further investigation required.</strong>
+    </p>
+    <p style="margin: 0; font-size: 0.85rem;">
+      Consent cookies were injected but a denied Google Consent Mode signal was not observed; the consent platform could not be identified. Treat findings as indicative, not legally defensible.
+    </p>
+  </div>
   
 
   
@@ -704,7 +714,7 @@
       
     </div>
     <div class="gpc-row">
-      <div class="k">Baseline pixel firings (S3 opt-out)</div>
+      <div class="k">Baseline pixel firings (post opt-out)</div>
       <div class="v">0</div>
     </div>
     <div class="gpc-row">
@@ -767,6 +777,7 @@
     </div>
     
     
+    
   </div>
 
   
@@ -778,42 +789,13 @@
       <h2>Vendor Tracking Findings</h2>
     </div>
     
-    <div class="responsive-table-wrap">
-      <table class="responsive-table">
-        <thead>
-          <tr>
-            <th>Vendor</th>
-            <th>Signal / Cookie</th>
-            <th>Category</th>
-            <th>Legal Risk</th>
-            <th>Status</th>
-            <th>Observation</th>
-          </tr>
-        </thead>
-        <tbody>
-          
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">OneTrust</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>OptanonConsent, OptanonAlertBoxClosed</span></td>
-            <td data-label="Category"><span>Functional</span></td>
-            <td data-label="Legal Risk">
-              
-                <span class="badge badge-gray">Unknown</span>
-              
-            </td>
-            <td data-label="Status">
-              
-                <span class="badge badge-green">Passed</span>
-              
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">&mdash;</td>
-          </tr>
-          
-        </tbody>
-      </table>
-    </div>
+    <div class="empty-state">No significant tracking vendors detected during this scan.</div>
     
   </div>
+
+  
+
+  
 
   
 
@@ -827,19 +809,6 @@
 
   <!-- OPEN GAPS — items requiring follow-up investigation -->
 
-  
-  <div class="section">
-    <div class="section-header">
-      <h2>Open Gaps <span style="font-size:0.75rem;font-weight:400;color:var(--muted);margin-left:8px;">requires manual follow-up</span></h2>
-    </div>
-    <div style="padding: 16px 22px 18px;">
-      <ul style="margin: 0; padding-left: 1.4em;">
-        
-        <li style="margin-bottom: 10px; font-size: 0.9rem; line-height: 1.6; color: var(--text);">OneTrust cookies (<code>OptanonConsent</code>) were observed but the OneTrust JS API was not detected during the scan window. The CMP is likely loading asynchronously past the networkidle threshold. Manually verify by inspecting <code>window.OneTrust</code> in browser DevTools, then consider re-scanning with a longer wait.</li>
-        
-      </ul>
-    </div>
-  </div>
   
 
   <!-- SECTION C — PIXEL ENDPOINT EVIDENCE -->
@@ -931,11 +900,11 @@ Format: <code>G1AB</code> where <code>A</code> = ad_storage, <code>B</code> = an
 </tr>
 </tbody>
 </table>
-<p><strong>Key audit signals for S3 opt-out tests:</strong><br />
+<p><strong>Key audit signals for opt-out tests:</strong><br />
 - <code>G100</code> = ACM correctly implemented — cookieless pings only, correct response to opt-out<br />
 - <code>G101</code> = <strong>Partial CCPA compliance</strong> — ad_storage denied but analytics_storage still granted. Under CCPA, "Do Not Sell" must cover analytics profiling, not just ad delivery. This is a compliance gap.<br />
 - <code>G110</code> = Partial compliance (inverse — rare in practice)<br />
-- <code>G111</code> in S3 test = CMP integration failure — opt-out not propagating to Consent Mode at all</p>
+- <code>G111</code> in an opt-out test = CMP integration failure — opt-out not propagating to Consent Mode at all</p>
 <p><strong>Key audit signal:</strong> If <code>gcs=G100</code> appears in network requests → the tag FIRED despite denied consent. This is Advanced Consent Mode — the tag is not blocked, it sends a cookieless ping.</p></div>
         </div>
       </div>
@@ -1004,7 +973,7 @@ Format: <code>G1AB</code> where <code>A</code> = ad_storage, <code>B</code> = an
   </div>
 
   <footer>
-    Generated by Consent Compliance Agent &nbsp;·&nbsp; Audit ID: 52d193d8-e5a4-41f7-b385-dd2e08cc66af
+    Generated by consent-engine &nbsp;·&nbsp; Audit ID: 87cea70e-9719-4421-8b1d-530d144a30d4
   </footer>
 
 </div>
