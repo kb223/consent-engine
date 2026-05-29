@@ -36,6 +36,15 @@ class MethodologyFlag(StrEnum):
     # — the CMP is working; the integration is broken. Findings are legally
     # defensible.
     S3_CONSENT_WIRING_BROKEN = "s3_consent_wiring_broken"
+    # S3 run completed with a recognised CMP and an applied/attempted reject,
+    # but the site emitted ZERO Google Consent Mode signals (no gcs= in any
+    # request). The GCS-based signal-chain audit is therefore not applicable:
+    # the site either does not use Consent Mode at all (common on IAB-TCF
+    # publishers) or uses Basic Consent Mode (which fully suppresses tags on
+    # opt-out). NON-definitive — we cannot confirm a GCS violation, and asserting
+    # "wiring broken" or "unknown CMP" would be inaccurate. Findings are
+    # informational only.
+    S3_NO_GOOGLE_CONSENT_MODE = "s3_no_google_consent_mode"
 
 
 class GCSValue(BaseModel):

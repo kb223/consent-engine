@@ -103,6 +103,9 @@ _METHODOLOGY_LABELS: dict[str, str] = {
     MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP: (
         "Inconclusive (CMP not recognised, injection unverified)"
     ),
+    MethodologyFlag.S3_NO_GOOGLE_CONSENT_MODE: (
+        "Not Applicable (Google Consent Mode not in use)"
+    ),
 }
 
 
@@ -1263,7 +1266,24 @@ def generate_marp_slides(
     # Separate real violations from ACM pings — pings are expected behavior, not evidence
     pixel_violations = [p for p in pixel_firings if not p.is_acm_ping]
     pixel_acm_pings = [p for p in pixel_firings if p.is_acm_ping]
-    clean = not violations and not pixel_violations
+    _definitive_methodology = audit_result.methodology in _DEFINITIVE_METHODOLOGIES
+    _no_gcs_methodology = audit_result.methodology == MethodologyFlag.S3_NO_GOOGLE_CONSENT_MODE
+    # Gate the headline's violation claim on definitiveness (the same single-source
+    # rule as _confirmed_violations) so pixel firings alone can't manufacture a
+    # verdict on a non-definitive scan.
+    _deck_has_claim = bool(violations) or (bool(pixel_violations) and _definitive_methodology)
+    # A non-definitive scan (no-GCS / inconclusive) is neither a confirmed
+    # violation nor a 'clean' pass — it must render a neutral verdict.
+    clean = (not violations and not pixel_violations) and _definitive_methodology
+    _deck_verdict_headline = (
+        "Violations Confirmed"
+        if _deck_has_claim
+        else "Consent Mode Not Detected"
+        if _no_gcs_methodology
+        else "Enforcement Not Verified"
+        if not _definitive_methodology
+        else "No Violations Detected"
+    )
     jurisdiction = audit_result.detected_jurisdiction or "US"
     gcs_state = audit_result.gcs_value.raw if audit_result.gcs_value else None
     # GCS interpretation: in an opt-out test (S3):
@@ -1869,11 +1889,18 @@ def generate_marp_slides(
             f'<div style="color:#9ca3af;font-weight:200;line-height:1.5;">{text}</div></div>'
         )
 
-    _actions_imm_html = (
-        "".join(_action_item(a) for a in _imm)
-        if _imm
-        else _action_item("No immediate actions required — site is compliant")
-    )
+    if _imm:
+        _actions_imm_html = "".join(_action_item(a) for a in _imm)
+    elif not _definitive_methodology:
+        # A non-definitive scan (no-GCS or inconclusive) must NOT claim the site
+        # is compliant; we could not assess Consent Mode enforcement.
+        _actions_imm_html = _action_item(
+            "Consent Mode enforcement could not be assessed in this scan. Re-audit "
+            "from a region or CMP that surfaces Google Consent Mode, or verify "
+            "the consent state manually."
+        )
+    else:
+        _actions_imm_html = _action_item("No immediate actions required — site is compliant")
     _actions_30d_html = "".join(_action_item(a) for a in _30d) if _30d else ""
 
     # 30-day panel (needs _actions_30d_html to be built first)
@@ -1996,6 +2023,15 @@ def generate_marp_slides(
             + "these vendors received behavioral data after consent was denied. "
             + _callout_text
             + "</div>"
+        )
+    elif _no_gcs_methodology:
+        _cookie_section_md = (
+            "### COOKIE ANALYSIS" + _nl + _nl
+            + "# Consent Mode Not Detected" + _nl + _nl
+            + "<p>This site emits no Google Consent Mode signal (it either does not use "
+            "Consent Mode, or uses Basic Consent Mode, which suppresses tags on opt-out). "
+            "The signal-chain audit is not applicable; any vendors observed are "
+            "informational only.</p>"
         )
     else:
         _cookie_section_md = (
@@ -2165,7 +2201,7 @@ style: |
 
 ### AUDIT VERDICT
 
-# {"Violations Confirmed" if (violations or pixel_violations) else "No Violations Detected"}
+# {_deck_verdict_headline}
 
 <p style="font-size:0.72em;color:#9ca3af;max-width:680px;line-height:1.6;margin-bottom:0;">{_slide_summary(executive_summary)}</p>
 

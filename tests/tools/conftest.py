@@ -136,6 +136,26 @@ _COOKIEYES_PAGE_HTML = b"""<!DOCTYPE html><html><head><title>CookieYes Test</tit
   <div id="cky-consent-bar" class="cky-consent-bar">Cookie banner</div>
 </body></html>"""
 
+# CookieYes (known CMP, cmp_injector HAS a plan) that ALSO fires a GCS=G111
+# (granted) beacon on load and never flips it — the genuine wiring-broken
+# signature: CMP recognised, denial injected, Consent Mode still GRANTED.
+# (The plain /cmp-cookieyes page above emits NO GCS beacon at all, which is the
+# distinct S3_NO_GOOGLE_CONSENT_MODE scenario.)
+_COOKIEYES_GCS_GRANTED_PAGE_HTML = b"""<!DOCTYPE html><html><head><title>CookieYes GCS Granted</title></head>
+<body>
+  <script>
+    window.getCkyConsent = function() {
+      return {categories: {analytics: false, advertisement: false}};
+    };
+    window.cookieyes = {version: '3.x'};
+    (function() {
+      var img = new Image();
+      img.src = '/gcs-beacon?gcs=G111&tid=G-TEST';
+    })();
+  </script>
+  <div id="cky-consent-bar" class="cky-consent-bar">Cookie banner</div>
+</body></html>"""
+
 _USERCENTRICS_PAGE_HTML = b"""<!DOCTYPE html><html><head><title>Usercentrics Test</title></head>
 <body>
   <script>
@@ -266,6 +286,7 @@ _PAGES = {
     "/banner-with-gcs": _BANNER_WITH_GCS_PAGE_HTML,
     "/custom-loader-page": _CUSTOM_LOADER_PAGE_HTML,
     "/cmp-cookieyes": _COOKIEYES_PAGE_HTML,
+    "/cmp-cookieyes-gcs": _COOKIEYES_GCS_GRANTED_PAGE_HTML,
     "/cmp-usercentrics": _USERCENTRICS_PAGE_HTML,
     "/cmp-trustarc": _TRUSTARC_PAGE_HTML,
     "/cmp-tcf": _TCF_PAGE_HTML,

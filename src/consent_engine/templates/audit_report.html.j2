@@ -648,17 +648,23 @@
   {% set has_violation = findings_with_violations | length > 0 %}
   {% set _methodology_str = result.methodology.value if result.methodology is not string else result.methodology %}
   {% set is_inconclusive = _methodology_str == 's3_inconclusive_unknown_cmp' %}
+  {% set is_no_gcs = _methodology_str == 's3_no_google_consent_mode' %}
   {% set is_wiring_broken = _methodology_str == 's3_consent_wiring_broken' %}
-  <div class="verdict {{ 'violation' if has_violation else ('inconclusive' if is_inconclusive else 'clean') }}">
+  {% set is_indeterminate = is_inconclusive or is_no_gcs %}
+  <div class="verdict {{ 'violation' if has_violation else ('inconclusive' if is_indeterminate else 'clean') }}">
     <p class="verdict-title">
       {% if report_variant == 'signal' %}
-        {{ 'Signal Gap Detected' if has_violation else ('Signal Check Inconclusive' if is_inconclusive else 'AI-Ready Measurement Stack') }}
+        {{ 'Signal Gap Detected' if has_violation else ('Consent Mode Not In Use' if is_no_gcs else ('Signal Check Inconclusive' if is_inconclusive else 'AI-Ready Measurement Stack')) }}
       {% else %}
-        {{ 'Consent Violation Detected' if has_violation else ('Consent Enforcement Not Verified' if is_inconclusive else 'No Consent Violations Detected') }}
+        {{ 'Consent Violation Detected' if has_violation else ('Google Consent Mode Not Detected' if is_no_gcs else ('Consent Enforcement Not Verified' if is_inconclusive else 'No Consent Violations Detected')) }}
       {% endif %}
     </p>
     <p class="verdict-sub">
-      {% if is_inconclusive %}
+      {% if is_no_gcs %}
+        {{ result.findings | length }} vendor{{ 's' if result.findings | length != 1 else '' }} observed (informational) &nbsp;·&nbsp;
+        site emits no Google Consent Mode signal &nbsp;·&nbsp;
+        {{ methodology_label }}
+      {% elif is_inconclusive %}
         {{ result.findings | length }} vendor{{ 's' if result.findings | length != 1 else '' }} observed (indicative) &nbsp;·&nbsp;
         consent enforcement could not be verified &nbsp;·&nbsp;
         {{ result.methodology }}

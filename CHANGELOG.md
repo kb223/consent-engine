@@ -3,6 +3,51 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.4] — 2026-05-28 — Sourcepoint reject-click reliability + no-GCS methodology
+
+Fixed the banner-click reject path for Sourcepoint (and, via the shared
+banner-detection fix, every CMP), and added an honest methodology for sites that
+emit no Google Consent Mode signal at all. Live-verified on theguardian.com,
+bbc.com, cnn.com. All tests pass, ruff + mypy strict clean.
+
+### Fixed — Sourcepoint reject-click (4 compounding bugs)
+- **`_banner_present` false-positive (the blocker).** It matched any
+  `[class*='banner']` element — including a site's subscription / promo banner
+  (e.g. the Guardian's `rr_banner_highlight`) — so a *successful* reject (consent
+  iframe already gone) was still reported as `banner_click_failed`, leaving
+  Sourcepoint sites stuck at INCONCLUSIVE. Banner detection is now
+  consent-specific: explicit CMP containers (OneTrust, Sourcepoint message
+  iframe, Cookiebot, CookieYes, Usercentrics, Didomi, TrustArc, Quantcast,
+  consentmanager, CookieScript) + `cookie`/`consent` keyword selectors; the bare
+  `[class*='banner']` is gone. This is an accuracy win across **all** CMPs.
+- **Message iframe never entered.** The clicker only entered frames matching
+  `"truste"`, gated on `dom_type == "iframe"`. Sourcepoint reports
+  `dom_type == "standard"` yet renders its reject button inside an
+  `sp_message_iframe` (often a first-party CNAME). New `_select_cmp_frame()`
+  enters any recognised CMP message iframe regardless of `dom_type`.
+- **Wrong JS API.** `window._sp_.rejectAll()` does not exist on modern builds.
+  Now calls the real namespaced methods (`_sp_.usnat.postRejectAll()`,
+  `_sp_.ccpa.rejectAll()`); GDPR has no direct reject API, so it falls through to
+  the in-iframe click (`button.sp_choice_type_13`).
+- **Vocabulary gap.** Added "no, thank you", "do not consent", and "continue
+  without accepting" to the reject vocabulary (Sourcepoint labels reject-all
+  "No, thank you").
+
+### Added — no-Google-Consent-Mode methodology
+- New `MethodologyFlag.S3_NO_GOOGLE_CONSENT_MODE`. When a known CMP is detected
+  and the reject is applied but the site emits **zero** `gcs=` signals across the
+  whole scan, the GCS-based audit is not applicable — the site either does not
+  use Consent Mode (common on IAB-TCF publishers) or uses Basic Consent Mode
+  (which suppresses tags on opt-out). This replaces two inaccurate labels for
+  such sites: the misleading `s3_consent_wiring_broken` (claims a GCS integration
+  that never existed — verified on cnn.com) and `s3_inconclusive_unknown_cmp`
+  (false when the CMP is recognised and the reject worked — verified on
+  theguardian.com). NON-definitive: no confirmed violations, no statutory
+  exposure, and the report + deck render a neutral verdict ("Google Consent Mode
+  Not Detected") instead of a false green "no violations / AI-ready" pass.
+- Methodology classification extracted to the pure, unit-tested
+  `classify_s3_methodology()`.
+
 ## [0.6.3] — 2026-05-28 — Full scan in production + jurisdiction-aware exposure
 
 Repositioned from an outreach lead-magnet (fast scan) to a give-away / portfolio

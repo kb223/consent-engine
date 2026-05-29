@@ -26,6 +26,9 @@ REJECT_VOCAB: frozenset[str] = frozenset(
         "refuse",
         "disagree",
         "no thanks",
+        "no, thank you",
+        "do not consent",
+        "continue without accepting",
         "only necessary",
         "only essential",
         "save preferences",
@@ -72,6 +75,11 @@ _FALLBACK_SELECTORS: list[str] = [
     ".cky-btn-reject",
     # Didomi
     "#didomi-notice-disagree-button",
+    # Sourcepoint — reject lives inside the sp_message_iframe (entered via
+    # _select_cmp_frame). sp_choice_type_13 = Reject All (language-independent;
+    # _11 = Accept, _12 = Manage). Verified live on theguardian.com.
+    "button.sp_choice_type_13",
+    ".sp_choice_type_13",
     # Quantcast
     ".qc-cmp2-summary-buttons button:first-child",
     # iubenda
@@ -104,10 +112,36 @@ _FALLBACK_SELECTORS: list[str] = [
     "button[data-tracking-optout]",
 ]
 
-# Banner container selectors used to detect if a banner is present
-_BANNER_SELECTORS = (
-    "[role='dialog'], [id*='cookie'], [id*='consent'], "
-    "[class*='banner'], [class*='cookie'], [class*='consent']"
+# Selectors used to detect whether a CONSENT banner is still present.
+#
+# These must be consent-specific. A bare [class*='banner'] is intentionally
+# EXCLUDED: it matches promo / ad / hero / subscription banners (e.g. the
+# Guardian's 'rr_banner_highlight' subscription promo), which turned
+# _banner_present into a false-positive and made attempt_cmp_decline report a
+# genuinely-successful reject as 'banner_click_failed' — leaving Sourcepoint
+# publisher sites stuck at INCONCLUSIVE. 'cookie'/'consent' (and the explicit
+# CMP container ids below) are consent-specific and safe.
+_BANNER_SELECTORS: tuple[str, ...] = (
+    # Known CMP banner / message containers (most reliable)
+    "#onetrust-banner-sdk",
+    "iframe[id^='sp_message_iframe']",  # Sourcepoint message iframe
+    ".sp_message_container",
+    "#CybotCookiebotDialog",  # Cookiebot
+    ".cky-consent-bar",  # CookieYes
+    ".cky-modal",
+    "#usercentrics-root",  # Usercentrics
+    "#didomi-host",  # Didomi
+    "#truste-consent-track",  # TrustArc
+    ".qc-cmp2-container",  # Quantcast
+    "#cmpbox",  # consentmanager
+    "#cookiescript_injected",  # CookieScript
+    # Generic consent-keyword containers (case-insensitive)
+    "[id*='cookie' i]",
+    "[id*='consent' i]",
+    "[class*='cookie' i]",
+    "[class*='consent' i]",
+    "[aria-label*='cookie' i]",
+    "[aria-label*='consent' i]",
 )
 
 
@@ -156,6 +190,30 @@ def _score_nav_node(name: str) -> int:
     return best
 
 
+# Substrings that identify a CMP's *message* iframe (the one holding the
+# Accept/Reject buttons). Used to enter the right frame before clicking.
+# Sourcepoint serves its message iframe from a first-party CNAME
+# (e.g. sourcepoint.theguardian.com) with element id sp_message_iframe_<id>;
+# TrustArc uses consent.truste.com; Sourcepoint's shared CDN is privacy-mgmt.com.
+_CMP_FRAME_HINTS: tuple[str, ...] = (
+    "truste",
+    "privacy-mgmt",
+    "sourcepoint",
+    "sp_message_iframe",
+)
+
+
+def _is_cmp_message_frame(name: str, url: str) -> bool:
+    """Return True if a frame (by name/url) is a CMP banner message iframe.
+
+    Pure string match against known CMP message-iframe hosts/ids so the clicker
+    can enter the frame that actually holds the reject button. Ad/analytics
+    iframes and the top document are rejected.
+    """
+    hay = f"{name or ''} {url or ''}".lower()
+    return any(hint in hay for hint in _CMP_FRAME_HINTS)
+
+
 def _is_gcs_denied(network_requests: list[str]) -> bool:
     """Return True if any URL in network_requests shows a GCS denied state.
 
@@ -183,10 +241,14 @@ def _is_gcs_denied(network_requests: list[str]) -> bool:
 
 
 async def _banner_present(page: Page) -> bool:
-    """Return True if a consent banner element is visible on the page."""
-    selectors = [s.strip() for s in _BANNER_SELECTORS.split(",")]
+    """Return True if a CONSENT banner element is visible on the page.
+
+    Iterates the consent-specific _BANNER_SELECTORS directly (no comma-split, so
+    selectors containing commas/`:has-text` stay intact). is_visible() is used
+    rather than offsetParent so position:fixed banners are handled correctly.
+    """
     try:
-        for sel in selectors:
+        for sel in _BANNER_SELECTORS:
             locs = await page.locator(sel).all()
             for loc in locs:
                 if await loc.is_visible(timeout=100):
@@ -194,6 +256,25 @@ async def _banner_present(page: Page) -> bool:
         return False
     except Exception:  # noqa: BLE001
         return False
+
+
+def _select_cmp_frame(page: Page) -> Page | Frame:
+    """Return the CMP message iframe if one is present, else the top page.
+
+    Not gated on cmp_profile.dom_type: Sourcepoint reports dom_type "standard"
+    yet renders its banner (and reject button) inside an sp_message_iframe, so
+    we must inspect the live frame tree directly. TrustArc (dom_type "iframe")
+    is covered by the same hint match.
+    """
+    try:
+        for frame in page.frames:
+            if frame is page.main_frame:
+                continue
+            if _is_cmp_message_frame(frame.name or "", frame.url or ""):
+                return frame
+    except Exception:  # noqa: BLE001
+        pass
+    return page
 
 
 async def attempt_cmp_decline(
@@ -252,20 +333,25 @@ async def attempt_cmp_decline(
         except Exception:
             pass
 
-    # Sourcepoint — _sp_.rejectAll(campaignType) — confirmed in official docs
-    # campaignType 'gdpr' for EU, 'ccpa' for US (try both)
+    # Sourcepoint — the flat _sp_.rejectAll() does NOT exist on modern builds
+    # (verified live on theguardian.com / bbc.com: window._sp_.rejectAll is
+    # undefined). The reject API is namespaced per campaign:
+    #   _sp_.usnat.postRejectAll()  — US multi-state privacy (confirmed live)
+    #   _sp_.ccpa.rejectAll()       — legacy CCPA, where present
+    # The GDPR/TCF campaign exposes no direct reject (only privacy-manager
+    # loaders), so for GDPR we fall through to the in-iframe banner click
+    # (sp_choice_type_13) handled in _try_click_decline.
     if cmp_profile and cmp_profile.name == "Sourcepoint":
         try:
             result = await page.evaluate("""
                 () => {
-                    if (!window._sp_) return null;
-                    if (typeof window._sp_.rejectAll === 'function') {
-                        // Try CCPA first (US ICP target), then GDPR
-                        try { window._sp_.rejectAll('ccpa'); } catch(e) {}
-                        try { window._sp_.rejectAll('gdpr'); } catch(e) {}
-                        return 'sp_reject_all';
-                    }
-                    return null;
+                    const sp = window._sp_;
+                    if (!sp) return null;
+                    let hit = null;
+                    try { if (sp.usnat && typeof sp.usnat.postRejectAll === 'function') { sp.usnat.postRejectAll(); hit = 'sp_usnat_reject'; } } catch(e) {}
+                    try { if (!hit && sp.ccpa && typeof sp.ccpa.rejectAll === 'function') { sp.ccpa.rejectAll(); hit = 'sp_ccpa_reject'; } } catch(e) {}
+                    try { if (!hit && typeof sp.rejectAll === 'function') { sp.rejectAll(); hit = 'sp_reject_all'; } } catch(e) {}
+                    return hit;
                 }
             """)
             if result:
@@ -594,12 +680,7 @@ async def _uncheck_toggles(page: Page, cmp_profile: CMPProfile | None) -> bool:
 
     Handles both GDPR category toggles and US CCPA sales/advertising opt-out toggles.
     """
-    context: Page | Frame = page
-    if cmp_profile and cmp_profile.dom_type == "iframe":
-        for frame in page.frames:
-            if "truste" in frame.name or "truste" in frame.url:
-                context = frame
-                break
+    context: Page | Frame = _select_cmp_frame(page)
 
     found = False
 
@@ -786,12 +867,10 @@ async def _try_click_decline(page: Page, cmp_profile: CMPProfile | None = None) 
                 continue
 
     # --- LAYER 4: Standard button-click strategy ---
-    # 0. Context selection based on dom_type
-    if cmp_profile and cmp_profile.dom_type == "iframe":
-        for frame in page.frames:
-            if "truste" in frame.name or "truste" in frame.url:
-                context = frame
-                break
+    # 0. Context selection — enter a CMP message iframe if present (TrustArc,
+    # Sourcepoint, ...). Sourcepoint reports dom_type "standard" yet renders its
+    # banner inside an sp_message_iframe, so this is NOT gated on dom_type.
+    context = _select_cmp_frame(page)
 
     # Primary: collect interactive element names via JS
     nodes: list[dict[str, object]] = await context.evaluate(

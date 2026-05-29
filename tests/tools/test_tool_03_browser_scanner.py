@@ -605,33 +605,35 @@ async def test_s3_unknown_cmp_with_no_gcs_marks_inconclusive(local_server: str) 
     assert result.methodology == MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP
 
 
-async def test_s3_known_cmp_with_no_denied_gcs_marks_wiring_broken(
+async def test_s3_known_cmp_with_no_gcs_signal_marks_no_google_consent_mode(
     local_server: str,
 ) -> None:
-    """Known CMP + injection plan existed + GCS never flipped = S3_CONSENT_WIRING_BROKEN.
+    """Known CMP + reject applied + ZERO GCS observed = S3_NO_GOOGLE_CONSENT_MODE.
 
-    When we recognise the CMP AND we have a matching injection plan AND we
-    still don't observe a denied GCS signal, that's definitive evidence the
-    site's tag wiring is broken — tags fire before or regardless of CMP state.
+    /cmp-cookieyes exposes window.cookieyes (known CMP, cmp_injector HAS a plan)
+    but emits NO Google Consent Mode beacon at all. We must NOT claim
+    'consent wiring broken' (there is no GCS integration to be broken) nor
+    'inconclusive_unknown_cmp' (the CMP is recognised). The honest label is
+    S3_NO_GOOGLE_CONSENT_MODE — the GCS signal-chain audit is not applicable.
     """
     from consent_engine.tools.tool_03_browser_scanner import _scan_s3
 
-    # /cmp-cookieyes exposes window.CookieYes (known CMP, and cmp_injector
-    # HAS a plan for CookieYes) but does not emit a denied GCS beacon.
-    # That's the wiring-broken signature.
     result = await _scan_s3(f"{local_server}/cmp-cookieyes", opted_out=True)
 
-    assert result.methodology == MethodologyFlag.S3_CONSENT_WIRING_BROKEN
+    assert result.detected_cmp == "CookieYes"
+    assert result.methodology == MethodologyFlag.S3_NO_GOOGLE_CONSENT_MODE
 
 
 async def test_s3_cmp_detected_injection_plan_exists_but_gcs_granted_marks_wiring_broken(
     local_server: str,
 ) -> None:
-    """Explicit coverage: CookieYes (has injection plan) + no denied GCS
-    must return S3_CONSENT_WIRING_BROKEN (definitive), NOT inconclusive.
+    """Explicit coverage: CookieYes (has injection plan) + GCS observed but never
+    denied must return S3_CONSENT_WIRING_BROKEN (definitive), NOT inconclusive.
 
     This is the Quince / Casper scenario: CMP recognised, denial injected
-    correctly, but Consent Mode beacons keep firing GCS=G111.
+    correctly, but Consent Mode beacons keep firing GCS=G111. The
+    /cmp-cookieyes-gcs fixture fires a granted GCS=G111 beacon on load (the
+    distinction from /cmp-cookieyes, which emits no GCS at all).
     """
     from consent_engine.tools.cmp_injector import has_plan_for
     from consent_engine.tools.tool_03_browser_scanner import _scan_s3
@@ -640,7 +642,7 @@ async def test_s3_cmp_detected_injection_plan_exists_but_gcs_granted_marks_wirin
     # exercises the wiring-broken branch rather than inconclusive fall-through.
     assert has_plan_for("CookieYes") is True
 
-    result = await _scan_s3(f"{local_server}/cmp-cookieyes", opted_out=True)
+    result = await _scan_s3(f"{local_server}/cmp-cookieyes-gcs", opted_out=True)
 
     assert result.detected_cmp == "CookieYes"
     assert result.methodology == MethodologyFlag.S3_CONSENT_WIRING_BROKEN

@@ -398,6 +398,39 @@ def classify_fast_methodology(
     return MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP
 
 
+def classify_s3_methodology(
+    *,
+    gcs_denied_observed: bool,
+    gcs_observed_at_all: bool,
+    cmp_detected: bool,
+    injection_plan_existed: bool,
+) -> MethodologyFlag:
+    """Methodology label for the full S3 scan (pure function; unit-testable).
+
+    Decision tree (order matters):
+      1. Denied GCS observed                         -> S3 (definitive; the denial
+         signal was seen, so we can audit which vendors fired despite it).
+      2. ZERO GCS observed anywhere + CMP recognised -> S3_NO_GOOGLE_CONSENT_MODE
+         (the site emits no Consent Mode signal — it either does not use Consent
+         Mode, or uses Basic mode which suppresses tags on opt-out. The GCS audit
+         is not applicable. NON-definitive. This MUST win over wiring_broken:
+         "wiring broken" claims a GCS integration that never existed, and
+         "unknown CMP" is false when we recognised the CMP and applied a reject.)
+      3. CMP recognised + injection plan existed     -> S3_CONSENT_WIRING_BROKEN
+         (GCS WAS observed but never flipped to denied despite our denial payload
+         — definitive evidence the integration is broken).
+      4. Otherwise                                   -> INCONCLUSIVE_UNKNOWN_CMP
+         (unidentified CMP, or one we never applied a denial against).
+    """
+    if gcs_denied_observed:
+        return MethodologyFlag.S3
+    if not gcs_observed_at_all and cmp_detected:
+        return MethodologyFlag.S3_NO_GOOGLE_CONSENT_MODE
+    if cmp_detected and injection_plan_existed:
+        return MethodologyFlag.S3_CONSENT_WIRING_BROKEN
+    return MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP
+
+
 def extract_gcs_from_url(url: str) -> str | None:
     """Extract the raw GCS parameter value from a URL, or None if not present."""
     parsed = urlparse(url)
@@ -1350,13 +1383,17 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
     _cmp_name = cmp_profile.name if cmp_profile is not None else None
     _cmp_detected = _cmp_name is not None and _cmp_name != "unknown"
     _injection_plan_existed = has_plan_for(_cmp_name)
+    # gcs_records is built above from every captured network request; empty means
+    # the site emitted no Google Consent Mode signal at all (TCF-only publisher,
+    # or Basic Consent Mode which fully suppresses tags on opt-out).
+    _gcs_observed_at_all = len(gcs_records) > 0
 
-    if _gcs_denied_observed:
-        methodology: MethodologyFlag = MethodologyFlag.S3
-    elif _cmp_detected and _injection_plan_existed:
-        methodology = MethodologyFlag.S3_CONSENT_WIRING_BROKEN
-    else:
-        methodology = MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP
+    methodology: MethodologyFlag = classify_s3_methodology(
+        gcs_denied_observed=_gcs_denied_observed,
+        gcs_observed_at_all=_gcs_observed_at_all,
+        cmp_detected=_cmp_detected,
+        injection_plan_existed=_injection_plan_existed,
+    )
 
     return ScanResult(
         url=url,
