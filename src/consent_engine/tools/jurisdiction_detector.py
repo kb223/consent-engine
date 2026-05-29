@@ -13,6 +13,7 @@ Returns "EU" | "CA" | "US". Defaults to "US" when no signals found.
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 
 import tldextract
 
@@ -436,3 +437,93 @@ def resolve_jurisdiction(explicit_override: str | None, page_html: str, url: str
     if explicit_override:
         return explicit_override
     return detect_jurisdiction(page_html or "", url)
+
+
+# ---------------------------------------------------------------------------
+# Jurisdiction-aware copy (single source of truth for regime-specific prose)
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class JurisdictionCopy:
+    """Regime-specific phrasing reused across the report, deck, and action items.
+
+    Centralising this keeps GPC's legal status, the regulator name, the manual-
+    repro vantage, and pixel-evidence framing correct per jurisdiction in ONE
+    place, instead of scattering hardcoded "Under CCPA/CPRA..." sentences (which
+    rendered on EU/UK/CA reports).
+    """
+
+    statute: str  # short regime label for inline prose
+    regulator: str  # enforcement body
+    vpn_label: str  # geolocation vantage for manual reproduction
+    gpc_legal: str  # GPC legal-status sentence
+    pixel_evidence: str  # framing for "pixels fired post-denial"
+
+
+_US_COPY = JurisdictionCopy(
+    statute="CCPA/CPRA",
+    regulator="California's CPPA",
+    vpn_label="California",
+    gpc_legal=(
+        "Under CCPA/CPRA, GPC is a legally binding opt-out signal. California's CPPA has "
+        "stated GPC non-compliance is enforceable without prior notice."
+    ),
+    pixel_evidence=(
+        "Each request is independent forensic evidence, the same pattern plaintiff law firms "
+        "source for CIPA/CCPA claims."
+    ),
+)
+_EU_COPY = JurisdictionCopy(
+    statute="GDPR / ePrivacy",
+    regulator="the relevant EU data-protection authority",
+    vpn_label="European",
+    gpc_legal=(
+        "Under the GDPR consent must be opt-in, so GPC is not itself a binding opt-out signal. "
+        "Tracking that continues after a privacy signal is asserted still shows the consent "
+        "banner is not enforcing the user's choice."
+    ),
+    pixel_evidence=(
+        "Each request is personal data disclosed without a valid legal basis, the kind of "
+        "transfer a GDPR / ePrivacy assessment would examine."
+    ),
+)
+_UK_COPY = JurisdictionCopy(
+    statute="UK GDPR / PECR",
+    regulator="the ICO",
+    vpn_label="UK",
+    gpc_legal=(
+        "Under UK GDPR and PECR consent must be opt-in, so GPC is not itself a binding opt-out "
+        "signal. Tracking that continues after a privacy signal is asserted still shows the "
+        "consent banner is not enforcing the user's choice."
+    ),
+    pixel_evidence=(
+        "Each request is personal data disclosed without a valid legal basis, the kind of "
+        "transfer an ICO assessment under UK GDPR / PECR would examine."
+    ),
+)
+_CA_COPY = JurisdictionCopy(
+    statute="Quebec Law 25 / PIPEDA",
+    regulator="the Commission d'accès à l'information / OPC",
+    vpn_label="Canadian",
+    gpc_legal=(
+        "GPC is not yet a binding opt-out signal under Quebec Law 25 or PIPEDA, but tracking "
+        "that continues after a privacy signal is asserted shows the consent banner is not "
+        "enforcing the user's choice."
+    ),
+    pixel_evidence=(
+        "Each request is a disclosure a Quebec Law 25 / PIPEDA assessment would examine as "
+        "data shared without valid consent."
+    ),
+)
+_JURISDICTION_COPY: dict[str, JurisdictionCopy] = {
+    "US": _US_COPY,
+    "EU": _EU_COPY,
+    "UK": _UK_COPY,
+    "CA": _CA_COPY,
+}
+
+
+def jurisdiction_copy(jurisdiction: str | None) -> JurisdictionCopy:
+    """Return regime-specific phrasing; defaults to US when unknown."""
+    return _JURISDICTION_COPY.get((jurisdiction or "US").upper(), _US_COPY)

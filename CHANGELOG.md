@@ -3,6 +3,32 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.6] — 2026-05-29 — Jurisdiction-aware report/deck prose
+
+Non-US reports no longer carry US (CCPA/CIPA/plaintiff/"Do Not Sell") framing;
+findings render in the audited site's own regime. Validated on an EU site
+(bbc.com): the deck is fully GDPR-framed with zero CCPA/CIPA/plaintiff strings,
+and the report pulls GDPR wiki rather than CCPA/CIPA.
+
+### Fixed — jurisdiction-aware regulatory context
+- **RAG wiki retrieval is jurisdiction-gated.** The finding→page map pulled
+  ccpa.md / cipa-vppa.md / us-class-actions.md for every scan with violations, so
+  EU/CA reports got US enforcement content alongside their own. Those US pages now
+  load only for a US jurisdiction; EU/UK sites get GDPR pages, CA sites get Quebec
+  Law 25 / PIPEDA.
+- **Single source of regime phrasing.** New `jurisdiction_copy()` centralises the
+  GPC legal status, statute name, regulator, manual-repro vantage, and
+  pixel-evidence framing per regime (US / EU / UK / CA). Wired through the report
+  (GPC note, pixel-evidence section, manual-validation steps + vantage), the deck
+  (GPC footer, audit-methodology bullet, pixel-exhibit subtitle), the
+  executive-summary builder, and the open-gaps action items.
+- **GPC is framed correctly per regime.** "Under CCPA/CPRA, GPC is a legally
+  binding opt-out signal" now renders only for US sites. EU/UK/CA sites state that
+  consent is opt-in and GPC is not itself binding, while continued tracking still
+  shows the banner is not enforcing the user's choice.
+- The LLM executive-summary prompt no longer instructs the model to cite CCPA or
+  treat GPC as a CCPA mandate for non-US sites.
+
 ## [0.6.5] — 2026-05-29 — Scanner-independent jurisdiction + copy fixes
 
 Jurisdiction is now derived only from signals the audited SITE declares, never

@@ -34,7 +34,7 @@ from consent_engine.models.audit_result import (
 from consent_engine.models.scan_result import ScanResult
 from consent_engine.security import validate_audit_url
 from consent_engine.tools.cmp_detector import detect_cmp_from_network_only
-from consent_engine.tools.jurisdiction_detector import resolve_jurisdiction
+from consent_engine.tools.jurisdiction_detector import jurisdiction_copy, resolve_jurisdiction
 from consent_engine.tools.tool_01_gtm_parser import parse_gtm_container
 from consent_engine.tools.tool_02_violation_classifier import classify_finding
 from consent_engine.tools.tool_03_browser_scanner import (
@@ -425,9 +425,8 @@ def _derive_action_items(
             f"<strong>GPC signal not respected.</strong> "
             f"{audit_result.gpc_vendors_after_signal} tracking pixel"
             f"{'s' if audit_result.gpc_vendors_after_signal != 1 else ''} fired after "
-            "<code>Sec-GPC: 1</code> was asserted. Under CCPA/CPRA this is enforceable "
-            "non-compliance — California's CPPA has stated GPC violations are enforceable without "
-            "prior notice."
+            f"<code>Sec-GPC: 1</code> was asserted. "
+            f"{jurisdiction_copy(audit_result.detected_jurisdiction).gpc_legal}"
         )
 
     return remediation, open_gaps

@@ -923,8 +923,19 @@
       </div>
     </div>
     <p style="margin: 10px 0 0; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
-      Under CCPA/CPRA, GPC is a legally binding opt-out signal. California's CPPA has stated
-      GPC non-compliance is enforceable without prior notice.
+      {% set _gpc_j = (result.detected_jurisdiction or 'US') | string %}
+      {% if _gpc_j == 'EU' %}
+        Under the GDPR, consent must be opt-in, so GPC is not itself a binding opt-out signal. But a
+        site that keeps firing non-essential tracking after a privacy signal is asserted shows its
+        consent enforcement is not honoring the user's choice.
+      {% elif _gpc_j == 'CA' %}
+        GPC is not yet a binding opt-out signal under Quebec Law 25 or PIPEDA. Still, tracking that
+        continues after a privacy signal is asserted indicates the consent banner is not enforcing
+        the user's choice.
+      {% else %}
+        Under CCPA/CPRA, GPC is a legally binding opt-out signal. California's CPPA has stated
+        GPC non-compliance is enforceable without prior notice.
+      {% endif %}
     </p>
   </div>
   {% endif %}
@@ -1335,10 +1346,17 @@
   {% if result.pixel_firings %}
   <div class="section">
     <div class="section-header">
-      <h2>Pixel Endpoint Evidence <span style="font-size:0.75rem;font-weight:400;color:#6b7280;margin-left:8px;">network-level — plaintiff methodology</span></h2>
+      <h2>Pixel Endpoint Evidence <span style="font-size:0.75rem;font-weight:400;color:#6b7280;margin-left:8px;">network-level evidence</span></h2>
     </div>
+    {% set _pj = (result.detected_jurisdiction or 'US') | string %}
     <div style="padding: 10px 16px 4px; font-size:0.78rem; color:#6b7280; line-height:1.5;">
-      Pixel endpoints observed in network traffic after consent denial. The same evidentiary pattern that demand-letter plaintiffs (Swigart, Vivek Shah, et al.) source from auto-scans of business websites in CIPA/CCPA class actions — surfaced here defensively, on your side of the table.
+      {% if _pj == 'US' %}
+      Pixel endpoints observed in network traffic after consent denial. The same evidentiary pattern that demand-letter plaintiffs (Swigart, Vivek Shah, et al.) source from auto-scans of business websites in CIPA/CCPA class actions, surfaced here defensively, on your side of the table.
+      {% elif _pj == 'CA' %}
+      Pixel endpoints observed in network traffic after consent denial. These are the data transfers a Quebec Law 25 / PIPEDA assessment (or a complaint to the Commission d'accès à l'information or the OPC) would examine as disclosure without valid consent.
+      {% else %}
+      Pixel endpoints observed in network traffic after consent denial. These are the transfers a GDPR / ePrivacy assessment (or a data-protection authority audit) would examine as personal data disclosed without a valid legal basis.
+      {% endif %}
     </div>
     <div class="responsive-table-wrap">
       <table class="responsive-table">
@@ -1403,7 +1421,8 @@
       <h2>Manual Validation Checklist</h2>
     </div>
     <div style="padding: 10px 16px 4px; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
-      Reproduce each finding in a browser to confirm audit accuracy. All steps assume incognito mode with a California VPN or geolocation override.
+      {% set _vj = (result.detected_jurisdiction or 'US') | string %}
+      Reproduce each finding in a browser to confirm audit accuracy. All steps assume incognito mode with a {{ 'European' if _vj == 'EU' else 'Canadian' if _vj == 'CA' else 'California' }} VPN or geolocation override.
     </div>
     <div style="padding: 8px 20px 16px;">
       {% for step in validation_steps %}

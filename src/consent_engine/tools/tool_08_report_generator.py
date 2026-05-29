@@ -25,6 +25,7 @@ from consent_engine.models.audit_result import (
     VendorFinding,
     ViolationStatus,
 )
+from consent_engine.tools.jurisdiction_detector import jurisdiction_copy
 from consent_engine.tools.tool_07_rag_retriever import WikiPage
 
 ReportVariant = Literal["signal", "compliance"]
@@ -707,8 +708,9 @@ def _build_executive_summary_prompt(
         acm_note = (
             f"Partial Consent Mode opt-out detected (GCS={gcs_state}): {_partial_what}. "
             f"The CMP only partially propagates user consent denial — users who opt out of ads "
-            f"remain tracked for analytics purposes. Under CCPA, a 'Do Not Sell' opt-out must "
-            f"halt all data sharing for targeted advertising AND analytics profiling."
+            f"remain tracked for analytics purposes. Under "
+            f"{jurisdiction_copy(audit_result.detected_jurisdiction).statute}, a valid opt-out "
+            f"must halt all data sharing for targeted advertising AND analytics profiling."
         )
     elif _es_gcs_cmp_broken:
         acm_note = (
@@ -736,8 +738,7 @@ def _build_executive_summary_prompt(
 
     gpc_note = (
         "GPC signal (Sec-GPC: 1) was detected. "
-        "Under CCPA/CPRA, GPC is a mandatory opt-out mechanism. "
-        "California's CPPA has stated GPC non-compliance is enforceable without prior notice."
+        + jurisdiction_copy(audit_result.detected_jurisdiction).gpc_legal
         if audit_result.gpc_tested and violations
         else ""
     )
@@ -803,9 +804,9 @@ TASK: Write 3-4 sentences summarizing the audit findings.
 Rules:
 - Lead with the most material legal risk (confirmed violation > GPC violation > ACM gray area > clean).
 - If violations exist: cite the specific statute (CCPA §1798.120, CPRA sharing extension, GDPR Article 6) and fine exposure.
-- If GPC was detected with violations: state explicitly that GPC is a mandatory opt-out under CCPA and that non-compliance is immediately enforceable.
+- If GPC was detected with violations: state whether GPC is binding in the governing jurisdiction. It is a legally binding opt-out under US CCPA/CPRA, but not a statutory opt-out under GDPR / UK GDPR / Quebec Law 25 (where it is still evidence the consent banner is not enforcing the user's choice). Do not cite CCPA for a non-US site.
 - If GCS=G100 (both denied) present with confirmed violations: note that Advanced Consent Mode is correctly implemented (cookieless pings only, no PII cookie IDs transmitted). The violations are the actual cookie sets by {vendors}, not the G100 pings. Do not frame G100 pings as a violation — they are compliant ACM behavior.
-- If GCS=G101 (ad_storage denied, analytics_storage granted): this is a PARTIAL opt-out. The brand's CMP only denies ad tracking — analytics tracking continues post opt-out. Frame this as incomplete CCPA compliance: "Do Not Sell" must cover analytics profiling, not just ad delivery. This is still a compliance gap even though it shows partial effort.
+- If GCS=G101 (ad_storage denied, analytics_storage granted): this is a PARTIAL opt-out. The brand's CMP only denies ad tracking; analytics tracking continues post opt-out. Frame this as an incomplete opt-out under the governing regime: a valid opt-out must cover analytics profiling, not just ad delivery. This is still a compliance gap even though it shows partial effort.
 - If SSGTM detected: note the server-side consent gap risk.
 - If clean: state it plainly and note ACM modeling activity if present.
 - Use specific enforcement case names or fine amounts from the regulatory context where relevant.
@@ -935,6 +936,7 @@ def _build_manual_validation(audit_result: AuditResult) -> list[dict[str, str]]:
     Only includes steps relevant to what this specific audit found.
     """
     steps: list[dict[str, str]] = []
+    cp = jurisdiction_copy(audit_result.detected_jurisdiction)
     violations = _confirmed_violations(audit_result)
     pixel_violations = [p for p in audit_result.pixel_firings if not p.is_acm_ping]
     pixel_acm_pings = [p for p in audit_result.pixel_firings if p.is_acm_ping]
@@ -958,10 +960,10 @@ def _build_manual_validation(audit_result: AuditResult) -> list[dict[str, str]]:
     steps.append(
         {
             "title": "CMP Banner Presence",
-            "what": f"Verify {cmp_name} appears for California visitors.",
+            "what": f"Verify {cmp_name} appears for {cp.vpn_label} visitors.",
             "how": (
-                "Open an incognito window. Use a VPN set to Los Angeles, CA (or Chrome DevTools > "
-                "Sensors > Location: Los Angeles). Navigate to the site. The consent banner should "
+                f"Open an incognito window. Use a VPN set to a {cp.vpn_label} location (or Chrome "
+                "DevTools > Sensors > Location). Navigate to the site. The consent banner should "
                 "appear on first visit."
             ),
             "expect": (
@@ -1047,13 +1049,13 @@ def _build_manual_validation(audit_result: AuditResult) -> list[dict[str, str]]:
                     "title": f"Partial Consent Mode (GCS={gcs_state})",
                     "what": f"Verify partial opt-out: {_p_desc}.",
                     "how": (
-                        "In incognito (CA VPN): (1) Navigate to site, (2) Click Reject All, "
+                        f"In incognito ({cp.vpn_label} VPN): (1) Navigate to site, (2) Click Reject All, "
                         "(3) DevTools > Network > filter 'google' > check 'gcs=' parameter. "
                         "(4) Also check if GA4 requests still fire with full measurement_id."
                     ),
                     "expect": (
-                        f"GCS={gcs_state} confirms partial denial only. Under CCPA, 'Do Not Sell' "
-                        "must halt ALL data sharing for advertising AND analytics profiling. "
+                        f"GCS={gcs_state} confirms partial denial only. Under {cp.statute}, a valid "
+                        "opt-out must halt ALL data sharing for advertising AND analytics profiling. "
                         "A compliant state would be G100 (both denied)."
                     ),
                 }
@@ -1068,15 +1070,14 @@ def _build_manual_validation(audit_result: AuditResult) -> list[dict[str, str]]:
                 "title": "Network Pixel Firing Post-Denial",
                 "what": f"Verify tracking pixels fire after opt-out: {', '.join(p.vendor_name for p in top_pixels)}.",
                 "how": (
-                    "In incognito (CA VPN): (1) Navigate to site, (2) Open DevTools > Network, "
+                    f"In incognito ({cp.vpn_label} VPN): (1) Navigate to site, (2) Open DevTools > Network, "
                     "(3) Click Reject All, (4) Reload page, (5) Filter network requests for: "
                     f"{', '.join(patterns)}. "
                     "Look for outbound requests to these domains/paths."
                 ),
                 "expect": (
                     "If these requests appear in network traffic after clicking Reject All, "
-                    "the pixels are firing despite consent denial. Each request is independent "
-                    "forensic evidence (this is the plaintiff law firm methodology for CIPA claims)."
+                    "the pixels are firing despite consent denial. " + cp.pixel_evidence
                 ),
             }
         )
@@ -1132,9 +1133,7 @@ def _build_manual_validation(audit_result: AuditResult) -> list[dict[str, str]]:
                     "(3) Does navigator.globalPrivacyControl return true in Console?"
                 ),
                 "expect": (
-                    "Under CCPA/CPRA, GPC is a legally binding opt-out signal. The CMP should auto-deny "
-                    "consent when GPC is detected. California's CPPA has stated GPC non-compliance is "
-                    "enforceable without prior notice."
+                    "The CMP should auto-deny consent when GPC is detected. " + cp.gpc_legal
                 ),
             }
         )
@@ -1563,7 +1562,7 @@ def generate_marp_slides(
     )
     _fr += _findings_row(
         "GPC Signal Honored",
-        "Tested — mandatory opt-out signal sent" if audit_result.gpc_tested else "Not tested",
+        "Tested: opt-out signal sent" if audit_result.gpc_tested else "Not tested",
         (_SVG_CROSS if violations else _SVG_CHECK) if audit_result.gpc_tested else _SVG_DASH,
     )
     _fr += "</div>"
@@ -1639,11 +1638,15 @@ def generate_marp_slides(
                 header = f"### NETWORK EVIDENCE\n\n# Pixel Endpoints (cont. {i + 1})"
             else:
                 header = "### NETWORK EVIDENCE\n\n# Post-Denial Pixel Endpoints"
+            _exhibit_note = (
+                "Primary exhibit methodology used by plaintiff law firms (CIPA §631 · CCPA class actions)"
+                if jurisdiction == "US"
+                else "Post-denial network evidence a data-protection regulator would examine"
+            )
             subtitle = (
                 (
                     '\n\n<p style="font-size:0.75em;color:#9ca3af;margin-bottom:4px;">'
-                    "Primary exhibit methodology used by plaintiff law firms "
-                    "(CIPA §631 · CCPA class actions)</p>\n"
+                    f"{_exhibit_note}</p>\n"
                 )
                 if i == 0
                 else "\n"
@@ -1853,8 +1856,7 @@ def generate_marp_slides(
             '<div style="margin-top:10px;background:#faf8f2;border-radius:6px;padding:10px 14px;'
             f'border-left:3px solid {_gpc_verdict_color};">'
             '<div style="font-size:0.62em;color:#6b7794;line-height:1.5;">'
-            "Under CCPA/CPRA, GPC is a legally binding opt-out signal. "
-            "California's CPPA has stated GPC non-compliance is enforceable without prior notice."
+            f"{jurisdiction_copy(audit_result.detected_jurisdiction).gpc_legal}"
             "</div></div>"
         )
 
@@ -1888,8 +1890,8 @@ def generate_marp_slides(
         _30d.append("Document legal basis for cookieless pings under Advanced Consent Mode")
     if _gcs_partial:
         _30d.append(
-            f"Extend {audit_result.detected_cmp or 'CMP'} opt-out to deny analytics_storage in addition to ad_storage — "
-            f"CCPA 'Do Not Sell' covers analytics profiling, not just ad delivery (GCS={gcs_state} must become G100)"
+            f"Extend {audit_result.detected_cmp or 'CMP'} opt-out to deny analytics_storage in addition to ad_storage. "
+            f"A valid opt-out covers analytics profiling, not just ad delivery (GCS={gcs_state} must become G100)"
         )
     if _gcs_cmp_broken:
         _30d.append(
@@ -2279,7 +2281,7 @@ style: |
 <p style="font-size:0.75em;color:#6b7280;margin-bottom:12px;">{methodology_label} — Independent forensic scan. No vendor access or cooperation required. Mirrors the approach used by the <strong style="color:#22c55e;">California Privacy Protection Agency</strong> in automated GPC compliance sweeps.</p>
 
 <div style="margin-top:4px;">
-{"".join(_action_item(a) for a in ["Fresh browser context — zero prior cookies, consent denial pre-injected before page load", "Page reloaded post-denial to capture true opted-out network state", "All network traffic captured and fingerprinted against 3,200+ vendor signatures", "Pixel endpoint detection — plaintiff law firm methodology (CIPA §631)", "Regulatory findings cross-referenced against live enforcement database"])}
+{"".join(_action_item(a) for a in ["Fresh browser context — zero prior cookies, consent denial pre-injected before page load", "Page reloaded post-denial to capture true opted-out network state", "All network traffic captured and fingerprinted against 3,200+ vendor signatures", ("Pixel endpoint detection: plaintiff law firm methodology (CIPA §631)" if jurisdiction == "US" else "Pixel endpoint detection: post-denial network evidence a regulator would examine"), "Regulatory findings cross-referenced against live enforcement database"])}
 </div>
 
 ---

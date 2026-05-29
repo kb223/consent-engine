@@ -177,8 +177,13 @@ def _select_page_keys(audit_result: AuditResult) -> list[str]:
     violations = [f for f in audit_result.findings if f.status == ViolationStatus.CONFIRMED]
     has_violations = bool(violations)
 
-    # US enforcement loads for all scans — primary client focus is US/CA.
-    if has_violations:
+    # CCPA / CIPA / US-class-action wiki pages are US-specific. Load them only
+    # for a US jurisdiction — an EU/UK or CA site gets its own regulatory context
+    # below (eu_jurisdiction / quebec), so e.g. a Meta-pixel violation on a UK
+    # site cites UK-GDPR, not California CIPA. (Previously these loaded for every
+    # scan, flooding non-US reports with CCPA/CIPA/"Do Not Sell" prose.)
+    is_us = jurisdiction == "US"
+    if has_violations and is_us:
         keys.append("us_violation")
 
     # EU/Canada-specific regulatory context — only when jurisdiction warrants it.
@@ -205,8 +210,9 @@ def _select_page_keys(audit_result: AuditResult) -> list[str]:
         if "gdpr" in cmp_signals and "eu_jurisdiction" not in keys:
             keys.append("eu_jurisdiction")
 
-    # GPC signal
-    if audit_result.gpc_tested and has_violations:
+    # GPC signal — GPC is a legally binding opt-out only under US state law, so
+    # the GPC-enforcement pages (CCPA + US class actions) load only for US.
+    if audit_result.gpc_tested and has_violations and is_us:
         keys.append("gpc_violation")
 
     # GCS / ACM — two distinct cases:
@@ -227,8 +233,9 @@ def _select_page_keys(audit_result: AuditResult) -> list[str]:
     if audit_result.ssgtm_detected:
         keys.append("ssgtm")
 
-    # Pixel vendors
-    if violations:
+    # Pixel vendors — CIPA/VPPA are US wiretap statutes, so these pages are
+    # US-only. On an EU/UK/CA site the same pixel is covered by the local regime.
+    if violations and is_us:
         vendor_names = {f.vendor.name.lower() for f in violations}
         if vendor_names & _PIXEL_VENDORS:
             keys.append("meta_tiktok_pixel")
