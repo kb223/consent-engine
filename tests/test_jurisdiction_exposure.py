@@ -80,6 +80,17 @@ def test_uk_estimate_exposure_is_turnover_cap() -> None:
     assert "£17.5M" in str(e["components"])
 
 
+def test_deck_jurisdiction_vantage_label_is_dynamic() -> None:
+    # The deck's Jurisdiction card hardcoded "simulated: Los Angeles, CA" — wrong
+    # on a UK/EU/CA card. US keeps the meaningful CA vantage; others say
+    # auto-detected and must NOT mention Los Angeles.
+    assert "simulated: Los Angeles, CA" in _deck("US")
+    for j in ("UK", "EU", "CA"):
+        d = _deck(j)
+        assert "Los Angeles" not in d
+        assert "auto-detected from site signals" in d
+
+
 def test_us_exposure_uses_ccpa_per_consumer() -> None:
     d = _deck("US")
     assert "$7,500" in d  # CCPA per-consumer rate

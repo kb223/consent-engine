@@ -831,7 +831,7 @@ Rules:
 - If SSGTM detected: note the server-side consent gap risk.
 - If clean: state it plainly and note ACM modeling activity if present.
 - Use specific enforcement case names or fine amounts from the regulatory context where relevant.
-- NOTE: The scan was simulated using a California, USA geolocation and timezone. If the CMP was not visually detected but its underlying cookies were targeted for injection, this indicates IP-gating where the CMP is active globally but hidden from users outside specific regions. Mention this risk if applicable.
+- NOTE: The scan runs from a fixed browser geolocation (Los Angeles, US). That is the scan vantage, not the site's jurisdiction (which is detected separately from the site's own signals), so do not describe the audited site as based in California. If the CMP was not visually detected but its underlying cookies were targeted for injection, this indicates IP-gating where the CMP is active globally but hidden from users outside specific regions. Mention this risk if applicable.
 - Never start with "In this audit", "It is important to note", or similar filler.
 - Never use em dashes."""
 
@@ -1528,9 +1528,16 @@ def generate_marp_slides(
         if _gcs_full_denial
         else ("#f59e0b" if (_gcs_partial or _gcs_cmp_broken) else "#3d6abb"),
     )
-    _verdict_cards += _metric_card(
-        "Jurisdiction", jurisdiction, "simulated: Los Angeles, CA", "#3d6abb"
+    # Sub-label: for US the simulated California vantage is meaningful (CCPA, and
+    # where most US violations concentrate). For non-US the jurisdiction is
+    # auto-detected from the site's own signals (scanner-independent), so we must
+    # NOT claim an LA vantage — that was the stale hardcode flagged on UK decks.
+    _juris_sub = (
+        "simulated: Los Angeles, CA"
+        if jurisdiction == "US"
+        else "auto-detected from site signals"
     )
+    _verdict_cards += _metric_card("Jurisdiction", jurisdiction, _juris_sub, "#3d6abb")
     _verdict_cards += "</div>"
 
     # Findings comparison rows

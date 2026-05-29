@@ -3,6 +3,17 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.8] — 2026-05-29 — Dynamic jurisdiction vantage label
+
+The deck's Jurisdiction card hardcoded "simulated: Los Angeles, CA" on every
+report, which read wrong on a UK/EU/CA audit (the jurisdiction is auto-detected
+from the site's own signals, not from the scan vantage). The card now shows
+"auto-detected from site signals" for non-US jurisdictions and keeps the
+California vantage note only for US, where it is meaningful for CCPA. The
+executive-summary prompt likewise no longer lets the model describe a non-US site
+as California-based; the LA browser geolocation is clarified as the scan vantage,
+not the jurisdiction.
+
 ## [0.6.7] — 2026-05-29 — Distinct UK jurisdiction (UK GDPR / PECR / ICO)
 
 The UK is now its own jurisdiction instead of folding into the EU/GDPR framework.
