@@ -24,6 +24,7 @@ from urllib.parse import urljoin, urlparse
 
 import httpx
 
+from consent_engine.models.audit_request import ConsentState
 from consent_engine.models.audit_result import (
     AuditResult,
     HarAnalysis,
@@ -33,13 +34,16 @@ from consent_engine.models.audit_result import (
 from consent_engine.models.scan_result import ScanResult
 from consent_engine.security import validate_audit_url
 from consent_engine.tools.cmp_detector import detect_cmp_from_network_only
-from consent_engine.tools.jurisdiction_detector import detect_jurisdiction
+from consent_engine.tools.jurisdiction_detector import (
+    country_to_jurisdiction,
+    detect_jurisdiction,
+)
 from consent_engine.tools.tool_01_gtm_parser import parse_gtm_container
 from consent_engine.tools.tool_02_violation_classifier import classify_finding
 from consent_engine.tools.tool_03_browser_scanner import (
     INJECTED_CONSENT_COOKIES as _INJECTED_CONSENT_COOKIES,
 )
-from consent_engine.tools.tool_03_browser_scanner import scan_page_fast
+from consent_engine.tools.tool_03_browser_scanner import scan_page
 from consent_engine.tools.tool_04_har_analyzer import analyze_har
 from consent_engine.tools.tool_05_vendor_library import lookup_vendor
 from consent_engine.tools.tool_06_ssgtm_detector import detect_ssgtm
@@ -465,8 +469,13 @@ async def run_audit(
     # 0. First-run setup: download Chromium binaries if they aren't cached.
     ensure_chromium_installed()
 
-    # 1. Primary S3 scan — consent pre-set to "reject all".
-    scan, _ = await scan_page_fast(url=url, opted_out=True)
+    # 1. Primary S3 scan — FULL scan (scan_page -> _scan_s3): per-CMP injection
+    #    plan (build_injection_plan) + banner-click fallback, wrapped in a 150s
+    #    timeout. Consent pre-set to "reject all". (The fast scan — OneTrust-only
+    #    injection — was the outreach lead-magnet path; the giveaway/portfolio
+    #    build uses the full scan so non-OneTrust CMPs are actually injected
+    #    against, not returned inconclusive.)
+    scan = await scan_page(url, ConsentState.OPTED_OUT)
 
     # 1a. Post-scan CMP refinement. The in-scan CMP detector runs at
     #     networkidle, but some CMPs (Truyo, certain TrustArc deploys)
@@ -484,7 +493,7 @@ async def run_audit(
     #     binding opt-out signal under CCPA/CPRA.
     gpc_scan: ScanResult | None = None
     if with_gpc:
-        gpc_scan, _ = await scan_page_fast(url=url, opted_out=True, gpc=True)
+        gpc_scan = await scan_page(url, ConsentState.GPC_OPTED_OUT)
 
     # 1c. Final CMP refinement using BOTH scans + cookie names. Sites that
     #     load their CMP via GTM or other deferred mechanisms can miss the
@@ -604,7 +613,20 @@ async def run_audit(
     pixel_firings = detect_pixel_firings(scan.network_requests)
 
     # 4. Jurisdiction + GTM parse + HAR analysis (each is independent).
-    resolved_jurisdiction = jurisdiction or detect_jurisdiction(scan.page_html or "", url)
+    #    Priority: explicit override > the CMP's OWN reported geolocation (ground
+    #    truth — the CMP itself determined which regime applies) > HTML/TLD
+    #    heuristic. country_to_jurisdiction only returns a positive non-US signal,
+    #    so a US-IP scan can't mask a real EU/CA site via the CMP geo.
+    _cmp_geo = (
+        scan.cmp_runtime_config.geolocation_country
+        if scan.cmp_runtime_config
+        else None
+    )
+    resolved_jurisdiction = (
+        jurisdiction
+        or country_to_jurisdiction(_cmp_geo)
+        or detect_jurisdiction(scan.page_html or "", url)
+    )
     tag_consent_map = parse_gtm_container(
         gtm_container_js=scan.gtm_container_js or "",
         page_html=scan.page_html or "",

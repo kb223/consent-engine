@@ -8,8 +8,9 @@ Two variants:
 from __future__ import annotations
 
 import base64
+import html
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 from urllib.parse import urlparse
 
 import markdown as md_lib
@@ -394,6 +395,71 @@ def _load_enforcement_anchors() -> dict[str, dict[str, object]]:
     return anchors
 
 
+# Jurisdiction-specific financial-exposure frameworks. CRITICAL structural point:
+# the US regime is a PER-CONSUMER multiplier (statutory penalty x affected-consumer
+# volume — grows with audience size), while the EU / UK / Quebec regimes are
+# TURNOVER-PERCENTAGE CAPS (a single ceiling that grows with company size, with NO
+# per-consumer multiplier). Rendering EU/CA exposure with the US opt-out-volume math
+# would be a methodological error a DPO would flag, so each regime gets its own
+# structure. Figures verified 2026-05 against primary regulator sources: GDPR Art. 83;
+# CNIL deliberations (Art. 82 ePrivacy); Quebec Private Sector Act ss. 90.12 / 91 /
+# 93.1; UK-GDPR / PECR (ICO). Canada/UK deliberately carry NO fine anchors — neither
+# has issued a flagship cookie-consent monetary penalty (Canada: Tim Hortons was a
+# no-fine OPC/CAI finding; UK: the ICO runs a banner-compliance campaign, not fines).
+_JURISDICTION_EXPOSURE: dict[str, dict[str, object]] = {
+    "US": {
+        "model": "per_consumer",
+        "statutes": [
+            ("CCPA / CPRA", "$7,500", "per intentional violation · per consumer"),
+            ("CIPA §631", "$5,000", "per session · no actual damages required"),
+            ("FTC Act", "$51,744", "per day of ongoing violation"),
+        ],
+        "anchors": None,
+        "note": (
+            "Realistic settlement range calibrated to precedent: Sephora $1.2M (2022) · "
+            "Tractor Supply $1.35M (Sep 2025) · Disney $2.75M (Feb 2026)"
+        ),
+    },
+    "EU": {
+        "model": "turnover_cap",
+        "statutes": [
+            ("GDPR Art. 83(5)", "€20M", "or 4% of global annual turnover"),
+            ("GDPR Art. 83(4)", "€10M", "or 2% of turnover · lower tier"),
+            ("ePrivacy · Art. 82", "DPA-set", "cookie consent · enforced nationally"),
+        ],
+        # Real CNIL cookie-consent fines — the anchor for what regulators actually levy.
+        "anchors": [
+            ("Google", "€325M", "CNIL · Sep 2025"),
+            ("SHEIN", "€150M", "CNIL · Sep 2025"),
+            ("Amazon", "€35M", "CNIL · 2020"),
+        ],
+        "note": (
+            "Cookie consent is enforced under the ePrivacy Directive / national law "
+            "(e.g. CNIL Art. 82), not GDPR directly. The cap scales with global turnover; "
+            "there is no per-consumer multiplier. UK-GDPR / PECR mirror this "
+            "(£17.5M or 4%)."
+        ),
+    },
+    "CA": {
+        "model": "turnover_cap",
+        "statutes": [
+            ("Quebec Law 25 · penal", "CAD $25M", "or 4% of worldwide turnover (s. 91)"),
+            ("Law 25 · admin (CAI)", "CAD $10M", "or 2% of worldwide turnover (s. 90.12)"),
+            ("Private right of action", "CAD $1,000", "punitive floor · per person (s. 93.1)"),
+        ],
+        # Canada has issued NO flagship cookie fine — render the honesty note, not anchors.
+        "anchors": None,
+        "note": (
+            "Enforcement is nascent: Law 25's penalty powers took effect Sep 2023 and no "
+            "flagship cookie-consent fine has issued yet. Closest precedent: Tim Hortons "
+            "(2022, OPC/CAI joint finding on background geolocation tracking, no fine, "
+            "since PIPEDA is an ombudsman model). Caps scale with worldwide turnover, not "
+            "per-consumer volume."
+        ),
+    },
+}
+
+
 def estimate_exposure_usd(
     audit_result: AuditResult,
 ) -> dict[str, object]:
@@ -420,6 +486,42 @@ def estimate_exposure_usd(
             "total_exposure_low_usd": 0,
             "total_exposure_high_usd": 0,
             "components": [],
+            "anchors_sourced_from_wiki": False,
+        }
+
+    # Jurisdiction gate: the US CCPA/CIPA dollar tiers below are a PER-CONSUMER
+    # model that does not apply to the EU/UK/Quebec TURNOVER-PERCENTAGE-CAP regimes.
+    # For a non-US jurisdiction, return that regime's statutory caps (from the shared
+    # _JURISDICTION_EXPOSURE framework) instead of a fabricated US dollar range, so the
+    # report matches the deck. Render only when there's something to flag.
+    _juris = audit_result.detected_jurisdiction or "US"
+    if _juris != "US":
+        _fw = _JURISDICTION_EXPOSURE.get(_juris)
+        _has = bool(_confirmed_violations(audit_result)) or any(
+            not p.is_acm_ping for p in audit_result.pixel_firings
+        )
+        if not _fw or not _has:
+            return {
+                "has_exposure": False,
+                "model": "turnover_cap",
+                "total_exposure_low_usd": 0,
+                "total_exposure_high_usd": 0,
+                "components": [],
+                "anchors_sourced_from_wiki": False,
+            }
+        _label = {"CA": "Quebec Law 25 / PIPEDA", "EU": "GDPR / ePrivacy"}.get(_juris, _juris)
+        _components = [
+            {"statute": s_label, "anchor": s_sub, "display_amount": s_value, "low_usd": 0, "high_usd": 0}
+            for (s_label, s_value, s_sub) in cast("list[tuple[str, str, str]]", _fw["statutes"])
+        ]
+        return {
+            "has_exposure": True,
+            "model": "turnover_cap",
+            "jurisdiction_label": _label,
+            "total_exposure_low_usd": 0,
+            "total_exposure_high_usd": 0,
+            "components": _components,
+            "note": _fw["note"],
             "anchors_sourced_from_wiki": False,
         }
 
@@ -516,6 +618,7 @@ def estimate_exposure_usd(
 
     return {
         "has_exposure": low > 0,
+        "model": "per_consumer",
         "total_exposure_low_usd": low,
         "total_exposure_high_usd": high,
         "components": components,
@@ -783,7 +886,13 @@ async def generate_executive_summary(
         )
     if violations:
         jurisdiction = audit_result.detected_jurisdiction or "US"
-        law = "CCPA/CPRA" if jurisdiction in ("US", "CA") else "GDPR"
+        law = (
+            "Quebec Law 25 / PIPEDA"
+            if jurisdiction == "CA"
+            else "GDPR"
+            if jurisdiction == "EU"
+            else "CCPA/CPRA"
+        )
         return (
             f"Confirmed consent violations detected at {audit_result.url}. "
             f"The following vendors fired tracking technologies despite opted-out consent: "
@@ -1176,13 +1285,21 @@ def generate_marp_slides(
     )
     url_display = audit_result.url.replace("https://", "").replace("http://", "").rstrip("/")
 
-    # Applicable law slide content
+    # Applicable law slide content — jurisdiction-specific (CA must not fall into
+    # the US/CCPA branch; it has its own Law 25 / PIPEDA framework).
     if jurisdiction == "EU":
         law_content = (
             "- **GDPR Art. 6(1)(a)**: Consent required for behavioral advertising cookies\n"
             "- **ePrivacy Directive Art. 5(3)**: Prior consent for any non-essential cookie\n"
-            "- **Legitimate interest**: Rejected by EU regulators for ad profiling (LinkedIn €310M)\n"
-            "- **Max fine**: 4% of global revenue or €20M, whichever is higher"
+            "- **Cookie enforcement**: via national DPAs under ePrivacy (e.g. CNIL Art. 82)\n"
+            "- **Max fine**: 4% of global revenue or €20M, whichever is higher (GDPR Art. 83)"
+        )
+    elif jurisdiction == "CA":
+        law_content = (
+            "- **Quebec Law 25 (Private Sector Act)**: Valid consent required for tracking/profiling\n"
+            "- **PIPEDA, Principle 4.3**: Meaningful consent for collection via cookies/pixels\n"
+            "- **Private right of action**: CAD $1,000 punitive-damages floor per person (s. 93.1)\n"
+            "- **Max penalty**: CAD $25M or 4% of worldwide turnover (penal, s. 91)"
         )
     else:
         law_content = (
@@ -1190,7 +1307,7 @@ def generate_marp_slides(
             "- **CPRA sharing extension**: Covers pixel-based data transfer to ad platforms\n"
             "- **GPC mandate**: `Sec-GPC: 1` is a legally binding opt-out signal\n"
             "- **Fine exposure**: Up to $7,500 per intentional violation per consumer\n"
-            "- **CIPA**: $5,000 statutory per-violation — no actual damages required"
+            "- **CIPA**: $5,000 statutory per-violation, no actual damages required"
         )
 
     methodology_label = _METHODOLOGY_LABELS.get(
@@ -1495,40 +1612,15 @@ def generate_marp_slides(
             parts.append(header + subtitle + slide)
         _pixel_marp_section = "\n\n---\n\n".join(parts)
 
-    # Financial exposure — statutory rates + realistic brand extrapolation
+    # Financial exposure — JURISDICTION-AWARE. US is a per-consumer multiplier
+    # (penalty x opt-out volume); EU/CA are turnover-percentage caps with a
+    # different structure (regulator-fine anchors for the EU, an honesty note for
+    # Canada where no flagship cookie fine exists). Framework: _JURISDICTION_EXPOSURE.
     _exposure_html = ""
     if violations or pixel_violations:
         v_count = len(violations)
-        p_count = len(pixel_violations)
-        # Statutory rates row — top of slide
-        _exposure_html = '<div style="display:flex;gap:8px;margin-top:14px;align-items:stretch;">'
-        _exposure_html += _metric_card(
-            "CCPA / CPRA", "$7,500", "per intentional violation · per consumer", "#3d6abb"
-        )
-        _exposure_html += _metric_card(
-            "CIPA §631", "$5,000", "per session · no actual damages required", "#3d6abb"
-        )
-        _exposure_html += _metric_card(
-            "FTC Act", "$51,744", "per day of ongoing violation", "#3d6abb"
-        )
-        _exposure_html += "</div>"
-
-        # Realistic exposure extrapolation — 3 traffic tiers
-        # Conservative (50K CA opt-outs/mo), Mid (250K), High (1M) — client self-selects tier
-        _scenarios = []
-        for label, ca_optouts_mo in [
-            ("Conservative", 50_000),
-            ("Mid-range", 250_000),
-            ("High-traffic", 1_000_000),
-        ]:
-            ccpa_annual = ca_optouts_mo * 12 * v_count * 7_500
-            cipa_annual = ca_optouts_mo * 12 * 5_000
-            # Realistic settlement = 0.01%–0.1% of theoretical statutory max (based on precedents)
-            settlement_low = int((ccpa_annual + cipa_annual) * 0.0001)
-            settlement_high = int((ccpa_annual + cipa_annual) * 0.001)
-            _scenarios.append(
-                (label, ca_optouts_mo, ccpa_annual + cipa_annual, settlement_low, settlement_high)
-            )
+        _juris = audit_result.detected_jurisdiction or "US"
+        _fw = _JURISDICTION_EXPOSURE.get(_juris) or _JURISDICTION_EXPOSURE["US"]
 
         def _fmt(n: int) -> str:
             if n >= 1_000_000_000:
@@ -1537,33 +1629,69 @@ def generate_marp_slides(
                 return f"${n/1_000_000:.1f}M"
             return f"${n/1_000:.0f}K"
 
-        # Scenario cards — bottom row. Equal width via flex:1 1 0, min-width:0
-        # so wide ranges can shrink inside their column instead of pushing the
-        # row past the slide bounds. Smaller value font (1.05em) matches the
-        # top-row card hierarchy and stays on one line at any tier.
-        _exposure_html += '<div style="display:flex;gap:8px;margin-top:8px;align-items:stretch;">'
-        for label, optouts, statutory, s_low, s_high in _scenarios:
-            _exposure_html += (
-                f'<div style="flex:1 1 0;min-width:0;background:#ffffff;border-radius:10px;'
-                f'padding:12px 14px;border-top:3px solid #ef4444;">'
-                f'<div style="color:#4b5563;font-size:0.55em;text-transform:uppercase;'
-                f"letter-spacing:0.14em;margin-bottom:4px;font-family:'Inter';font-weight:600;\">{label}</div>"
-                f"<div style=\"font-family:'Inter';font-weight:800;font-size:1.05em;color:#ef4444;"
-                f'line-height:1.15;margin-bottom:4px;letter-spacing:-0.01em;">'
-                f"{_fmt(s_low)}–{_fmt(s_high)}</div>"
-                f'<div style="color:#6b7280;font-size:0.55em;font-weight:300;line-height:1.45;">'
-                f"{optouts:,} CA opt-outs/mo<br>max {_fmt(statutory)}/yr</div>"
-                f"</div>"
+        def _exposure_card(label: str, value: str, sub: str) -> str:
+            return (
+                '<div style="flex:1 1 0;min-width:0;background:#ffffff;border-radius:10px;'
+                'padding:12px 14px;border-top:3px solid #ef4444;">'
+                '<div style="color:#4b5563;font-size:0.55em;text-transform:uppercase;'
+                "letter-spacing:0.14em;margin-bottom:4px;font-family:'Inter';font-weight:600;\">"
+                f"{label}</div>"
+                "<div style=\"font-family:'Inter';font-weight:800;font-size:1.05em;color:#ef4444;"
+                'line-height:1.15;margin-bottom:4px;letter-spacing:-0.01em;">'
+                f"{value}</div>"
+                '<div style="color:#6b7280;font-size:0.55em;font-weight:300;line-height:1.45;">'
+                f"{sub}</div></div>"
             )
+
+        # Statute cards (top row) — from the detected jurisdiction's framework.
+        _statutes = cast("list[tuple[str, str, str]]", _fw["statutes"])
+        _exposure_html = '<div style="display:flex;gap:8px;margin-top:14px;align-items:stretch;">'
+        for _label, _value, _sub in _statutes:
+            _exposure_html += _metric_card(_label, _value, _sub, "#3d6abb")
         _exposure_html += "</div>"
 
-        # Benchmarks footnote — matches existing panel style
+        if _fw["model"] == "per_consumer":
+            # US: realistic exposure scales with affected-consumer volume.
+            # Conservative (50K CA opt-outs/mo), Mid (250K), High (1M).
+            _exposure_html += (
+                '<div style="display:flex;gap:8px;margin-top:8px;align-items:stretch;">'
+            )
+            for label, optouts in [
+                ("Conservative", 50_000),
+                ("Mid-range", 250_000),
+                ("High-traffic", 1_000_000),
+            ]:
+                ccpa_annual = optouts * 12 * v_count * 7_500
+                cipa_annual = optouts * 12 * 5_000
+                statutory = ccpa_annual + cipa_annual
+                # Realistic settlement = 0.01%-0.1% of theoretical statutory max.
+                s_low = int(statutory * 0.0001)
+                s_high = int(statutory * 0.001)
+                _exposure_html += _exposure_card(
+                    label,
+                    f"{_fmt(s_low)}–{_fmt(s_high)}",
+                    f"{optouts:,} CA opt-outs/mo<br>max {_fmt(statutory)}/yr",
+                )
+            _exposure_html += "</div>"
+        else:
+            # EU/CA: turnover-percentage cap regimes — NO per-consumer multiplier.
+            # Where real regulator cookie fines exist (EU/CNIL), show them as the
+            # realistic anchor. Canada has none yet, so the note below carries it.
+            _anchors = cast("list[tuple[str, str, str]] | None", _fw.get("anchors"))
+            if _anchors:
+                _exposure_html += (
+                    '<div style="display:flex;gap:8px;margin-top:8px;align-items:stretch;">'
+                )
+                for _ent, _amt, _src in _anchors:
+                    _exposure_html += _exposure_card(_ent, _amt, _src)
+                _exposure_html += "</div>"
+
+        # Footnote — jurisdiction-specific precedent / methodology note.
         _exposure_html += (
             '<div style="margin-top:8px;background:#ffffff;border-radius:8px;padding:8px 14px;'
             'border-left:3px solid #374151;">'
             '<div style="font-size:0.6em;color:#4b5563;line-height:1.5;">'
-            "Realistic settlement range calibrated to precedent: "
-            "Sephora $1.2M (2022) · Tractor Supply $1.35M (Sep 2025) · Disney $2.75M (Feb 2026)"
+            f"{_fw['note']}"
             "</div></div>"
         )
 
@@ -1584,9 +1712,20 @@ def generate_marp_slides(
         _rc_rows.append(("Consent Model", _rc.consent_model.capitalize()))
         if _rc.script_version:
             _rc_rows.append(("Script Version", _rc.script_version))
-        _rc_rows_html = "\n".join(
-            f"  <tr><td style='padding:6px 14px;color:#4b5563;font-weight:600;'>{k}</td>"
-            f"<td style='padding:6px 14px;color:#14182b;'>{v}</td></tr>"
+        # On-brand "spec sheet": a navy-accented panel of label/value pairs in a
+        # responsive grid, instead of a generic theme-styled <table> (which read
+        # off-brand and left the slide half-empty). KJB palette: #345187 accent
+        # rail, #3d6abb kicker labels, #1e293b ink. Values are html.escape()d —
+        # they come from the audited site's CMP JS API, so raw interpolation into
+        # the deck HTML would be an injection sink (no Jinja autoescape here).
+        _rc_cells_html = "\n".join(
+            "  <div>"
+            "<div style='font-size:0.32em;text-transform:uppercase;letter-spacing:0.12em;"
+            "color:#3d6abb;font-weight:700;margin-bottom:5px;'>"
+            f"{html.escape(str(k))}</div>"
+            "<div style='font-size:0.5em;color:#1e293b;font-weight:600;line-height:1.3;'>"
+            f"{html.escape(str(v))}</div>"
+            "</div>"
             for k, v in _rc_rows
         )
         _cmp_runtime_slide_md = (
@@ -1599,10 +1738,12 @@ def generate_marp_slides(
             "This is the configuration the CMP <em>believes</em> it is enforcing. "
             "Compare against the observed network behavior below to surface "
             "misconfigurations.</p>\n\n"
-            "<table style='border-collapse:collapse;font-size:0.5em;margin-top:12px;'>"
-            "<tbody>\n"
-            f"{_rc_rows_html}\n"
-            "</tbody></table>\n"
+            "<div style='margin-top:18px;max-width:1060px;border-left:4px solid #345187;"
+            "background:#f6f8fc;border-radius:0 14px 14px 0;padding:22px 26px;'>\n"
+            "<div style='display:grid;"
+            "grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px 32px;'>\n"
+            f"{_rc_cells_html}\n"
+            "</div></div>\n"
         )
 
     # GPC Compliance slide — dedicated evidence block for screenshot sharing
@@ -1829,6 +1970,20 @@ def generate_marp_slides(
     # backslash-escaped HTML attribute inside an f-string expression breaks
     # mypy on Python 3.12 even though the runtime accepts it (PEP 701).
     _nl = chr(10)
+    # Jurisdiction-aware exposure callout (US is a per-firing $ amount; EU/CA are
+    # turnover-percentage caps, so a per-firing dollar figure would be wrong there).
+    _callout_label = (
+        "Quebec Law 25"
+        if jurisdiction == "CA"
+        else "GDPR / ePrivacy"
+        if jurisdiction == "EU"
+        else "CCPA"
+    )
+    _callout_text = (
+        "Each firing = potential $7,500 violation."
+        if jurisdiction == "US"
+        else "Exposure is a turnover-percentage cap on global revenue, not a per-firing amount."
+    )
     if violations:
         _cookie_section_md = (
             "### COOKIE EVIDENCE" + _nl + _nl
@@ -1837,10 +1992,10 @@ def generate_marp_slides(
             + '<div style="margin-top:16px;background:#fbe8e2;border-radius:10px;'
               'padding:14px 18px;border-left:4px solid #ef4444;font-size:0.72em;'
               'color:#9ca3af;line-height:1.7;">'
-              "<strong style=\"color:#ef4444;\">CCPA exposure:</strong> "
-              "these vendors received behavioral data after consent was denied. "
-              "Each firing = potential $7,500 violation."
-              "</div>"
+            + f'<strong style="color:#ef4444;">{_callout_label} exposure:</strong> '
+            + "these vendors received behavioral data after consent was denied. "
+            + _callout_text
+            + "</div>"
         )
     else:
         _cookie_section_md = (
@@ -2038,7 +2193,7 @@ style: |
 
 ---
 
-### {"GDPR · EPRIVACY DIRECTIVE" if jurisdiction == "EU" else "CCPA · CPRA · CIPA · FTC ACT"}
+### {"GDPR · EPRIVACY DIRECTIVE" if jurisdiction == "EU" else "QUEBEC LAW 25 · PIPEDA" if jurisdiction == "CA" else "CCPA · CPRA · CIPA · FTC ACT"}
 
 # Applicable Legal Framework
 

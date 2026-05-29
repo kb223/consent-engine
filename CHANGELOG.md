@@ -3,6 +3,55 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.3] — 2026-05-28 — Full scan in production + jurisdiction-aware exposure
+
+Repositioned from an outreach lead-magnet (fast scan) to a give-away / portfolio
+tool: the FULL scan is now the production path, and financial-exposure reporting
+is correct per jurisdiction. 113 tests pass (9 new), ruff + mypy strict clean.
+
+### Changed — the full scan is now production
+- `run_audit` now calls `scan_page` (`_scan_s3`) for both the opt-out and GPC
+  passes, instead of `scan_page_fast`. This brings per-CMP injection
+  (`build_injection_plan`) + banner-click reject + a 150s per-pass timeout. The
+  fast path only injected OneTrust's cookies, so every non-OneTrust CMP came back
+  INCONCLUSIVE; the full scan actually injects against Didomi/Usercentrics/
+  Sourcepoint/etc. (and the 150s wrapper fixed the fast path's hang on slow sites).
+- Ported the fast path's newer wiring into the full scan: CMP runtime
+  introspection + consent-event capture (into `_scan_s3`), and the Camoufox
+  stealthy WAF retry (into the `scan_page` wrapper).
+
+### Fixed — accuracy
+- **Geo-override no longer fabricates a "denied" GCS off an injected cookie.**
+  The full-scan override fired on any `cmp_method`, including `cookie_injection`
+  (the denial cookie WE pre-inject) — circular, and a false-CONFIRMED source.
+  Now gated to `banner_click` only (a genuine reject that wrote the cookie), the
+  same bug class fixed in the fast path for v0.6.2.
+- **Jurisdiction detection prefers the CMP's own geolocation as ground truth**
+  (`country_to_jurisdiction`) over the HTML/TLD heuristic — the CMP itself
+  determined which regime applies. Returns a positive non-US signal only, so a
+  US-IP scan can't mask a real EU/CA site.
+
+### Fixed — jurisdiction-aware financial exposure (deck + report)
+- A Canadian or EU site no longer shows US statutes (CCPA/CPRA, CIPA §631) or US
+  settlement precedents (Sephora/Disney). The exposure now branches by regime,
+  using the correct *structure* for each: the US is a per-consumer multiplier
+  (penalty × opt-out volume); the EU/UK/Quebec are turnover-percentage caps (a
+  single ceiling, no per-consumer multiplier).
+  - **US**: CCPA $7,500 / CIPA $5,000 / FTC, per-consumer volume tiers, US settlements.
+  - **Canada**: Quebec Law 25 (CAD $25M/4% penal · CAD $10M/2% admin · CAD $1,000
+    private floor), PIPEDA, with an honesty note (enforcement nascent, no flagship
+    cookie fine yet, Tim Hortons as the real precedent).
+  - **EU**: GDPR Art. 83 (€20M/4%), ePrivacy/CNIL Art. 82, anchored to real cookie
+    fines (Google €325M, SHEIN €150M — Sep 2025; Amazon €35M). UK-GDPR/PECR noted.
+  - Figures verified against primary regulator sources. The "Applicable Legal
+    Framework" slide, the per-pixel exposure callout, and the statute kicker are
+    jurisdiction-branched too.
+
+### Fixed — deck
+- **CMP self-report slide** redesigned from a generic theme table to an on-brand
+  spec grid (navy accent rail, brand-blue kicker labels). Site-derived values on
+  that slide are now `html.escape()`d (the deck f-strings have no autoescape).
+
 ## [0.6.2] — 2026-05-28 — Second-review hardening (P0/P1/P2 fixes)
 
 A deeper multi-agent review of the full pipeline (not just the diff) before the

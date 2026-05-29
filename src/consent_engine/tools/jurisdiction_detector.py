@@ -366,3 +366,26 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
             return "CA"
         return "EU"
     return "US"
+
+
+def country_to_jurisdiction(country_code: str | None) -> str | None:
+    """Map a CMP-reported ISO-3166 alpha-2 country code to our jurisdiction enum.
+
+    The CMP's own geolocation (from runtime introspection, e.g. OneTrust's
+    GetDomainData geolocation rule) is GROUND TRUTH for which regime the operator
+    configured — far more reliable than guessing from page HTML/TLD. Callers should
+    prefer this over `detect_jurisdiction` when a CMP geolocation is available.
+
+    Returns "CA" or "EU" for a positive non-US signal, else None. We deliberately
+    do NOT return "US": the scan runs from a US IP, so a CMP that geolocates by IP
+    may report US even for a site that also operates under EU/CA law — returning
+    None lets the HTML/TLD heuristic still surface a non-US regime in that case.
+    """
+    if not country_code:
+        return None
+    cc = country_code.strip().upper()
+    if cc == "CA":
+        return "CA"
+    if cc in _EU_COUNTRY_CODES:  # EU members + EEA + GB (UK-GDPR folds into EU)
+        return "EU"
+    return None

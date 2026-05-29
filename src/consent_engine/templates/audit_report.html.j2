@@ -792,6 +792,26 @@
 
   {% if report_variant == 'compliance' and exposure and exposure.has_exposure %}
   <!-- STATUTORY + CLASS-ACTION EXPOSURE (compliance variant only) -->
+  {% if exposure.model == 'turnover_cap' %}
+  <!-- EU / UK / Quebec: turnover-percentage caps (no US per-consumer dollar range) -->
+  <div class="exposure-panel">
+    <span class="exposure-tag">Estimated Exposure</span>
+    <h3 class="exposure-title">Maximum statutory exposure under {{ exposure.jurisdiction_label }}</h3>
+    <div class="exposure-sub">These regimes cap penalties at a percentage of global turnover, not a per-consumer amount.</div>
+    <div class="exposure-components">
+      {% for c in exposure.components %}
+      <div class="exposure-row">
+        <div>
+          <div class="exposure-row-statute">{{ c.statute }}</div>
+          <div class="exposure-row-anchor">{{ c.anchor }}</div>
+        </div>
+        <div class="exposure-row-amount">{{ c.display_amount }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="exposure-footnote">{{ exposure.note }}</p>
+  </div>
+  {% else %}
   <div class="exposure-panel">
     <span class="exposure-tag">Estimated Exposure</span>
     <h3 class="exposure-title">Statutory + class-action exposure from observed violations</h3>
@@ -820,6 +840,7 @@
       Anchored to published settlements (see Regulatory Basis below).
     </p>
   </div>
+  {% endif %}
   {% endif %}
 
   {% if is_inconclusive %}

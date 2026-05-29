@@ -1009,6 +1009,21 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
 
         cmp_profile = await detect_cmp(page, network_requests)
 
+        # CMP runtime introspection + consent-event capture — what the CMP itself
+        # reports via its JS API (template/geo/consent-model) plus the gtag/CMP
+        # consent dataLayer pushes. Ported from scan_page_fast so the full scan
+        # keeps these forensic signals (display-only; does not affect the verdict).
+        from consent_engine.tools.cmp_runtime_introspect import (
+            extract_cmp_runtime,
+            extract_consent_events,
+        )
+
+        _detected_cmp_name = (
+            cmp_profile.name if cmp_profile and cmp_profile.name != "unknown" else None
+        )
+        cmp_runtime_config = await extract_cmp_runtime(page, _detected_cmp_name)
+        consent_events_captured = await extract_consent_events(page)
+
         title = await page.title()
         bot_detection_encountered = (
             "Security Check" in title
@@ -1282,18 +1297,25 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
         gcd_raw = denied_gcd[0] if denied_gcd else gcd_records[-1]
 
     # --- GCS geo-targeting override ---
-    # CMPs like CookieYes geo-target consent defaults: EU=denied, US=granted.
-    # When scanning from a US IP (e.g. Cloud Run), the CMP may report GCS G111
-    # even though denied cookies are set and the CMP banner was dismissed.
-    # If the CMP is known, denied cookies are confirmed, and GCS is all-granted,
-    # override to G100 — the value an EU visitor would see after opting out.
+    # A US-targeted CMP can report GCS G111 even after a genuine reject (geo
+    # defaults: EU=denied, US=granted). If we actually CLICKED reject in the UI
+    # (cmp_method == "banner_click") and the CMP then wrote its denial cookie, a
+    # still-all-granted GCS is a real Consent Mode misconfiguration, so we override
+    # to G100 (the value an EU visitor would see after opting out).
+    # CRITICAL: gate on banner_click ONLY. Under "cookie_injection" the denial
+    # cookie is one WE pre-injected, so its presence is circular and would
+    # fabricate a "denied" signal -> false CONFIRMED violations (the same bug class
+    # fixed in the fast path for v0.6.2). In that case the honest output is
+    # GCS-as-observed plus the S3_CONSENT_WIRING_BROKEN methodology, not a forced
+    # G100. "banner_click_failed/_reverted/_inconclusive" are excluded too — an
+    # unconfirmed reject is not reliable cookie evidence.
     if (
         gcs_value
         and gcs_value.ad_storage == "granted"
         and gcs_value.analytics_storage == "granted"
         and cmp_profile
         and cmp_profile.name not in ("unknown",)
-        and cmp_method is not None
+        and cmp_method == "banner_click"
     ):
         _denied_cookie_names = {
             "CookieYes": "cookieyes-consent",
@@ -1356,6 +1378,8 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
         cmp_detection_confidence=cmp_profile.confidence if cmp_profile.name != "unknown" else None,
         bot_detection_encountered=bot_detection_encountered,
         har_path=final_har_path,
+        cmp_runtime_config=cmp_runtime_config,
+        consent_events=consent_events_captured,
     )
 
 
@@ -2134,6 +2158,15 @@ async def scan_page(
         return await asyncio.wait_for(_scan_gpc(url, proxy_url=proxy_url), timeout=150)
 
     opted_out = consent_state == ConsentState.OPTED_OUT
-    return await asyncio.wait_for(
+    result = await asyncio.wait_for(
         _scan_s3(url, opted_out=opted_out, proxy_url=proxy_url), timeout=150
     )
+    # WAF/bot-challenge fallback — the full scan, like the fast path, retries via
+    # the Camoufox-backed stealthy fetcher when the primary Chromium scan hit a
+    # bot wall (Cloudflare/PerimeterX). Falls back to the primary result if the
+    # stealthy retry is unavailable or also fails, so the audit still renders.
+    if result.bot_detection_encountered:
+        stealthy = await _scan_page_stealthy(url=url, opted_out=opted_out, gpc=False)
+        if stealthy is not None:
+            return stealthy
+    return result
