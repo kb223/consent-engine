@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from consent_engine.tools.jurisdiction_detector import (
     _canadian_content_signal,
+    _french_language_signal,
     detect_jurisdiction,
     resolve_jurisdiction,
 )
@@ -48,7 +49,35 @@ def test_canadian_content_signal_keeps_site_identity_markers() -> None:
     assert _canadian_content_signal("Conforme à la Loi 25 du Québec")
     assert _canadian_content_signal("Hydro-Québec, Montréal")
     assert _canadian_content_signal("We comply with PIPEDA")
-    assert _canadian_content_signal("Office: 100 King St W, Toronto, ON M5X 1A9")  # postal code
+
+
+def test_canadian_content_signal_ignores_hex_asset_hashes() -> None:
+    # THE bbc.com bug: under IGNORECASE the old A1A-1A1 postal-code regex matched
+    # hex fragments in CSS/asset hashes (e.g. a5b7a0 inside 537a5b7a0167d5a8),
+    # producing 100+ false hits and flipping the site to CA.
+    asset_html = (
+        '<link rel="stylesheet" href="/_next/static/css/537a5b7a0167d5a8.css">'
+        '<script src="/static/f92e6ec078-web-3.7.0.js"></script>'
+    )
+    assert not _canadian_content_signal(asset_html)
+
+
+def test_french_gate_blocks_canadian_check_on_english_pages() -> None:
+    # An English (en-GB) page mentioning Montréal in editorial copy must NOT be
+    # CA — the Canadian-content tiebreaker only runs on French-language pages.
+    english = '<html lang="en-GB"><body>The Montréal Canadiens won; Québec reacts.</body></html>'
+    assert detect_jurisdiction(english, "https://www.bbc.com") == "EU"
+    # The same markers on a FRENCH page DO resolve CA (the legitimate case).
+    french = '<html lang="fr"><body>Les Canadiens de Montréal. Hydro-Québec.</body></html>'
+    assert detect_jurisdiction(french, "https://example.com") == "CA"
+
+
+def test_french_language_signal() -> None:
+    assert _french_language_signal('<html lang="fr">')
+    assert _french_language_signal('<html lang="fr-CA">')
+    assert _french_language_signal('<meta property="og:locale" content="fr_FR">')
+    assert not _french_language_signal('<html lang="en-GB">')
+    assert not _french_language_signal('<html lang="en-US">')
 
 
 # --- preserved behavior: genuine Quebec / CA / EU sites ----------------------

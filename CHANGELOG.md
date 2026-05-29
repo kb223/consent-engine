@@ -18,12 +18,16 @@ locked with regression tests. Live-verified: CNN -> US, BBC -> EU, NYTimes -> US
   Canadian law. Jurisdiction now flows through the new pure
   `resolve_jurisdiction(explicit_override, page_html, url)`, which takes no CMP
   geo by construction. CMP geolocation is still captured as evidence.
-- **Tightened the Canadian-content heuristic.** `_canadian_content_signal` no
-  longer matches bare English city names ("Toronto", "Edmonton", ...) or a bare
-  "Canada"/"Canadian" mention — editorial content on a global news site
-  (bbc.com), not site identity, which was flipping UK/US sites to CA. It now
-  keys only on site-identity markers (Québec/Montréal/Hydro-Québec, Loi 25 /
-  Law 25, PIPEDA, Commission d'accès, a Canadian postal code).
+- **Hardened the Canadian-content heuristic (the France-vs-Quebec tiebreaker).**
+  It no longer matches bare English city names or a bare "Canada"/"Canadian"
+  mention (editorial content on a global news site, not the site's own
+  jurisdiction). The Canadian postal-code pattern was removed entirely: under
+  `IGNORECASE` its A1A-1A1 shape matched hex fragments in CSS/asset hashes
+  (160+ false hits on a single bbc.com page). The tiebreaker is now also gated
+  on a French-language signal, since it exists only to separate French-Quebec
+  from French-France, so an English (en-GB / en-US) page is never subject to it.
+  Kept signals: Québec/Montréal/Hydro-Québec, Loi 25 / Law 25, PIPEDA,
+  Commission d'accès.
 
 ### Fixed — client-copy polish
 - The executive summary no longer leaks the raw methodology enum (e.g. "under

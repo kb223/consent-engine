@@ -178,38 +178,57 @@ _OG_LOCALE_ALT_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Canadian site-IDENTITY markers — used ONLY as a tiebreaker when a French/EU
-# language signal is already present on a generic TLD, to separate Quebec (CA)
-# from France (EU). Hydro-Québec (hydroquebec.com) is the canonical case the old
-# "lang='fr' → EU" rule got wrong.
+# Canadian site-IDENTITY markers — used ONLY as a France-vs-Quebec tiebreaker,
+# and ONLY on a page whose declared language is French (see the gate in
+# detect_jurisdiction). Hydro-Québec (hydroquebec.com) is the canonical case the
+# old "lang='fr' → EU" rule got wrong.
 #
-# Deliberately EXCLUDES bare English city names ("Toronto", "Edmonton", ...) and
-# a bare "Canada"/"Canadian" mention. A global news site (e.g. bbc.com) routinely
-# names Canadian cities or "Canada" in headlines — that is EDITORIAL content, not
-# the site's own jurisdiction, and it was flipping UK/US news sites to CA. The
-# kept signals appear in a site's own chrome / privacy policy / address, not its
-# news copy: Québec/Montréal/Hydro-Québec (French-market identity), the Canadian
-# privacy statutes a site cites in its policy, and a Canadian postal code.
+# Deliberately EXCLUDES:
+#  - bare English city names ("Toronto", "Edmonton", ...) and bare
+#    "Canada"/"Canadian" — editorial content on global news sites, not site
+#    identity (was flipping UK/US news sites to CA).
+#  - a Canadian postal-code regex — under IGNORECASE the A1A-1A1 shape matched
+#    hex fragments in CSS/asset hashes (e.g. ".../537a5b7a0167d5a8.css"),
+#    producing 100+ false hits on a single news page. It is also redundant: a
+#    real Quebec address is accompanied by "Québec"/"Montréal".
+# Kept signals are proper-noun / legal-text identity markers that appear in a
+# site's own chrome and privacy policy, not its news copy.
 _CANADIAN_CONTENT_RE = re.compile(
     r"(qu[ée]bec|montr[ée]al|hydro[\s-]qu[ée]bec|"
-    r"commission d.acc[èe]s|\bloi\s*25\b|\blaw\s*25\b|\bpipeda\b|"
-    r"[A-Z]\d[A-Z][\s-]?\d[A-Z]\d)",  # Canadian postal code (A1A 1A1)
+    r"commission d.acc[èe]s|\bloi\s*25\b|\blaw\s*25\b|\bpipeda\b)",
     re.IGNORECASE,
 )
 
 
 def _canadian_content_signal(html: str) -> bool:
-    """Heuristic: returns True if HTML has Canadian/Quebec content markers.
+    """Returns True if HTML has Canadian/Quebec site-identity markers.
 
-    Conservative signal — only checked when other signals are ambiguous (e.g.
-    lang='fr' without country subtag on a .com domain). A French-language site
-    that mentions "Québec", "Montréal", a Canadian postal code, or Loi 25 is
-    almost certainly Canadian, not French. Examples this catches that the old
-    logic missed: hydroquebec.com, desjardins.com (when on .com), banque-laurentienne.com.
+    Caller MUST gate this behind `_french_language_signal`: it exists only to
+    separate a French-Quebec site (CA) from a French-France site (EU). On an
+    English page there is no such ambiguity, so running it there only invites
+    false positives from editorial mentions of Canada.
     """
     if not html:
         return False
     return bool(_CANADIAN_CONTENT_RE.search(html))
+
+
+def _french_language_signal(html: str) -> bool:
+    """True if the page's DECLARED primary language is French (html lang /
+    og:locale). Intentionally ignores hreflang: an international news site links
+    French editions via hreflang without being a French-language site itself.
+
+    Gates the France-vs-Quebec content tiebreaker so it runs only where the
+    ambiguity actually exists. An en-GB / en-US site (bbc.com, cnn.com) is never
+    subject to the Canadian-content check.
+    """
+    if not html:
+        return False
+    m = _HTML_LANG_RE.search(html)
+    if m and m.group(1).lower().split("-")[0] == "fr":
+        return True
+    m = _OG_LOCALE_RE.search(html) or _OG_LOCALE_ALT_RE.search(html)
+    return bool(m and m.group(1).lower().replace("-", "_").split("_")[0] == "fr")
 
 
 # ---------------------------------------------------------------------------
@@ -346,11 +365,12 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
                 return "CA"
             any_eu = any_eu or is_eu
         if any_eu:
-            # Last-ditch Quebec disambiguation: a French-language signal on a
-            # .com is ambiguous (France vs Quebec). Promote to CA if the page
-            # body contains Canadian markers (Hydro-Québec, Loi 25, postal
-            # codes, named Canadian cities, etc.). Defaults to EU otherwise.
-            if _canadian_content_signal(page_html):
+            # France-vs-Quebec disambiguation — ONLY when the page's declared
+            # language is French. An en-GB / en-US site has no such ambiguity,
+            # so it must never be subjected to the Canadian-content check (that
+            # is what flipped bbc.com to CA). A French .com page carrying
+            # Hydro-Québec / Loi 25 / etc. is Quebec, not France.
+            if _french_language_signal(page_html) and _canadian_content_signal(page_html):
                 return "CA"
             return "EU"
         return "US"
@@ -368,7 +388,7 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
     if any_ca:
         return "CA"
     if any_eu:
-        if _canadian_content_signal(page_html):
+        if _french_language_signal(page_html) and _canadian_content_signal(page_html):
             return "CA"
         return "EU"
     return "US"
