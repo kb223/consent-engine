@@ -178,15 +178,21 @@ _OG_LOCALE_ALT_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Quebec/Canadian content markers. Used to disambiguate the "lang='fr' on .com"
-# case — a French-language site on a generic TLD is otherwise indistinguishable
-# from a France site by the lang-signal alone. Hydro-Québec (hydroquebec.com) is
-# the canonical case the old "lang='fr' → EU" rule got wrong.
+# Canadian site-IDENTITY markers — used ONLY as a tiebreaker when a French/EU
+# language signal is already present on a generic TLD, to separate Quebec (CA)
+# from France (EU). Hydro-Québec (hydroquebec.com) is the canonical case the old
+# "lang='fr' → EU" rule got wrong.
+#
+# Deliberately EXCLUDES bare English city names ("Toronto", "Edmonton", ...) and
+# a bare "Canada"/"Canadian" mention. A global news site (e.g. bbc.com) routinely
+# names Canadian cities or "Canada" in headlines — that is EDITORIAL content, not
+# the site's own jurisdiction, and it was flipping UK/US news sites to CA. The
+# kept signals appear in a site's own chrome / privacy policy / address, not its
+# news copy: Québec/Montréal/Hydro-Québec (French-market identity), the Canadian
+# privacy statutes a site cites in its policy, and a Canadian postal code.
 _CANADIAN_CONTENT_RE = re.compile(
-    r"(qu[ée]bec|montr[ée]al|hydro[\s-]qu[ée]bec|ottawa|toronto|vancouver|"
-    r"calgary|edmonton|winnipeg|halifax|"
-    r"commission d.acc[èe]s|loi\s*25|law\s*25|pipeda|"
-    r"\bcanad(?:a|ian|ienne?)\b|"
+    r"(qu[ée]bec|montr[ée]al|hydro[\s-]qu[ée]bec|"
+    r"commission d.acc[èe]s|\bloi\s*25\b|\blaw\s*25\b|\bpipeda\b|"
     r"[A-Z]\d[A-Z][\s-]?\d[A-Z]\d)",  # Canadian postal code (A1A 1A1)
     re.IGNORECASE,
 )
@@ -389,3 +395,24 @@ def country_to_jurisdiction(country_code: str | None) -> str | None:
     if cc in _EU_COUNTRY_CODES:  # EU members + EEA + GB (UK-GDPR folds into EU)
         return "EU"
     return None
+
+
+def resolve_jurisdiction(explicit_override: str | None, page_html: str, url: str) -> str:
+    """Resolve the audit's jurisdiction from SCANNER-INDEPENDENT site signals.
+
+    Precedence: explicit operator override > site-intrinsic detection
+    (`detect_jurisdiction`: TLD > declared locale/lang/geo.region > content
+    tiebreaker > US default).
+
+    This intentionally does NOT consider the CMP's IP-based geolocation
+    (`cmp_runtime_config.geolocation_country`). That value reflects where the
+    SCAN is executed from (the visitor), not the audited site's market — so a
+    scan run from a Canadian IP was stamping Canadian law (Quebec Law 25) onto
+    US and UK sites. CMP geolocation is kept as captured evidence, but the
+    jurisdiction verdict must be reproducible regardless of scan location, so it
+    is derived only from signals the SITE itself declares. `country_to_jurisdiction`
+    remains available for callers that have a trustworthy, site-scoped country.
+    """
+    if explicit_override:
+        return explicit_override
+    return detect_jurisdiction(page_html or "", url)

@@ -3,6 +3,33 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.5] — 2026-05-29 — Scanner-independent jurisdiction + copy fixes
+
+Jurisdiction is now derived only from signals the audited SITE declares, never
+from where the scan runs from. A scan executed from a Canadian IP was stamping
+Quebec Law 25 / PIPEDA onto US and UK sites (CNN, BBC). Fixed completely and
+locked with regression tests. Live-verified: CNN -> US, BBC -> EU, NYTimes -> US.
+
+### Fixed — jurisdiction is scanner-independent
+- **Dropped the CMP IP-geolocation override.** `run_audit` no longer maps
+  `cmp_runtime_config.geolocation_country` onto the report jurisdiction. That
+  value reflects the SCANNER's location (the visitor the CMP geo-targets), not
+  the site's market, so every CMP-geolocated site scanned from Canada reported
+  Canadian law. Jurisdiction now flows through the new pure
+  `resolve_jurisdiction(explicit_override, page_html, url)`, which takes no CMP
+  geo by construction. CMP geolocation is still captured as evidence.
+- **Tightened the Canadian-content heuristic.** `_canadian_content_signal` no
+  longer matches bare English city names ("Toronto", "Edmonton", ...) or a bare
+  "Canada"/"Canadian" mention — editorial content on a global news site
+  (bbc.com), not site identity, which was flipping UK/US sites to CA. It now
+  keys only on site-identity markers (Québec/Montréal/Hydro-Québec, Loi 25 /
+  Law 25, PIPEDA, Commission d'accès, a Canadian postal code).
+
+### Fixed — client-copy polish
+- The executive summary no longer leaks the raw methodology enum (e.g. "under
+  the s3_no_google_consent_mode methodology") — it uses the human label, and the
+  no-GCS case now gets an accurate summary instead of a false "AI-ready" line.
+
 ## [0.6.4] — 2026-05-28 — Sourcepoint reject-click reliability + no-GCS methodology
 
 Fixed the banner-click reject path for Sourcepoint (and, via the shared

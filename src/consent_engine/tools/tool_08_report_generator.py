@@ -109,6 +109,11 @@ _METHODOLOGY_LABELS: dict[str, str] = {
 }
 
 
+def _methodology_label(audit_result: AuditResult) -> str:
+    """Human-readable methodology label for client copy (never the raw enum value)."""
+    return _METHODOLOGY_LABELS.get(audit_result.methodology, "Scan")
+
+
 def _render_markdown(text: str) -> Markup:
     """Convert markdown text to safe HTML for Jinja2 rendering."""
     return Markup(md_lib.markdown(text, extensions=["nl2br", "tables", "sane_lists"]))
@@ -882,10 +887,16 @@ async def generate_executive_summary(
                 f"the ad platforms optimize on the signal they receive, and this stack is giving them an incomplete picture."
                 f"{rec_suffix}"
             )
+        if audit_result.methodology == MethodologyFlag.S3_NO_GOOGLE_CONSENT_MODE:
+            return (
+                f"No Google Consent Mode signal was observed at {audit_result.url}, so a "
+                f"signal-chain assessment is not applicable. The site appears to use a "
+                f"non-Google consent framework or Basic Consent Mode; any vendors observed "
+                f"are informational only."
+            )
         return (
-            f"No consent-driven signal gaps detected at {audit_result.url} "
-            f"under the {audit_result.methodology} methodology. "
-            f"The measurement stack is AI-ready — ad platforms are receiving clean post-consent signal."
+            f"No consent-driven signal gaps were confirmed at {audit_result.url}. "
+            f"The measurement stack is passing clean post-consent signal to the ad platforms."
         )
     if violations:
         jurisdiction = audit_result.detected_jurisdiction or "US"
@@ -903,9 +914,17 @@ async def generate_executive_summary(
             f"This constitutes a potential violation of {law} and may expose the organization "
             f"to regulatory enforcement and class-action litigation."
         )
+    if audit_result.methodology == MethodologyFlag.S3_NO_GOOGLE_CONSENT_MODE:
+        return (
+            f"No Google Consent Mode signal was observed at {audit_result.url}. The site "
+            f"uses {audit_result.detected_cmp or 'a consent banner'} but emits no Consent "
+            f"Mode beacons, so the signal-chain consent audit is not applicable (it may use "
+            f"a non-Google consent framework or Basic Consent Mode). Vendors observed are "
+            f"informational only."
+        )
     return (
         f"No confirmed consent violations were detected at {audit_result.url} "
-        f"under the {audit_result.methodology} methodology."
+        f"under the {_methodology_label(audit_result)} methodology."
     )
 
 
