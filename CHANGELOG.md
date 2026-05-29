@@ -3,6 +3,27 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.7] — 2026-05-29 — Distinct UK jurisdiction (UK GDPR / PECR / ICO)
+
+The UK is now its own jurisdiction instead of folding into the EU/GDPR framework.
+A .co.uk site, an en-GB site on a generic TLD (bbc.com), or a GB geolocation now
+renders UK GDPR + PECR + ICO enforcement and the £17.5M / 4% turnover cap, rather
+than EU GDPR + ePrivacy + CNIL + €20M.
+
+### Added — UK regime
+- Detection: `_UK_TLDS` (.uk / .co.uk / .gov.uk / ...) and `_uk_signals()` (GB in
+  html-lang / og:locale / geo.region) route UK sites to "UK" in
+  `detect_jurisdiction`, ahead of the EU branch. GB is removed from the EU country
+  set, and `country_to_jurisdiction("GB")` now returns "UK".
+- Exposure: a UK entry in `_JURISDICTION_EXPOSURE` (turnover_cap; UK GDPR Art 83
+  £17.5M / £8.7M, PECR reg 6, ICO). No flagship UK cookie fine exists, so it cites
+  no anchor (the same honesty guardrail as Canada) and notes that ICO cookie
+  enforcement to date is mostly reprimands and enforcement notices.
+- Report + deck: UK branches in the applicable-law slide, the statute kicker, the
+  exec-summary law label, the pixel-exposure callout, and the jurisdiction label;
+  `jurisdiction_copy("UK")` supplies UK GDPR / PECR / ICO phrasing. UK shares the
+  EU GDPR opt-in framing for the GPC note (UK GDPR mirrors it).
+
 ## [0.6.6] — 2026-05-29 — Jurisdiction-aware report/deck prose
 
 Non-US reports no longer carry US (CCPA/CIPA/plaintiff/"Do Not Sell") framing;

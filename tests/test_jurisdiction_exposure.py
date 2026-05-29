@@ -57,9 +57,27 @@ def _deck(juris: str) -> str:
 def test_country_to_jurisdiction_mapping() -> None:
     assert country_to_jurisdiction("CA") == "CA"
     assert country_to_jurisdiction("FR") == "EU"
-    assert country_to_jurisdiction("GB") == "EU"  # UK-GDPR folds into EU framework
+    assert country_to_jurisdiction("GB") == "UK"  # UK GDPR / PECR is its own regime
     assert country_to_jurisdiction("US") is None  # don't override; let heuristic run
     assert country_to_jurisdiction(None) is None
+
+
+def test_uk_exposure_uses_uk_gdpr_not_eu_or_us() -> None:
+    d = _deck("UK")
+    assert "UK GDPR" in d
+    assert "£17.5M" in d
+    assert "ICO" in d
+    # Must NOT borrow EU/US specifics or the per-consumer model.
+    assert "CNIL" not in d
+    assert "€20M" not in d
+    assert "Sephora" not in d
+    assert "$7,500" not in d
+
+
+def test_uk_estimate_exposure_is_turnover_cap() -> None:
+    e = estimate_exposure_usd(_audit("UK"))
+    assert e["model"] == "turnover_cap"
+    assert "£17.5M" in str(e["components"])
 
 
 def test_us_exposure_uses_ccpa_per_consumer() -> None:

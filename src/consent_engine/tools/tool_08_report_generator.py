@@ -445,8 +445,25 @@ _JURISDICTION_EXPOSURE: dict[str, dict[str, object]] = {
         "note": (
             "Cookie consent is enforced under the ePrivacy Directive / national law "
             "(e.g. CNIL Art. 82), not GDPR directly. The cap scales with global turnover; "
-            "there is no per-consumer multiplier. UK-GDPR / PECR mirror this "
-            "(£17.5M or 4%)."
+            "there is no per-consumer multiplier."
+        ),
+    },
+    "UK": {
+        "model": "turnover_cap",
+        "statutes": [
+            ("UK GDPR Art. 83(5)", "£17.5M", "or 4% of global annual turnover"),
+            ("UK GDPR Art. 83(4)", "£8.7M", "or 2% of turnover · lower tier"),
+            ("PECR reg. 6", "ICO-set", "cookie consent · enforced by the ICO"),
+        ],
+        # No flagship ICO cookie fine exists — enforcement to date is reprimands +
+        # notices — so we cite no anchor rather than a misleading one (same honesty
+        # guardrail as CA). The monetary PECR precedents are nuisance-marketing fines.
+        "anchors": None,
+        "note": (
+            "UK GDPR and PECR are enforced by the ICO. Cookie-consent enforcement to date "
+            "is mostly reprimands and enforcement notices rather than fines, so there is no "
+            "flagship cookie penalty to cite. The statutory cap scales with global turnover "
+            "(£17.5M or 4%), with no per-consumer multiplier."
         ),
     },
     "CA": {
@@ -518,7 +535,11 @@ def estimate_exposure_usd(
                 "components": [],
                 "anchors_sourced_from_wiki": False,
             }
-        _label = {"CA": "Quebec Law 25 / PIPEDA", "EU": "GDPR / ePrivacy"}.get(_juris, _juris)
+        _label = {
+            "CA": "Quebec Law 25 / PIPEDA",
+            "EU": "GDPR / ePrivacy",
+            "UK": "UK GDPR / PECR",
+        }.get(_juris, _juris)
         _components = [
             {"statute": s_label, "anchor": s_sub, "display_amount": s_value, "low_usd": 0, "high_usd": 0}
             for (s_label, s_value, s_sub) in cast("list[tuple[str, str, str]]", _fw["statutes"])
@@ -904,6 +925,8 @@ async def generate_executive_summary(
         law = (
             "Quebec Law 25 / PIPEDA"
             if jurisdiction == "CA"
+            else "UK GDPR / PECR"
+            if jurisdiction == "UK"
             else "GDPR"
             if jurisdiction == "EU"
             else "CCPA/CPRA"
@@ -1331,6 +1354,13 @@ def generate_marp_slides(
             "- **ePrivacy Directive Art. 5(3)**: Prior consent for any non-essential cookie\n"
             "- **Cookie enforcement**: via national DPAs under ePrivacy (e.g. CNIL Art. 82)\n"
             "- **Max fine**: 4% of global revenue or €20M, whichever is higher (GDPR Art. 83)"
+        )
+    elif jurisdiction == "UK":
+        law_content = (
+            "- **UK GDPR Art. 6(1)(a)**: Consent required for behavioral advertising cookies\n"
+            "- **PECR reg. 6**: Prior consent for any non-essential cookie\n"
+            "- **Cookie enforcement**: by the ICO under PECR (reprimands / enforcement notices)\n"
+            "- **Max fine**: 4% of global turnover or £17.5M, whichever is higher (UK GDPR Art. 83)"
         )
     elif jurisdiction == "CA":
         law_content = (
@@ -2023,6 +2053,8 @@ def generate_marp_slides(
     _callout_label = (
         "Quebec Law 25"
         if jurisdiction == "CA"
+        else "UK GDPR / PECR"
+        if jurisdiction == "UK"
         else "GDPR / ePrivacy"
         if jurisdiction == "EU"
         else "CCPA"
@@ -2250,7 +2282,7 @@ style: |
 
 ---
 
-### {"GDPR · EPRIVACY DIRECTIVE" if jurisdiction == "EU" else "QUEBEC LAW 25 · PIPEDA" if jurisdiction == "CA" else "CCPA · CPRA · CIPA · FTC ACT"}
+### {"GDPR · EPRIVACY DIRECTIVE" if jurisdiction == "EU" else "UK GDPR · PECR" if jurisdiction == "UK" else "QUEBEC LAW 25 · PIPEDA" if jurisdiction == "CA" else "CCPA · CPRA · CIPA · FTC ACT"}
 
 # Applicable Legal Framework
 

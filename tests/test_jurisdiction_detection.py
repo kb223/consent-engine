@@ -25,14 +25,15 @@ from consent_engine.tools.jurisdiction_detector import (
 # --- bug #2: editorial content must not flip jurisdiction to CA --------------
 
 
-def test_uk_news_site_naming_canadian_cities_stays_eu() -> None:
+def test_uk_news_site_naming_canadian_cities_is_uk_not_ca() -> None:
     # bbc.com: en-GB site whose homepage mentions Canadian cities in headlines.
+    # Must resolve UK (en-GB), and crucially NOT CA from the editorial city names.
     html = (
         '<html lang="en-GB"><head><meta property="og:locale" content="en_GB"></head>'
         "<body>Wildfires near Edmonton and Toronto; updates from Vancouver and Calgary."
         "</body></html>"
     )
-    assert detect_jurisdiction(html, "https://www.bbc.com") == "EU"
+    assert detect_jurisdiction(html, "https://www.bbc.com") == "UK"
 
 
 def test_us_site_with_canada_in_headline_stays_us() -> None:
@@ -65,8 +66,9 @@ def test_canadian_content_signal_ignores_hex_asset_hashes() -> None:
 def test_french_gate_blocks_canadian_check_on_english_pages() -> None:
     # An English (en-GB) page mentioning Montréal in editorial copy must NOT be
     # CA — the Canadian-content tiebreaker only runs on French-language pages.
+    # (en-GB resolves UK; the point here is that it does not flip to CA.)
     english = '<html lang="en-GB"><body>The Montréal Canadiens won; Québec reacts.</body></html>'
-    assert detect_jurisdiction(english, "https://www.bbc.com") == "EU"
+    assert detect_jurisdiction(english, "https://www.bbc.com") == "UK"
     # The same markers on a FRENCH page DO resolve CA (the legitimate case).
     french = '<html lang="fr"><body>Les Canadiens de Montréal. Hydro-Québec.</body></html>'
     assert detect_jurisdiction(french, "https://example.com") == "CA"
@@ -94,6 +96,24 @@ def test_ca_tld_is_ca() -> None:
 
 def test_eu_tld_is_eu() -> None:
     assert detect_jurisdiction("<html></html>", "https://www.lemonde.fr") == "EU"
+
+
+# --- UK is its own regime, not folded into EU --------------------------------
+
+
+def test_uk_cctld_is_uk() -> None:
+    assert detect_jurisdiction("<html></html>", "https://www.tesco.co.uk") == "UK"
+    assert detect_jurisdiction("<html></html>", "https://example.uk") == "UK"
+
+
+def test_uk_dotcom_with_en_gb_is_uk() -> None:
+    # bbc.com declares en-GB on a generic TLD -> UK, not EU and not US.
+    html = '<html lang="en-GB"><head><meta property="og:locale" content="en_GB"></head><body>News</body></html>'
+    assert detect_jurisdiction(html, "https://www.bbc.com") == "UK"
+
+
+def test_fr_tld_still_eu_not_uk() -> None:
+    assert detect_jurisdiction('<html lang="fr"></html>', "https://www.lemonde.fr") == "EU"
 
 
 def test_declared_en_ca_locale_is_ca() -> None:

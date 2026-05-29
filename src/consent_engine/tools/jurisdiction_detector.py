@@ -92,13 +92,20 @@ _EU_COUNTRY_CODES: frozenset[str] = frozenset(
         "CY",
         "LU",
         "EU",
-        # EEA non-EU but GDPR applies
-        "GB",
+        # EEA non-EU but GDPR applies (the UK is split into its own UK GDPR regime)
         "IS",
         "NO",
         "LI",
         "CH",
     }
+)
+
+# United Kingdom — UK GDPR + PECR (post-Brexit), enforced by the ICO. Kept
+# distinct from the EU framework: different statute names, regulator, and a
+# GBP turnover cap (£17.5M / 4%) rather than the EU's €20M.
+_UK_COUNTRY_CODES: frozenset[str] = frozenset({"GB", "UK"})
+_UK_TLDS: frozenset[str] = frozenset(
+    {"uk", "co.uk", "org.uk", "me.uk", "gov.uk", "ac.uk", "ltd.uk", "plc.uk"}
 )
 
 # ccTLDs for EU/EEA countries
@@ -132,16 +139,11 @@ _EU_TLDS: frozenset[str] = frozenset(
         "gr",
         "cy",
         "lu",
-        # UK/EEA
-        "uk",
+        # EEA (UK ccTLDs are handled separately by _UK_TLDS)
         "is",
         "no",
         "li",
         "ch",
-        # Common second-level domains for EU countries
-        "co.uk",
-        "org.uk",
-        "me.uk",
     }
 )
 
@@ -315,6 +317,27 @@ def _tld_signals(url: str) -> tuple[bool, bool]:
     return is_eu, is_ca
 
 
+def _uk_signals(page_html: str, url: str) -> bool:
+    """Return True if the site declares a UK identity (.uk TLD or a GB region).
+
+    Site-intrinsic only (TLD, html-lang country subtag, og:locale, geo.region) —
+    never the scanner's IP. Routes GB sites to the UK GDPR / PECR regime instead
+    of folding them into the EU framework.
+    """
+    if url and _TLD_EXTRACT(url).suffix.lower() in _UK_TLDS:
+        return True
+    m = _HTML_LANG_RE.search(page_html)
+    if m and any(p.upper() == "GB" for p in m.group(1).lower().split("-")[1:]):
+        return True
+    m = _OG_LOCALE_RE.search(page_html) or _OG_LOCALE_ALT_RE.search(page_html)
+    if m:
+        parts = m.group(1).replace("-", "_").split("_")
+        if len(parts) > 1 and parts[1].upper() == "GB":
+            return True
+    m = _GEO_REGION_RE.search(page_html) or _GEO_REGION_ALT_RE.search(page_html)
+    return bool(m and m.group(1).upper().split("-")[0] == "GB")
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -341,6 +364,8 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
     ext = _TLD_EXTRACT(url) if url else None
     suffix = ext.suffix.lower() if ext else ""
 
+    if suffix in _UK_TLDS:
+        return "UK"
     if suffix in _EU_TLDS:
         return "EU"
     if suffix in _CA_TLDS:
@@ -355,6 +380,10 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
     #    Tesco.com (UK retailer on .com) is the canonical case the old
     #    "return US immediately on generic TLD" rule got wrong.
     if suffix in _US_DEFAULT_TLDS:
+        # A .com site that declares a GB region (og:locale en_GB, lang="en-GB",
+        # geo.region GB) is a UK site on a generic TLD (e.g. bbc.com) -> UK GDPR.
+        if _uk_signals(page_html, url):
+            return "UK"
         # Check CA before EU when both signals fire: a Quebec French page
         # (lang="fr-CA") trips is_eu=True via the "fr" primary lang code AND
         # is_ca=True via the country subtag. The country tag is more specific,
@@ -376,8 +405,10 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
             return "EU"
         return "US"
 
-    # 3. Truly ambiguous TLD — fall back to all content signals (CA before EU,
-    # same precedence rule: country subtag wins over primary-lang heuristic).
+    # 3. Truly ambiguous TLD — fall back to all content signals (UK and CA
+    # before EU; country subtag wins over the primary-lang heuristic).
+    if _uk_signals(page_html, url):
+        return "UK"
     any_eu = False
     any_ca = False
 
@@ -413,7 +444,9 @@ def country_to_jurisdiction(country_code: str | None) -> str | None:
     cc = country_code.strip().upper()
     if cc == "CA":
         return "CA"
-    if cc in _EU_COUNTRY_CODES:  # EU members + EEA + GB (UK-GDPR folds into EU)
+    if cc in _UK_COUNTRY_CODES:  # GB/UK -> UK GDPR + PECR (ICO)
+        return "UK"
+    if cc in _EU_COUNTRY_CODES:  # EU members + EEA
         return "EU"
     return None
 

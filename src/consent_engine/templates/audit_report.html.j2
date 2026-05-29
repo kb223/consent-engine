@@ -924,7 +924,7 @@
     </div>
     <p style="margin: 10px 0 0; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
       {% set _gpc_j = (result.detected_jurisdiction or 'US') | string %}
-      {% if _gpc_j == 'EU' %}
+      {% if _gpc_j in ('EU', 'UK') %}
         Under the GDPR, consent must be opt-in, so GPC is not itself a binding opt-out signal. But a
         site that keeps firing non-essential tracking after a privacy signal is asserted shows its
         consent enforcement is not honoring the user's choice.
@@ -984,6 +984,7 @@
       <div class="signal-label">Jurisdiction</div>
       {% set jur_labels = {
         "EU": "European Union (GDPR / TCF)",
+        "UK": "United Kingdom (UK GDPR / PECR)",
         "US": "United States (CCPA / State Laws)",
         "CA": "Canada (PIPEDA / Provincial)"
       } %}
@@ -1422,7 +1423,7 @@
     </div>
     <div style="padding: 10px 16px 4px; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
       {% set _vj = (result.detected_jurisdiction or 'US') | string %}
-      Reproduce each finding in a browser to confirm audit accuracy. All steps assume incognito mode with a {{ 'European' if _vj == 'EU' else 'Canadian' if _vj == 'CA' else 'California' }} VPN or geolocation override.
+      Reproduce each finding in a browser to confirm audit accuracy. All steps assume incognito mode with a {{ 'European' if _vj == 'EU' else 'UK' if _vj == 'UK' else 'Canadian' if _vj == 'CA' else 'California' }} VPN or geolocation override.
     </div>
     <div style="padding: 8px 20px 16px;">
       {% for step in validation_steps %}
