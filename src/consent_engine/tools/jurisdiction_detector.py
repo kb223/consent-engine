@@ -22,6 +22,13 @@ import tldextract
 # the Mozilla list on first use, keeping this forensic tool offline-deterministic.
 _TLD_EXTRACT = tldextract.TLDExtract(suffix_list_urls=())
 
+# Single source of truth for the jurisdictions the engine models. The CLI's
+# --jurisdiction choices, the exposure framework (_JURISDICTION_EXPOSURE), and the
+# copy helper (_JURISDICTION_COPY) must all stay in sync with this. Adding a new
+# regime = add it here + to those two dicts; a test asserts they match (this
+# constant exists because v0.6.7 added "UK" everywhere EXCEPT the CLI choices).
+SUPPORTED_JURISDICTIONS: tuple[str, ...] = ("US", "EU", "UK", "CA")
+
 # ---------------------------------------------------------------------------
 # Signal sets
 # ---------------------------------------------------------------------------

@@ -3,6 +3,22 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.9] — 2026-05-29 — CLI --jurisdiction accepts UK (+ list-sync guard)
+
+v0.6.7 added the UK regime everywhere except the CLI's `--jurisdiction` choices,
+so `consent-engine audit <url> --jurisdiction UK` errored with "invalid choice
+(choose from US, EU, CA)". Fixed, and hardened against the whole class of bug:
+the supported-jurisdiction set is now a single source of truth
+(`SUPPORTED_JURISDICTIONS` in jurisdiction_detector) that the CLI `choices` derive
+from, with a test asserting the CLI choices, the copy helper (`_JURISDICTION_COPY`),
+and the exposure framework (`_JURISDICTION_EXPOSURE`) all stay in sync.
+
+### Docs
+- README MCP-server setup now shows the absolute-path `uvx` command for Claude
+  Desktop (a macOS GUI app does not inherit the shell `PATH`, so a bare `uvx`
+  cannot be found), warns to quit Desktop before editing its config, adds the
+  Claude Code (`claude mcp add`) variant, and a short "not showing up?" note.
+
 ## [0.6.8] — 2026-05-29 — Dynamic jurisdiction vantage label
 
 The deck's Jurisdiction card hardcoded "simulated: Los Angeles, CA" on every

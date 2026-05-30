@@ -142,3 +142,20 @@ def test_resolve_jurisdiction_signature_excludes_cmp_geo() -> None:
 
     params = list(inspect.signature(resolve_jurisdiction).parameters)
     assert params == ["explicit_override", "page_html", "url"]
+
+
+def test_jurisdiction_lists_stay_in_sync() -> None:
+    # Self-anneal: the CLI --jurisdiction choices, the copy helper, and the
+    # exposure framework must all cover exactly SUPPORTED_JURISDICTIONS. v0.6.7
+    # added "UK" everywhere EXCEPT the CLI choices — this guards that bug class.
+    from consent_engine.cli import SUPPORTED_JURISDICTIONS as cli_set
+    from consent_engine.tools.jurisdiction_detector import (
+        _JURISDICTION_COPY,
+        SUPPORTED_JURISDICTIONS,
+    )
+    from consent_engine.tools.tool_08_report_generator import _JURISDICTION_EXPOSURE
+
+    expected = set(SUPPORTED_JURISDICTIONS)
+    assert set(cli_set) == expected  # CLI uses the shared constant
+    assert set(_JURISDICTION_COPY) == expected  # every regime has phrasing
+    assert expected.issubset(set(_JURISDICTION_EXPOSURE))  # and an exposure entry

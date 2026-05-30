@@ -37,6 +37,9 @@ from pathlib import Path
 
 from consent_engine import __version__
 
+# Light import (no Playwright) — safe at module top, keeps --help fast.
+from consent_engine.tools.jurisdiction_detector import SUPPORTED_JURISDICTIONS
+
 
 def _audit_command(args: argparse.Namespace) -> int:
     """Run an audit against a URL. Writes the bundle to out/<audit_id>/."""
@@ -298,10 +301,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_audit.add_argument(
         "--jurisdiction",
-        choices=("US", "EU", "CA"),
+        choices=SUPPORTED_JURISDICTIONS,
         help="Force jurisdiction instead of auto-detecting from TLD/content. "
         "Useful when the auto-detector is wrong (e.g. a US-targeted .com mistakenly "
-        "tagged EU because of a French-language hreflang). Accepted: US, EU, CA.",
+        "tagged EU because of a French-language hreflang). Accepted: US, EU, UK, CA.",
     )
     p_audit.set_defaults(func=_audit_command)
 

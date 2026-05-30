@@ -97,20 +97,41 @@ follow-up questions grounded in the captured evidence.
 uvx --from 'consent-engine[mcp]' consent-engine-mcp
 ```
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+**Claude Desktop** — edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "consent-engine": {
-      "command": "uvx",
+      "command": "/Users/you/.local/bin/uvx",
       "args": ["--from", "consent-engine[mcp]", "consent-engine-mcp"]
     }
   }
 }
 ```
 
-Exposes `audit_url`, `read_audit_result`, and `query_evidence` as MCP tools.
+Use the **absolute path** to `uvx` (run `which uvx` to find yours). The Claude
+Desktop app is a macOS GUI process and does not inherit your shell `PATH`, so a
+bare `"command": "uvx"` cannot be found and the server fails to start. Also
+**quit Claude Desktop completely before editing this file**: the app holds the
+config in memory and rewrites it on quit, so an edit made while it is running
+gets overwritten.
+
+**Claude Code (CLI)** — add it to `~/.claude.json`, or run:
+
+```sh
+claude mcp add consent-engine -- uvx --from 'consent-engine[mcp]' consent-engine-mcp
+```
+
+The CLI inherits your shell `PATH`, so a bare `uvx` command works here (no
+absolute path needed).
+
+Either way, the server exposes `audit_url`, `read_audit_result`, and
+`query_evidence` as MCP tools.
+
+**Not showing up?** The first `uvx` call resolves the package from PyPI (10-20s)
+before the tool panel turns green. On the Desktop app the usual cause is a bare
+`uvx` command (missing `PATH`) or an edit saved while the app was still running.
 
 ### 4. FastAPI service
 
