@@ -111,9 +111,13 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 # The optional `mcp` package's decorators (Server.list_tools, Server.call_tool)
 # come back as untyped because the package ships no stubs. The decorated
-# functions themselves are properly typed in our source. Silence the cascade.
+# functions themselves are properly typed in our source. Disabling both the
+# untyped-decorator cascade and the no-untyped-call on the decorator-factory
+# call keeps this clean in BOTH lanes: with the [mcp] extra installed (where the
+# calls resolve as untyped) and without it (where mcp is Any, so an inline
+# `type: ignore` would itself be flagged as unused).
 module = ["consent_engine.mcp_server"]
-disable_error_code = ["untyped-decorator"]
+disable_error_code = ["untyped-decorator", "no-untyped-call"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

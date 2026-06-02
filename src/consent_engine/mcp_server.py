@@ -78,7 +78,7 @@ except ImportError as e:                                          # pragma: no c
 server: Server = Server("consent-engine")
 
 
-@server.list_tools()  # type: ignore[no-untyped-call]  # mcp SDK decorator is untyped
+@server.list_tools()
 async def list_tools() -> list[Tool]:
     return [
         Tool(
