@@ -714,7 +714,17 @@ async def _scan_s1(url: str, proxy_url: str | None = None) -> ScanResult:
                     continue
 
         raw_cookies = await context.cookies()
-        page_html = await page.content()
+        # page.content() raises "Unable to retrieve content because the page is
+        # navigating and changing the content" on HTTP error pages and SPA/redirect
+        # sites. Settle the load state first, then read defensively (same guarded
+        # pattern as the post-consent passes below) so a navigating page degrades
+        # to an empty-HTML scan instead of crashing the whole audit.
+        with contextlib.suppress(Exception):
+            await page.wait_for_load_state("domcontentloaded", timeout=5_000)
+        try:
+            page_html = await asyncio.wait_for(page.content(), timeout=10.0)
+        except (TimeoutError, Exception):  # noqa: BLE001
+            page_html = ""
         gtm_id, gtm_js, gtm_method = await _extract_gtm_from_page(page, page_html, gtm_js_body)
 
         await context.close()  # ensures HAR is written before browser closes
@@ -1523,7 +1533,17 @@ async def _scan_gpc(url: str, proxy_url: str | None = None) -> ScanResult:
                     continue
 
         raw_cookies = await context.cookies()
-        page_html = await page.content()
+        # page.content() raises "Unable to retrieve content because the page is
+        # navigating and changing the content" on HTTP error pages and SPA/redirect
+        # sites. Settle the load state first, then read defensively (same guarded
+        # pattern as the post-consent passes below) so a navigating page degrades
+        # to an empty-HTML scan instead of crashing the whole audit.
+        with contextlib.suppress(Exception):
+            await page.wait_for_load_state("domcontentloaded", timeout=5_000)
+        try:
+            page_html = await asyncio.wait_for(page.content(), timeout=10.0)
+        except (TimeoutError, Exception):  # noqa: BLE001
+            page_html = ""
         gtm_id, gtm_js, gtm_method = await _extract_gtm_from_page(page, page_html, gtm_js_body)
 
         await context.close()  # ensures HAR is written before browser closes

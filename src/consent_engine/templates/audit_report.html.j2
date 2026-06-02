@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ 'Signal Recovery Audit' if report_variant == 'signal' else 'Consent Compliance Audit' }} — {{ result.url }}</title>
+<title>{{ 'Signal Recovery Audit' if report_variant == 'signal' else 'Consent Compliance Audit' }}: {{ result.url }}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
 
@@ -667,15 +667,15 @@
       {% elif is_inconclusive %}
         {{ result.findings | length }} vendor{{ 's' if result.findings | length != 1 else '' }} observed (indicative) &nbsp;·&nbsp;
         consent enforcement could not be verified &nbsp;·&nbsp;
-        {{ result.methodology }}
+        {{ methodology_label }}
       {% elif report_variant == 'signal' %}
         {{ findings_with_violations | length }} vendor{{ 's' if findings_with_violations | length != 1 else '' }} leaking post-consent signal &nbsp;·&nbsp;
         {{ result.findings | length }} vendor{{ 's' if result.findings | length != 1 else '' }} analyzed &nbsp;·&nbsp;
-        {{ result.methodology }}
+        {{ methodology_label }}
       {% else %}
         {{ findings_with_violations | length }} confirmed violation{{ 's' if findings_with_violations | length != 1 else '' }} &nbsp;·&nbsp;
         {{ result.findings | length }} vendor{{ 's' if result.findings | length != 1 else '' }} analyzed &nbsp;·&nbsp;
-        {{ result.methodology }}
+        {{ methodology_label }}
       {% endif %}
     </p>
   </div>
@@ -690,7 +690,7 @@
   <div class="exec-summary" style="background:#0f172a;color:#e2e8f0;border:none;">
     <h2 style="color:#7dd3fc;">Why this matters for plaintiff PI / mass-tort firms</h2>
     <p style="color:#cbd5e1;">
-      The same kind of synthetic-browser scan a CIPA / VPPA / state-wiretap plaintiff would run against your site to source a demand letter — used here defensively, before they do. Every pattern flagged below is dual-purpose: <strong>it costs you signed-case revenue</strong> (because the bid algorithm can't see what it can't measure) <strong>and it's the same finding a plaintiff's tester would dollarize at \$5,000/violation/session.</strong>
+      The same kind of synthetic-browser scan a CIPA / VPPA / state-wiretap plaintiff would run against your site to source a demand letter, used here defensively, before they do. Every pattern flagged below is dual-purpose: <strong>it costs you signed-case revenue</strong> (because the bid algorithm can't see what it can't measure) <strong>and it's the same finding a plaintiff's tester would dollarize at \$5,000/violation/session.</strong>
     </p>
     {% if firm_name %}
     <p style="color:#94a3b8;font-size:0.85rem;margin-top:8px;">
@@ -709,7 +709,7 @@
     </div>
     <div class="recovery-figure">
       <div class="recovery-range">
-        ${{ "{:,}".format(recovery.monthly_recoverable_low_usd) }}–${{ "{:,}".format(recovery.monthly_recoverable_high_usd) }}
+        ${{ "{:,}".format(recovery.monthly_recoverable_low_usd) }} to ${{ "{:,}".format(recovery.monthly_recoverable_high_usd) }}
         <span class="recovery-unit">/ month</span>
       </div>
       <div class="recovery-annual">
@@ -720,7 +720,7 @@
       <div class="recovery-cell">
         <div class="recovery-cell-label">Monthly ad spend</div>
         <div class="recovery-cell-value">${{ "{:,}".format(recovery.monthly_ad_spend_usd) }}</div>
-        <div class="recovery-cell-sub">{{ 'self-reported' if recovery.ad_spend_user_provided else 'auto-estimated from brand tier — override with --monthly-ad-spend' }}</div>
+        <div class="recovery-cell-sub">{{ 'self-reported' if recovery.ad_spend_user_provided else 'auto-estimated from brand tier (override with --monthly-ad-spend)' }}</div>
       </div>
       <div class="recovery-cell">
         <div class="recovery-cell-label">Ad-attributable revenue</div>
@@ -741,7 +741,7 @@
     <p class="recovery-footnote">
       Formula: monthly ad spend × {{ recovery.roas_multiplier }}× ROAS × {{ recovery.consent_loss_rate_pct }}% US opt-out market × {{ recovery.signal_gap_pct }}% signal gap × {{ recovery.recovery_uplift_pct }}% recapture =
       <strong>${{ "{:,}".format(recovery.monthly_recoverable_usd) }}/month recovered conversion value</strong>.
-      Brand tier ({{ recovery.brand_tier_label }}) is auto-derived from scan signals — vendor breadth, sGTM presence, CMP sophistication — so the math defaults to the
+      Brand tier ({{ recovery.brand_tier_label }}) is auto-derived from scan signals (vendor breadth, sGTM presence, CMP sophistication), so the math defaults to the
       scale of the audited site rather than a generic mid-market anchor. Re-run with <code>--monthly-ad-spend</code> for a sharper estimate.
       Recovery is realized by routing post-consent signal through server-side GTM → Meta CAPI, Google Enhanced Conversions, and TikTok Events API.
     </p>
@@ -755,7 +755,7 @@
       <h2>Plaintiff Legal-Stack Stitch Validation <span style="font-size:0.75rem;font-weight:400;color:#6b7280;margin-left:8px;">Lead Docket · Filevine · CallRail · CallTrackingMetrics</span></h2>
     </div>
     <div style="padding:14px 20px 6px;font-size:0.82rem;color:#374151;line-height:1.6;">
-      Does the firm's intake stack stitch UTMs from form submit → signed-case event → ad-platform conversion API? Tested four paths with synthetic data. The integration gap between case-management software (Lead Docket / Filevine / Litify) and ad platforms (Meta CAPI / Google Enhanced Conversions) is the gap nobody else is filling — and it's the largest single source of "invisible signed-case" revenue loss.
+      Does the firm's intake stack stitch UTMs from form submit → signed-case event → ad-platform conversion API? Tested four paths with synthetic data. The integration gap between case-management software (Lead Docket / Filevine / Litify) and ad platforms (Meta CAPI / Google Enhanced Conversions) is the gap nobody else is filling, and it's the largest single source of "invisible signed-case" revenue loss.
     </div>
     <table>
       <thead>
@@ -777,19 +777,19 @@
           <td>CallRail DNI → Meta CAPI offline-event</td>
           <td>{% if legal_stack.callrail_meta_passes %}<span class="badge badge-green">Passes</span>{% else %}<span class="badge badge-red">Gap</span>{% endif %}</td>
           <td>{{ legal_stack.callrail_meta_observed | default('CallRail offline-event integration with Meta CAPI: ' + ('configured' if legal_stack.callrail_meta_passes else 'NOT configured / partial'), true) }}</td>
-          <td>{% if legal_stack.callrail_meta_passes %}Calls attribute back to Meta-sourced ad clicks.{% else %}Calls from Meta ads attribute as "direct" — Meta starts reducing bids on Google's customer.{% endif %}</td>
+          <td>{% if legal_stack.callrail_meta_passes %}Calls attribute back to Meta-sourced ad clicks.{% else %}Calls from Meta ads attribute as "direct", so Meta starts reducing bids on Google's customer.{% endif %}</td>
         </tr>
         <tr>
           <td>Filevine signed-case event → ad platforms</td>
           <td>{% if legal_stack.filevine_event_push %}<span class="badge badge-green">Configured</span>{% else %}<span class="badge badge-red">Missing</span>{% endif %}</td>
           <td>{{ legal_stack.filevine_event_observed | default('Server-side push of signed-case event to Meta CAPI / Google Enhanced Conversions: ' + ('configured' if legal_stack.filevine_event_push else 'NOT configured'), true) }}</td>
-          <td>{% if legal_stack.filevine_event_push %}Bidding optimizes on signed-case value, not lead count.{% else %}Bidding optimizes on cheap-leads, not signed cases — typical 30–60% ROAS lift available.{% endif %}</td>
+          <td>{% if legal_stack.filevine_event_push %}Bidding optimizes on signed-case value, not lead count.{% else %}Bidding optimizes on cheap-leads, not signed cases (typical 30% to 60% ROAS lift available).{% endif %}</td>
         </tr>
         <tr>
           <td>Multi-domain consent-state propagation</td>
           <td>{% if legal_stack.multi_domain_consent_propagates %}<span class="badge badge-green">Propagates</span>{% else %}<span class="badge badge-yellow">Per-domain</span>{% endif %}</td>
           <td>{{ legal_stack.multi_domain_observed | default('Mass-tort microsites tested: ' + (legal_stack.multi_domain_count|default('1')|string) + ' domain(s)', true) }}</td>
-          <td>{% if legal_stack.multi_domain_consent_propagates %}Consent flows across mass-tort microsites.{% else %}Each microsite resets the consent state — high-value mass-tort traffic is in the worst signal-loss zone.{% endif %}</td>
+          <td>{% if legal_stack.multi_domain_consent_propagates %}Consent flows across mass-tort microsites.{% else %}Each microsite resets the consent state, so high-value mass-tort traffic is in the worst signal-loss zone.{% endif %}</td>
         </tr>
       </tbody>
     </table>
@@ -822,10 +822,10 @@
     <span class="exposure-tag">Estimated Exposure</span>
     <h3 class="exposure-title">Statutory + class-action exposure from observed violations</h3>
     <div class="exposure-range">
-      ${{ "{:,}".format(exposure.total_exposure_low_usd) }}–${{ "{:,}".format(exposure.total_exposure_high_usd) }}
+      ${{ "{:,}".format(exposure.total_exposure_low_usd) }} to ${{ "{:,}".format(exposure.total_exposure_high_usd) }}
       <span class="exposure-unit">range</span>
     </div>
-    <div class="exposure-sub">Grounded in settled case outcomes — additive across statutes that apply to this scan.</div>
+    <div class="exposure-sub">Grounded in settled case outcomes, additive across statutes that apply to this scan.</div>
     <div class="exposure-components">
       {% for c in exposure.components %}
       <div class="exposure-row">
@@ -835,14 +835,14 @@
         </div>
         <div class="exposure-row-amount">
           {% if c.low_usd or c.high_usd %}
-          ${{ "{:,}".format(c.low_usd) }}–${{ "{:,}".format(c.high_usd) }}
+          ${{ "{:,}".format(c.low_usd) }} to ${{ "{:,}".format(c.high_usd) }}
           {% else %}—{% endif %}
         </div>
       </div>
       {% endfor %}
     </div>
     <p class="exposure-footnote">
-      Directional estimate — actual liability scales with class size and intentionality findings.
+      Directional estimate. Actual liability scales with class size and intentionality findings.
       Anchored to published settlements (see Regulatory Basis below).
     </p>
   </div>
@@ -853,7 +853,7 @@
   <div class="inconclusive-banner">
     <p style="margin: 0 0 4px;">
       <span class="lbl">Methodology: Inconclusive</span>
-      <strong>CMP not recognized — further investigation required.</strong>
+      <strong>CMP not recognized. Further investigation required.</strong>
     </p>
     <p style="margin: 0; font-size: 0.85rem;">
       Consent cookies were injected but a denied Google Consent Mode signal was not observed{% if not result.detected_cmp %}; the consent platform could not be identified{% endif %}. Treat findings as indicative, not legally defensible.
@@ -902,10 +902,10 @@
     <div class="gpc-row">
       <div class="k">Site honored GPC signal</div>
       {% if result.gpc_signal_respected %}
-      <div class="v ok">YES — tracking pixels stopped firing when GPC was asserted</div>
+      <div class="v ok">YES. Tracking pixels stopped firing when GPC was asserted</div>
       {% elif result.gpc_signal_respected == False %}
       <div class="v bad">
-        NO — {{ result.gpc_vendors_after_signal }} vendor pixel{{ 's' if result.gpc_vendors_after_signal != 1 else '' }}
+        NO. {{ result.gpc_vendors_after_signal }} vendor pixel{{ 's' if result.gpc_vendors_after_signal != 1 else '' }}
         fired tracking after GPC was asserted
       </div>
       {% else %}
@@ -966,13 +966,13 @@
         {% elif result.cmp_interaction_method and result.cmp_interaction_method.startswith('injection:') %}
           Cookie injection ({{ result.cmp_interaction_method[10:] }})
         {% elif result.cmp_interaction_method == 'banner_click' %}
-          Banner click &mdash; GCS confirmed
+          Banner click: GCS confirmed
         {% elif result.cmp_interaction_method == 'banner_click_inconclusive' %}
-          Banner click &mdash; inconclusive
+          Banner click: inconclusive
         {% elif result.cmp_interaction_method == 'banner_click_failed' %}
-          Banner click failed &mdash; manual review
+          Banner click failed: manual review
         {% elif result.cmp_interaction_method == 'banner_click_reverted' %}
-          Click reverted on reload &mdash; manual review
+          Click reverted on reload: manual review
         {% else %}
           {{ result.cmp_interaction_method }}
         {% endif %}
@@ -991,7 +991,7 @@
       <div class="signal-value">
         {{ jur_labels.get(result.detected_jurisdiction, result.detected_jurisdiction) }}
       </div>
-      <div class="signal-sub">auto-detected</div>
+      <div class="signal-sub">inferred from site signals; pass --jurisdiction to override</div>
     </div>
     {% endif %}
     <div class="signal-card">
@@ -1114,7 +1114,7 @@
             {% if result.gcs_value.ad_storage == 'denied' and result.gcs_value.analytics_storage == 'denied' %}
               Google tags may fire cookieless modeling pings (ACM)
             {% elif result.gcs_value.ad_storage == 'granted' and result.gcs_value.analytics_storage == 'granted' %}
-              Full consent granted — all signals active
+              Full consent granted, all signals active
             {% else %}
               Partial consent
             {% endif %}
@@ -1174,7 +1174,7 @@
             <td data-label="Consent Types"><span>{{ tag.consent_types | join(", ") if tag.consent_types else "—" }}</span></td>
             <td data-label="Requirement">
               {% if tag.requirement == "missing" %}
-                <span class="badge badge-red">MISSING — violation</span>
+                <span class="badge badge-red">MISSING: violation</span>
               {% elif tag.requirement == "required" %}
                 <span class="badge badge-green">Required</span>
               {% elif tag.requirement == "optional" %}

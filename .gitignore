@@ -10,6 +10,7 @@ __pycache__/
 # Audit outputs (transient)
 out/
 .tmp/
+.planning/
 
 # Local env
 .env

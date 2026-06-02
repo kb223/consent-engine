@@ -34,8 +34,14 @@ from consent_engine.mcp_server import (  # noqa: E402  - import after skipif
     ],
 )
 def test_safe_audit_dir_accepts_valid_uuid4(good_id: str, tmp_path, monkeypatch) -> None:
-    monkeypatch.chdir(tmp_path)
-    (tmp_path / "out" / good_id).mkdir(parents=True)
+    # _output_base() resolves the audit base from CONSENT_ENGINE_OUT_DIR (falling
+    # back to ~/.consent-engine/out), NOT the CWD. Point it at the tmp dir so the
+    # path _safe_audit_dir() resolves is the one we create here. (Regression: the
+    # old test only chdir'd, so it failed under the [mcp] extra once _output_base
+    # stopped being CWD-relative.)
+    out_base = tmp_path / "out"
+    monkeypatch.setenv("CONSENT_ENGINE_OUT_DIR", str(out_base))
+    (out_base / good_id).mkdir(parents=True)
     result = _safe_audit_dir(good_id)
     assert good_id in str(result)
     assert result.is_dir()

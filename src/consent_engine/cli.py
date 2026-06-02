@@ -58,16 +58,27 @@ def _audit_command(args: argparse.Namespace) -> int:
         print(f"Scanning {url} (two-pass opt-out + GPC, ~60s, jurisdiction forced to {jurisdiction_override})…", flush=True)
     else:
         print(f"Scanning {url} (two-pass opt-out + GPC, ~60s)…", flush=True)
-    bundle = asyncio.run(
-        run_audit(
-            url,
-            with_gpc=True,
-            firm_name=firm_name,
-            report_variant=variant,
-            monthly_ad_spend_usd=monthly_ad_spend,
-            jurisdiction=jurisdiction_override,
+    try:
+        bundle = asyncio.run(
+            run_audit(
+                url,
+                with_gpc=True,
+                firm_name=firm_name,
+                report_variant=variant,
+                monthly_ad_spend_usd=monthly_ad_spend,
+                jurisdiction=jurisdiction_override,
+            )
         )
-    )
+    except ValueError as e:
+        # Input / guard rejection: SSRF guard (internal/loopback/metadata host),
+        # unresolvable hostname, or a non-http(s) scheme. Clean message, no traceback.
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    except Exception as e:  # noqa: BLE001
+        # Scan-time failure: navigation timeout, target closed, an HTTP error
+        # page, etc. Surface a one-line cause instead of a Python traceback.
+        print(f"error: could not complete audit of {url}: {e}", file=sys.stderr)
+        return 1
 
     audit_dir = out_dir / bundle.audit_id
     audit_dir.mkdir(parents=True, exist_ok=True)

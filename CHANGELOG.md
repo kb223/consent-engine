@@ -3,6 +3,51 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.10] - 2026-06-01 - launch stress-test hardening
+
+A 50-site live stress run (real CMPs across US/EU/UK/CA plus failure and SSRF
+probes) surfaced several defects, all fixed here with regression tests.
+
+### Fixed
+- **Ungraceful failures now exit cleanly.** Pointing the CLI at a down host, an
+  HTTP error page, a redirect to an internal address, or a slow/timeout site used
+  to print a full Python traceback and write no output. `run_audit` errors are now
+  caught at the CLI boundary and reported as a one-line `error: ...` with a
+  non-zero exit code. The SSRF guard's clear refusal messages surface the same way
+  instead of as a stack trace.
+- **Navigating / error pages no longer crash the scan.** `page.content()` raised
+  "Unable to retrieve content because the page is navigating" on HTTP error pages
+  and SPA/redirect sites (it took down a real site, cbc.ca). The primary scan now
+  settles the load state and reads content defensively, degrading to an empty-HTML
+  scan instead of aborting the audit.
+- **Methodology enum no longer leaks into the report.** The verdict line rendered
+  the raw `s3_inconclusive_unknown_cmp` value as visible client text on inconclusive
+  scans. The report now always renders the human methodology label, and the label
+  helper can never fall back to the raw enum.
+- **Claims discipline under an unrecognised CMP.** When the CMP is not recognised
+  (INCONCLUSIVE_UNKNOWN_CMP), the opt-out cannot be confirmed, so a tracker firing
+  is now reported as observed / requires-investigation rather than a "confirmed
+  violation". This stops the engine over-claiming on scans it itself flags
+  non-definitive, and removes a first-party false positive (a Wikimedia cookie on
+  Wikipedia) from the headline count.
+- **Jurisdiction: operator-identity rescue plus honest labeling.** Country-code
+  TLDs were already correct; generic .com/.io sites that declare no regional locale
+  now also route to EU/UK when the page's own footer/legal text identifies an EU/UK
+  operator (GmbH, "registered in England", Companies House, S.r.l., and similar).
+  US sites without such markers stay US. The report jurisdiction note now reads
+  "inferred from site signals; pass --jurisdiction to override".
+- **MCP test, type, and CI gaps.** `test_safe_audit_dir_accepts_valid_uuid4` was
+  stale (it set the CWD, but `_output_base()` reads `CONSENT_ENGINE_OUT_DIR`); it
+  now sets the env var. The `mcp_server.list_tools` decorator gets a targeted
+  `no-untyped-call` ignore. A new CI lane installs the `[mcp]` extra so the MCP
+  server is actually type-checked and its tests run, the gap that hid both issues.
+
+### Changed
+- Public-facing copy (README, report, deck) scrubbed of em dashes per the project
+  voice rules.
+- Removed stale planning notes and the `docs/release-v0.5.0/` artifacts folder plus
+  their dangling references.
+
 ## [0.6.9] — 2026-05-29 — CLI --jurisdiction accepts UK (+ list-sync guard)
 
 v0.6.7 added the UK regime everywhere except the CLI's `--jurisdiction` choices,
@@ -560,8 +605,8 @@ Closes the four v0.5.0-deferred warnings + the mcp decorator cascade:
   silences the cascade from `mcp` shipping without stubs. Same pattern as
   the existing `markdown` override.
 
-[docs/release-v0.5.0/type-coverage.md](docs/release-v0.5.0/type-coverage.md)
-updated to reflect the clean state.
+The v0.5.0 type-coverage release note was updated at the time to reflect
+the clean state.
 
 ### Added — 4 new eval cases (4 → 8 total)
 
@@ -736,7 +781,7 @@ cover surfaces that the v0.5.0 audit identified as under-tested.
   - Body still shows the current `consent-engine audit <url>` run command
   - Body doesn't reference dead-code imports / deprecated flags
 
-## [0.5.1] — 2026-05-18 — jurisdiction fix + release artifacts + demo URL
+## [0.5.1] — 2026-05-18 — jurisdiction fix + demo URL
 
 ### Fixed
 - **Jurisdiction detection on `.com` UK/global brands.** The `.com` TLD was
@@ -754,19 +799,6 @@ cover surfaces that the v0.5.0 audit identified as under-tested.
   specific than the primary-lang heuristic.
 
 ### Added
-- **`docs/release-v0.5.0/`** release-artifacts folder. The auditable record
-  behind every v0.5.0 claim:
-  - [`security-audit.md`](docs/release-v0.5.0/security-audit.md) — internal
-    HIGH/MED/LOW punch list with closure status per item.
-  - [`cve-scan.md`](docs/release-v0.5.0/cve-scan.md) — dependency CVE posture,
-    Jinja2 floor-bump rationale.
-  - [`type-coverage.md`](docs/release-v0.5.0/type-coverage.md) — mypy run
-    output + accepted-warnings rationale.
-  - [`e2e-smoke-test.md`](docs/release-v0.5.0/e2e-smoke-test.md) — full
-    smoke-test command sequence + verified output.
-  - [`jurisdiction-validation.md`](docs/release-v0.5.0/jurisdiction-validation.md)
-    — five-site validation matrix (US / UK / CA / EU / Quebec-French) with
-    the two bugs caught and fixed.
 - **`docs/sample-audit/`** — a committed sample audit (against
   `https://example.com`) so cold readers can see what `report.html` +
   `deck.html` + `evidence.jsonl` look like without running the tool first.

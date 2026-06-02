@@ -10,9 +10,8 @@ Verifies the v0.5.0 security model:
   test doesn't launch Playwright).
 - GET /healthz returns 200 + the version.
 
-The actual run_audit pipeline is exercised end-to-end in the smoke test
-documented at docs/release-v0.5.0/e2e-smoke-test.md — these tests focus on
-the HTTP surface contract.
+The actual run_audit pipeline is exercised end-to-end by smoke coverage;
+these tests focus on the HTTP surface contract.
 """
 
 from __future__ import annotations

@@ -573,7 +573,10 @@ def estimate_exposure_usd(
         if a:
             amt = a.get("amount_usd")
             if isinstance(amt, int):
-                label = f"{a['case']}: {a['raw_amount']} — {a.get('principle', '')}".rstrip(" —")
+                _principle = str(a.get("principle", "")).strip()
+                label = f"{a['case']}: {a['raw_amount']}"
+                if _principle:
+                    label = f"{label} ({_principle})"
                 return label, amt
         return fallback_case, fallback_usd
 
@@ -905,8 +908,8 @@ async def generate_executive_summary(
                 f"Signal gaps detected at {audit_result.url}. "
                 f"The following vendors are leaking post-consent data the ad AI cannot optimize on: "
                 f"{', '.join(violations)}. "
-                f"This caps scale on Meta Advantage+, Performance Max, and TikTok Smart+ — "
-                f"the ad platforms optimize on the signal they receive, and this stack is giving them an incomplete picture."
+                f"This caps scale on Meta Advantage+, Performance Max, and TikTok Smart+. "
+                f"The ad platforms optimize on the signal they receive, and this stack is giving them an incomplete picture."
                 f"{rec_suffix}"
             )
         if audit_result.methodology == MethodologyFlag.S3_NO_GOOGLE_CONSENT_MODE:
@@ -1232,9 +1235,7 @@ async def generate_report(
         wiki_pages=wiki_pages,
         findings_with_violations=findings_with_violations,
         validation_steps=validation_steps,
-        methodology_label=_METHODOLOGY_LABELS.get(
-            audit_result.methodology, audit_result.methodology
-        ),
+        methodology_label=_methodology_label(audit_result),
         report_variant=report_variant,
         recovery=recovery,
         exposure=exposure,
@@ -1378,9 +1379,7 @@ def generate_marp_slides(
             "- **CIPA**: $5,000 statutory per-violation, no actual damages required"
         )
 
-    methodology_label = _METHODOLOGY_LABELS.get(
-        audit_result.methodology, str(audit_result.methodology)
-    )
+    methodology_label = _methodology_label(audit_result)
 
     # Pre-compute law items HTML (avoids backslash-in-f-string issues)
     _law_item_style = (
@@ -1501,18 +1500,18 @@ def generate_marp_slides(
     _verdict_cards += _metric_card(
         "GCS State",
         gcs_state or "N/A",
-        "ACM correct — cookieless only"
+        "ACM correct, cookieless only"
         if _gcs_full_denial
         else (
             (
-                "Partial opt-out — ads denied, analytics active"
+                "Partial opt-out: ads denied, analytics active"
                 if (
                     gcs_state
                     and len(gcs_state) >= 4
                     and gcs_state[2] == "0"
                     and gcs_state[3] == "1"
                 )
-                else "Partial opt-out — analytics denied, ads active"
+                else "Partial opt-out: analytics denied, ads active"
                 if (
                     gcs_state
                     and len(gcs_state) >= 4
@@ -1562,7 +1561,7 @@ def generate_marp_slides(
         f"font-family:\"SF Mono\",Menlo,monospace;font-weight:600;'>{gcs_state}</code>"
     )
     if _gcs_full_denial:
-        _gcs_display = f"{_gcs_code} — ACM implemented correctly (cookieless pings only)"
+        _gcs_display = f"{_gcs_code}: ACM implemented correctly (cookieless pings only)"
         _gcs_icon = _SVG_CHECK
     elif _gcs_partial:
         _p_ad = gcs_state and len(gcs_state) >= 3 and gcs_state[2] == "0"
@@ -1574,11 +1573,11 @@ def generate_marp_slides(
             if _p_analytics and not _p_ad
             else "partial denial"
         )
-        _gcs_display = f"{_gcs_code} — Partial opt-out: {_p_label}"
+        _gcs_display = f"{_gcs_code}: Partial opt-out ({_p_label})"
         _gcs_icon = _SVG_WARN
     elif _gcs_cmp_broken:
         _gcs_display = (
-            f"{_gcs_code} — CMP not updating Consent Mode on opt-out (integration failure)"
+            f"{_gcs_code}: CMP not updating Consent Mode on opt-out (integration failure)"
         )
         _gcs_icon = _SVG_WARN
     else:
@@ -1587,7 +1586,7 @@ def generate_marp_slides(
     _fr += _findings_row("Consent Mode (GCS)", _gcs_display, _gcs_icon)
     _fr += _findings_row(
         "Server-Side GTM",
-        f"<strong style='color:#f59e0b'>{audit_result.ssgtm_domain}</strong> — consent bypass risk"
+        f"<strong style='color:#f59e0b'>{audit_result.ssgtm_domain}</strong> (consent bypass risk)"
         if audit_result.ssgtm_detected
         else "Not detected",
         _SVG_WARN if audit_result.ssgtm_detected else _SVG_DASH,
@@ -1639,7 +1638,7 @@ def generate_marp_slides(
                 )
             slide_html += "</div>"
             if i > 0:
-                slide_html += f'<p style="font-size:0.6em;color:#4b5563;margin-top:8px;">Continued ({i + 1}–{i + len(chunk)} of {len(pixel_violations)})</p>'
+                slide_html += f'<p style="font-size:0.6em;color:#4b5563;margin-top:8px;">Continued ({i + 1} to {i + len(chunk)} of {len(pixel_violations)})</p>'
             _pixel_slides.append(slide_html)
     # ACM observation on its own slide if there are also pixel violations,
     # otherwise append to the first (and only) pixel slide
@@ -1649,13 +1648,13 @@ def generate_marp_slides(
             '<div style="margin-top:12px;background:#ffffff;border-radius:8px;padding:12px 16px;'
             'border-left:3px solid #22c55e;">'
             "<div style=\"font-family:'Inter';font-weight:600;font-size:0.62em;color:#22c55e;"
-            'text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Observation — Expected ACM Behavior</div>'
+            'text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Observation: Expected ACM Behavior</div>'
             '<div style="font-size:0.68em;color:#6b7280;line-height:1.6;">'
         )
         for pf in pixel_acm_pings:
             _acm_block += (
                 f'<div><strong style="color:#9ca3af;">{pf.vendor_name}</strong> '
-                f'<span style="color:#4b5563;">({pf.matched_pattern})</span> — '
+                f'<span style="color:#4b5563;">({pf.matched_pattern})</span>: '
                 f"Consent Mode cookieless ping (GCS=G100, npa=1). "
                 f"No cookie ID transmitted. This is correct Advanced Consent Mode behavior.</div>"
             )
@@ -1748,7 +1747,7 @@ def generate_marp_slides(
                 s_high = int(statutory * 0.001)
                 _exposure_html += _exposure_card(
                     label,
-                    f"{_fmt(s_low)}–{_fmt(s_high)}",
+                    f"{_fmt(s_low)} to {_fmt(s_high)}",
                     f"{optouts:,} CA opt-outs/mo<br>max {_fmt(statutory)}/yr",
                 )
             _exposure_html += "</div>"
@@ -1833,7 +1832,7 @@ def generate_marp_slides(
             _gpc_verdict_label = "Respected"
             _gpc_verdict_color = "#22c55e"
             _gpc_honored_text = (
-                "<strong style='color:#22c55e'>YES</strong> — tracking pixels stopped "
+                "<strong style='color:#22c55e'>YES</strong>. Tracking pixels stopped "
                 "firing when GPC was asserted"
             )
             _gpc_honored_icon = _SVG_CHECK
@@ -1842,7 +1841,7 @@ def generate_marp_slides(
             _gpc_verdict_color = "#ef4444"
             _vcount = audit_result.gpc_vendors_after_signal
             _gpc_honored_text = (
-                f"<strong style='color:#ef4444'>NO</strong> — {_vcount} vendor "
+                f"<strong style='color:#ef4444'>NO</strong>. {_vcount} vendor "
                 f"pixel{'s' if _vcount != 1 else ''} fired tracking after GPC was asserted"
             )
             _gpc_honored_icon = _SVG_CROSS
@@ -1958,7 +1957,7 @@ def generate_marp_slides(
             "the consent state manually."
         )
     else:
-        _actions_imm_html = _action_item("No immediate actions required — site is compliant")
+        _actions_imm_html = _action_item("No immediate actions required, site is compliant")
     _actions_30d_html = "".join(_action_item(a) for a in _30d) if _30d else ""
 
     # 30-day panel (needs _actions_30d_html to be built first)
@@ -2317,10 +2316,10 @@ style: |
 
 # Forensic Methodology
 
-<p style="font-size:0.75em;color:#6b7280;margin-bottom:12px;">{methodology_label} — Independent forensic scan. No vendor access or cooperation required. Mirrors the approach used by the <strong style="color:#22c55e;">California Privacy Protection Agency</strong> in automated GPC compliance sweeps.</p>
+<p style="font-size:0.75em;color:#6b7280;margin-bottom:12px;">{methodology_label}. Independent forensic scan. No vendor access or cooperation required. Mirrors the approach used by the <strong style="color:#22c55e;">California Privacy Protection Agency</strong> in automated GPC compliance sweeps.</p>
 
 <div style="margin-top:4px;">
-{"".join(_action_item(a) for a in ["Fresh browser context — zero prior cookies, consent denial pre-injected before page load", "Page reloaded post-denial to capture true opted-out network state", "All network traffic captured and fingerprinted against 3,200+ vendor signatures", ("Pixel endpoint detection: plaintiff law firm methodology (CIPA §631)" if jurisdiction == "US" else "Pixel endpoint detection: post-denial network evidence a regulator would examine"), "Regulatory findings cross-referenced against live enforcement database"])}
+{"".join(_action_item(a) for a in ["Fresh browser context, zero prior cookies, consent denial pre-injected before page load", "Page reloaded post-denial to capture true opted-out network state", "All network traffic captured and fingerprinted against 3,200+ vendor signatures", ("Pixel endpoint detection: plaintiff law firm methodology (CIPA §631)" if jurisdiction == "US" else "Pixel endpoint detection: post-denial network evidence a regulator would examine"), "Regulatory findings cross-referenced against live enforcement database"])}
 </div>
 
 ---

@@ -49,3 +49,28 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build Docker image (advertised in README)
         run: docker build -t consent-engine:ci .
+
+  mcp:
+    # Exercises the optional [mcp] extra: the default `test` job runs without it,
+    # so mcp_server.py is never type-checked and its tests are importorskip'd.
+    # This lane installs the extra so mypy sees the mcp SDK and the MCP tests run.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies (with mcp extra)
+        run: uv sync --group dev --extra mcp
+
+      - name: Type check with mypy (mcp SDK present)
+        run: uv run mypy src/
+
+      - name: Run MCP server tests
+        run: uv run pytest tests/test_mcp_server.py -v --tb=short

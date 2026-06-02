@@ -30,6 +30,7 @@ from consent_engine.models.audit_result import (
     HarAnalysis,
     MethodologyFlag,
     VendorFinding,
+    ViolationStatus,
 )
 from consent_engine.models.scan_result import ScanResult
 from consent_engine.security import validate_audit_url
@@ -432,6 +433,24 @@ def _derive_action_items(
     return remediation, open_gaps
 
 
+def _downgrade_confirmed_if_inconclusive(
+    status: ViolationStatus, methodology: MethodologyFlag
+) -> ViolationStatus:
+    """Claims discipline: under INCONCLUSIVE_UNKNOWN_CMP the CMP was not
+    recognised, so the engine could not confirm its opt-out injection registered.
+    A CONFIRMED tracking firing is then only OBSERVED, not a confirmed violation —
+    asserting "confirmed" on a scan the engine itself flags non-definitive would
+    overclaim. Downgrade to REQUIRES_INVESTIGATION so it surfaces as indicative,
+    never a headline violation. Every other methodology passes through unchanged.
+    """
+    if (
+        methodology == MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP
+        and status == ViolationStatus.CONFIRMED
+    ):
+        return ViolationStatus.REQUIRES_INVESTIGATION
+    return status
+
+
 async def run_audit(
     url: str,
     *,
@@ -593,6 +612,17 @@ async def run_audit(
             gcd_raw=scan.gcd_raw,
             consent_state=scan.consent_state,
         )
+        # Claims discipline (see _downgrade_confirmed_if_inconclusive): under an
+        # unrecognised CMP the opt-out could not be confirmed, so a CONFIRMED
+        # firing is downgraded to observed/requires-investigation.
+        _adjusted = _downgrade_confirmed_if_inconclusive(status, scan.methodology)
+        if _adjusted != status:
+            status = _adjusted
+            notes = (
+                "Observed firing in the opted-out scan, but the CMP was not "
+                "recognised so the opt-out could not be confirmed. Re-run with a "
+                "recognised CMP or banner-click methodology to confirm. " + notes
+            )
         findings.append(
             VendorFinding(
                 vendor=vendor,
@@ -623,7 +653,7 @@ async def run_audit(
 
     # 4b. GPC delta — count pixel firings under the GPC scan and compare.
     # Typed explicitly (no **dict unpack into AuditResult) so mypy strict
-    # passes — see docs/release-v0.5.0/type-coverage.md for the rationale.
+    # passes.
     gpc_tested = gpc_scan is not None
     gpc_header_sent = False
     gpc_navigator_api_set = False

@@ -93,11 +93,11 @@ follow-up questions grounded in the captured evidence.
 ### 3. MCP server
 
 ```sh
-# Note the [mcp] extra — the MCP SDK is an optional dependency.
+# Note the [mcp] extra. The MCP SDK is an optional dependency.
 uvx --from 'consent-engine[mcp]' consent-engine-mcp
 ```
 
-**Claude Desktop** — edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+**Claude Desktop**: edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
@@ -117,7 +117,7 @@ bare `"command": "uvx"` cannot be found and the server fails to start. Also
 config in memory and rewrites it on quit, so an edit made while it is running
 gets overwritten.
 
-**Claude Code (CLI)** — add it to `~/.claude.json`, or run:
+**Claude Code (CLI)**: add it to `~/.claude.json`, or run:
 
 ```sh
 claude mcp add consent-engine -- uvx --from 'consent-engine[mcp]' consent-engine-mcp
@@ -136,7 +136,7 @@ before the tool panel turns green. On the Desktop app the usual cause is a bare
 ### 4. FastAPI service
 
 The `/audit` endpoint requires a bearer token. It returns `503` until you set
-`CONSENT_ENGINE_API_TOKEN` (this is deliberate — it refuses to run an
+`CONSENT_ENGINE_API_TOKEN` (this is deliberate: it refuses to run an
 unauthenticated public audit endpoint).
 
 ```sh
@@ -160,8 +160,8 @@ around exactly the failure modes this tool detects:
 
 > "We went to your website, clicked decline, and yet we saw tags firing,
 > traffic going to LinkedIn, to Google Analytics, to Meta. You have violated
-> our privacy. Pay us $10,000, $15,000, $25,000, $50,000." — Fred Pike,
-> describing the inbound wave that drove him to build a similar tool.
+> our privacy. Pay us $10,000, $15,000, $25,000, $50,000." (Fred Pike,
+> describing the inbound wave that drove him to build a similar tool.)
 
 CCPA fines are **$2,500 per non-intentional violation, $7,500 per intentional
 violation**. CIPA (California Invasion of Privacy Act) wiretap claims are
@@ -171,15 +171,11 @@ healthcare systems, and B2B SaaS marketing sites. See
 
 ## See a finished audit before running
 
-A committed sample audit lives at [`docs/sample-audit/`](docs/sample-audit/) — open `report.html` and `deck.html` in a browser to see what the tool produces without installing it first.
+A committed sample audit lives at [`docs/sample-audit/`](docs/sample-audit/). Open `report.html` and `deck.html` in a browser to see what the tool produces without installing it first.
 
 Once GitHub Pages is enabled for this repo, the live demo URLs are:
 - https://kb223.github.io/consent-engine/sample-audit/report.html
 - https://kb223.github.io/consent-engine/sample-audit/deck.html
-
-## Release artifacts
-
-[`docs/release-v0.5.0/`](docs/release-v0.5.0/) is the auditable record behind every v0.5.0 release claim: security audit punch list, dependency CVE scan, type-coverage rationale, end-to-end smoke test, jurisdiction-detection validation matrix. Read it before evaluating the release quality.
 
 ## Optional: unlock LLM-written executive summaries
 
@@ -189,12 +185,12 @@ report + Marp deck) and writes a templated executive summary that's
 hand-tuned to be readable. No LLM, no API keys, no LiteLLM provider-probe
 warnings on stderr. This is the OSS-shipping default.
 
-If you want the LLM-written prose summary instead — slightly sharper framing,
-adapted per-audit to the actual findings + wiki citations — set **any one** of
+If you want the LLM-written prose summary instead (slightly sharper framing,
+adapted per-audit to the actual findings + wiki citations), set **any one** of
 these env vars before running:
 
 ```sh
-# Gemini direct (recommended — generous free tier, simple auth)
+# Gemini direct (recommended: generous free tier, simple auth)
 export GEMINI_API_KEY="..."
 
 # OR Anthropic (best at legal/compliance nuance)
@@ -208,7 +204,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/sa.json"
 ```
 
 The engine uses [LiteLLM](https://github.com/BerriAI/litellm) under the hood
-to route to whatever provider you've configured — no SDK swap required. The
+to route to whatever provider you've configured, no SDK swap required. The
 default model targets are `gemini/gemini-2.5-pro` (audit) and
 `gemini/gemini-2.5-flash` (executive summary classification), but you can
 override either via the `default_audit_model` / `default_classify_model`
@@ -216,7 +212,7 @@ fields on `consent_engine.config.Settings`. Or just set
 `LITELLM_LOG=ERROR` and pick any model string LiteLLM understands.
 
 The audit pipeline always falls back to the deterministic template if the
-LLM call fails for any reason — so if your key is rate-limited or invalid,
+LLM call fails for any reason. So if your key is rate-limited or invalid,
 the audit still completes cleanly.
 
 ## Develop
@@ -252,7 +248,7 @@ The audit engine is configurable by data, not code:
   `data/wiki/index.md`.
 
 No vector database, no embeddings, no fine-tuning. The whole knowledge layer
-is markdown — version it like any other code.
+is markdown. Version it like any other code.
 
 ## What this doesn't do
 

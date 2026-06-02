@@ -345,6 +345,44 @@ def _uk_signals(page_html: str, url: str) -> bool:
     return bool(m and m.group(1).upper().split("-")[0] == "GB")
 
 
+# Operator-identity markers — legal-form suffixes and company-registration
+# phrases that appear in a site's OWN footer / legal text and identify where the
+# operator is incorporated (not merely a market it ships to). Used only on
+# generic TLDs (.com/.io/...) to rescue EU/UK operators that declare no regional
+# og:locale / lang. Deliberately narrow: a US company does not describe itself as
+# a "GmbH" or say "registered in England", so the false-positive risk is low.
+_UK_OPERATOR_RE = re.compile(
+    r"registered in england(?:\s+and\s+wales)?"
+    r"|registered office[^<.,]{0,60}\b(?:england|wales|united kingdom)\b"
+    r"|\bcompanies house\b"
+    r"|registered (?:with )?the information commissioner",
+    re.IGNORECASE,
+)
+_EU_OPERATOR_RE = re.compile(
+    r"\bGmbH\b|\bAktiengesellschaft\b|\bHandelsregister\b|Umsatzsteuer"
+    r"|USt[-\s]?IdNr|S\.\s?à\s?r\.l\.|\bSARL\b|S\.p\.A\.|S\.r\.l\."
+    r"|soci[ée]t[ée] à responsabilit[ée] limit[ée]e",
+    re.IGNORECASE,
+)
+
+
+def _operator_identity_signal(page_html: str) -> str | None:
+    """Return "UK"/"EU" if the page's own legal/footer text identifies a UK or
+    EU operator, else None. UK is checked first (its markers are unambiguous).
+
+    Site-intrinsic and geo-stable: company-registration text lives in the footer
+    regardless of the visitor's IP, so unlike og:locale it is not rewritten by a
+    site's geo-localisation when the scan egresses from a non-US IP.
+    """
+    if not page_html:
+        return None
+    if _UK_OPERATOR_RE.search(page_html):
+        return "UK"
+    if _EU_OPERATOR_RE.search(page_html):
+        return "EU"
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -410,6 +448,12 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
             if _french_language_signal(page_html) and _canadian_content_signal(page_html):
                 return "CA"
             return "EU"
+        # Operator-identity rescue: a generic-TLD site that declares no regional
+        # locale but whose footer/legal text identifies an EU/UK operator
+        # (GmbH, "registered in England", Companies House, S.r.l., ...).
+        op = _operator_identity_signal(page_html)
+        if op:
+            return op
         return "US"
 
     # 3. Truly ambiguous TLD — fall back to all content signals (UK and CA
@@ -430,6 +474,9 @@ def detect_jurisdiction(page_html: str, url: str) -> str:
         if _french_language_signal(page_html) and _canadian_content_signal(page_html):
             return "CA"
         return "EU"
+    op = _operator_identity_signal(page_html)
+    if op:
+        return op
     return "US"
 
 
