@@ -3,6 +3,35 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.11] - 2026-06-01 - weighted jurisdiction scorer + no-GCS claims discipline
+
+Fast-follows from the v0.6.10 launch stress test.
+
+### Added
+- **Weighted jurisdiction content-scorer with confidence.** Generic-TLD
+  (.com / .io / ...) detection now combines signals into per-regime scores
+  instead of a fixed precedence cascade: a strong declared locale, UK identity,
+  operator-identity, or US declaration decides on its own, while weak signals
+  (currency symbols, supervisory-authority mentions) only corroborate, so no
+  single weak signal flips the US baseline. The resolver returns a confidence
+  flag; the report jurisdiction note reads "auto-detected from site signals" at
+  high confidence and "inferred (low confidence); pass --jurisdiction to
+  override" when the verdict rests on the US default or weak signals only.
+  Country-code TLDs remain a high-confidence hard rule.
+
+### Changed
+- **Claims discipline now covers no-Google-Consent-Mode scans.** The v0.6.10
+  confirmed-to-observed downgrade under an unrecognised CMP now applies to every
+  non-definitive methodology, including S3_NO_GOOGLE_CONSENT_MODE (IAB-TCF
+  publishers such as the BBC). A tracker firing on such a scan is reported as
+  observed / requires-investigation, so per-finding badges match the already
+  methodology-gated (zero) headline confirmed-violation count.
+
+### Notes
+- The scorer improves multi-signal .com detection and honest confidence
+  labeling. It cannot correct a site that serves geo-localized markup declaring a
+  different region to the scan's egress IP; use --jurisdiction for those.
+
 ## [0.6.10] - 2026-06-01 - launch stress-test hardening
 
 A 50-site live stress run (real CMPs across US/EU/UK/CA plus failure and SSRF

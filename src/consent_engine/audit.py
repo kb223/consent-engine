@@ -35,7 +35,10 @@ from consent_engine.models.audit_result import (
 from consent_engine.models.scan_result import ScanResult
 from consent_engine.security import validate_audit_url
 from consent_engine.tools.cmp_detector import detect_cmp_from_network_only
-from consent_engine.tools.jurisdiction_detector import jurisdiction_copy, resolve_jurisdiction
+from consent_engine.tools.jurisdiction_detector import (
+    jurisdiction_copy,
+    resolve_jurisdiction_with_confidence,
+)
 from consent_engine.tools.tool_01_gtm_parser import parse_gtm_container
 from consent_engine.tools.tool_02_violation_classifier import classify_finding
 from consent_engine.tools.tool_03_browser_scanner import (
@@ -433,20 +436,28 @@ def _derive_action_items(
     return remediation, open_gaps
 
 
-def _downgrade_confirmed_if_inconclusive(
+_DEFINITIVE_METHODOLOGIES: tuple[MethodologyFlag, ...] = (
+    MethodologyFlag.S3,
+    MethodologyFlag.S3_CONSENT_WIRING_BROKEN,
+)
+
+
+def _downgrade_confirmed_if_non_definitive(
     status: ViolationStatus, methodology: MethodologyFlag
 ) -> ViolationStatus:
-    """Claims discipline: under INCONCLUSIVE_UNKNOWN_CMP the CMP was not
-    recognised, so the engine could not confirm its opt-out injection registered.
-    A CONFIRMED tracking firing is then only OBSERVED, not a confirmed violation —
-    asserting "confirmed" on a scan the engine itself flags non-definitive would
-    overclaim. Downgrade to REQUIRES_INVESTIGATION so it surfaces as indicative,
-    never a headline violation. Every other methodology passes through unchanged.
+    """Claims discipline: a CONFIRMED tracking finding only stands under a
+    DEFINITIVE methodology (S3 or S3_CONSENT_WIRING_BROKEN).
+
+    Under any non-definitive scan the engine could not confirm the opt-out
+    actually registered, so a firing is OBSERVED, not a confirmed violation:
+      - INCONCLUSIVE_UNKNOWN_CMP: the CMP was not recognised.
+      - S3_NO_GOOGLE_CONSENT_MODE: no Google Consent Mode signal at all, so the
+        GCS-based check is not applicable (the methodology is informational).
+    Downgrade to REQUIRES_INVESTIGATION so the finding surfaces as indicative and
+    its per-finding badge matches the (already methodology-gated, zero) headline
+    confirmed-violation count. Definitive methodologies pass through unchanged.
     """
-    if (
-        methodology == MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP
-        and status == ViolationStatus.CONFIRMED
-    ):
+    if methodology not in _DEFINITIVE_METHODOLOGIES and status == ViolationStatus.CONFIRMED:
         return ViolationStatus.REQUIRES_INVESTIGATION
     return status
 
@@ -612,15 +623,15 @@ async def run_audit(
             gcd_raw=scan.gcd_raw,
             consent_state=scan.consent_state,
         )
-        # Claims discipline (see _downgrade_confirmed_if_inconclusive): under an
-        # unrecognised CMP the opt-out could not be confirmed, so a CONFIRMED
-        # firing is downgraded to observed/requires-investigation.
-        _adjusted = _downgrade_confirmed_if_inconclusive(status, scan.methodology)
+        # Claims discipline (see _downgrade_confirmed_if_non_definitive): under a
+        # non-definitive methodology the opt-out could not be confirmed, so a
+        # CONFIRMED firing is downgraded to observed/requires-investigation.
+        _adjusted = _downgrade_confirmed_if_non_definitive(status, scan.methodology)
         if _adjusted != status:
             status = _adjusted
             notes = (
-                "Observed firing in the opted-out scan, but the CMP was not "
-                "recognised so the opt-out could not be confirmed. Re-run with a "
+                "Observed firing in the opted-out scan under a non-definitive "
+                "methodology (the opt-out could not be confirmed). Re-run with a "
                 "recognised CMP or banner-click methodology to confirm. " + notes
             )
         findings.append(
@@ -644,7 +655,9 @@ async def run_audit(
     #    do NOT use the CMP's IP-based geolocation here: it reports where the SCAN
     #    runs from (the visitor), not the site's market, so a scan from a Canadian
     #    IP must not stamp Quebec Law 25 onto a US/UK site. See resolve_jurisdiction().
-    resolved_jurisdiction = resolve_jurisdiction(jurisdiction, scan.page_html or "", url)
+    resolved_jurisdiction, jurisdiction_confidence = resolve_jurisdiction_with_confidence(
+        jurisdiction, scan.page_html or "", url
+    )
     tag_consent_map = parse_gtm_container(
         gtm_container_js=scan.gtm_container_js or "",
         page_html=scan.page_html or "",
@@ -690,6 +703,7 @@ async def run_audit(
         gcd_raw=scan.gcd_raw,
         findings=findings,
         detected_jurisdiction=resolved_jurisdiction,
+        jurisdiction_confidence=jurisdiction_confidence,
         tag_consent_map=tag_consent_map,
         gcs_timeline=har_analysis.gcs_timeline,
         post_payloads=har_analysis.post_payloads,

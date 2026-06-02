@@ -16,7 +16,7 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime
 
-from consent_engine.audit import _downgrade_confirmed_if_inconclusive
+from consent_engine.audit import _downgrade_confirmed_if_non_definitive
 from consent_engine.models.audit_result import (
     AuditResult,
     MethodologyFlag,
@@ -67,27 +67,31 @@ def test_country_tld_still_wins_over_operator_text() -> None:
 
 def test_confirmed_downgrades_under_inconclusive() -> None:
     assert (
-        _downgrade_confirmed_if_inconclusive(
+        _downgrade_confirmed_if_non_definitive(
             ViolationStatus.CONFIRMED, MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP
         )
         == ViolationStatus.REQUIRES_INVESTIGATION
     )
 
 
-def test_confirmed_preserved_under_definitive_and_no_gcs() -> None:
+def test_confirmed_preserved_only_under_definitive() -> None:
+    # Definitive methodologies keep a CONFIRMED finding.
     for m in (MethodologyFlag.S3, MethodologyFlag.S3_CONSENT_WIRING_BROKEN):
         assert (
-            _downgrade_confirmed_if_inconclusive(ViolationStatus.CONFIRMED, m)
+            _downgrade_confirmed_if_non_definitive(ViolationStatus.CONFIRMED, m)
             == ViolationStatus.CONFIRMED
         )
-    # Scoped to inconclusive only — the no-GCS verdict is handled separately by
-    # the _confirmed_violations methodology gate, so leave its statuses intact.
-    assert (
-        _downgrade_confirmed_if_inconclusive(
-            ViolationStatus.CONFIRMED, MethodologyFlag.S3_NO_GOOGLE_CONSENT_MODE
+    # Every NON-definitive methodology downgrades CONFIRMED to observed: both the
+    # unrecognised-CMP scan and the no-Google-Consent-Mode case (BBC-type sites),
+    # so per-finding badges match the methodology-gated (zero) headline count.
+    for m in (
+        MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP,
+        MethodologyFlag.S3_NO_GOOGLE_CONSENT_MODE,
+    ):
+        assert (
+            _downgrade_confirmed_if_non_definitive(ViolationStatus.CONFIRMED, m)
+            == ViolationStatus.REQUIRES_INVESTIGATION
         )
-        == ViolationStatus.CONFIRMED
-    )
 
 
 def test_non_confirmed_status_unchanged_under_inconclusive() -> None:
@@ -97,7 +101,7 @@ def test_non_confirmed_status_unchanged_under_inconclusive() -> None:
         ViolationStatus.ACM_COMPLIANT,
     ):
         assert (
-            _downgrade_confirmed_if_inconclusive(s, MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP)
+            _downgrade_confirmed_if_non_definitive(s, MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP)
             == s
         )
 

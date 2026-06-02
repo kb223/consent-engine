@@ -201,6 +201,9 @@ class AuditResult(BaseModel):
     detected_jurisdiction: str | None = (
         None  # "EU" | "US" | "CA"; str (not Literal) to allow extension without schema migration
     )
+    jurisdiction_confidence: str = (
+        "high"  # "high" | "low"; low = inferred from weak signals / US default -> prompt --jurisdiction
+    )
     tag_consent_map: list[TagConsentEntry] = []
     gcs_timeline: list[GCSHit] = []
     post_payloads: list[str] = []

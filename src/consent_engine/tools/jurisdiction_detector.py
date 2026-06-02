@@ -383,101 +383,144 @@ def _operator_identity_signal(page_html: str) -> str | None:
     return None
 
 
+def _us_declared_signal(page_html: str) -> bool:
+    """True if the page declares a US locale (html-lang / og:locale country US,
+    or geo.region US). Lets an explicitly US-declared generic-TLD site score as
+    high-confidence US instead of resting on the bare default."""
+    m = _HTML_LANG_RE.search(page_html)
+    if m and any(p.upper() == "US" for p in m.group(1).split("-")[1:]):
+        return True
+    m = _OG_LOCALE_RE.search(page_html) or _OG_LOCALE_ALT_RE.search(page_html)
+    if m:
+        parts = m.group(1).replace("-", "_").split("_")
+        if len(parts) > 1 and parts[1].upper() == "US":
+            return True
+    m = _GEO_REGION_RE.search(page_html) or _GEO_REGION_ALT_RE.search(page_html)
+    return bool(m and m.group(1).upper().split("-")[0] == "US")
+
+
+# Supervisory-authority / statute mentions. A homepage scan rarely includes
+# these, but when present they corroborate the operating regime. Deliberately
+# excludes the universally cross-listed bare "GDPR"/"ICO" (every global privacy
+# policy names them; ICO also = "initial coin offering") to avoid noise.
+_REGULATOR_RE: dict[str, re.Pattern[str]] = {
+    "UK": re.compile(r"information commissioner|\bPECR\b|ico\.org\.uk", re.IGNORECASE),
+    "EU": re.compile(
+        r"\bCNIL\b|\bDSGVO\b|datenschutz|autoriteit persoonsgegevens|"
+        r"\bgarante\b|\bAEPD\b|data protection commission",
+        re.IGNORECASE,
+    ),
+    "US": re.compile(r"\bCCPA\b|\bCPRA\b|california privacy|\bCPPA\b", re.IGNORECASE),
+}
+
+# Currency markers (symbol immediately before digits, or the ISO code). Weak: a
+# US store can quote EUR for shipping, so this only corroborates, never decides.
+_CURRENCY_RE: dict[str, re.Pattern[str]] = {
+    "UK": re.compile(r"£\s?\d|\bGBP\b"),
+    "EU": re.compile(r"€\s?\d|\bEUR\b"),
+}
+
+
+def _regulator_signals(page_html: str) -> set[str]:
+    """Jurisdictions whose supervisory authority / statute is named on the page."""
+    if not page_html:
+        return set()
+    return {j for j, rx in _REGULATOR_RE.items() if rx.search(page_html)}
+
+
+def _currency_signals(page_html: str) -> set[str]:
+    """Jurisdictions implied by a currency symbol/code on the page (weak)."""
+    if not page_html:
+        return set()
+    return {j for j, rx in _CURRENCY_RE.items() if rx.search(page_html)}
+
+
+def _score_jurisdiction(page_html: str, url: str) -> tuple[str, str]:
+    """Weighted multi-signal scorer for generic (non-ccTLD) domains.
+
+    Combines site-intrinsic signals into per-regime scores and returns
+    ``(jurisdiction, confidence)`` where confidence is "high" | "low". Strong
+    signals are developer-declared (og:locale / html-lang country / geo.region),
+    UK identity, operator-identity, or US declaration; any one is decisive.
+    Weak signals (currency, regulator mention) only corroborate: the US baseline
+    is set so no single weak signal flips the verdict on its own. Confidence is
+    "high" when a strong signal fired, else "low" (a bare default or weak-only
+    inference the operator should confirm with --jurisdiction).
+    """
+    # Quebec disambiguation (specific, decisive): a French-declared page carrying
+    # Quebec / Law 25 / PIPEDA identity markers is Canada, not France.
+    if _french_language_signal(page_html) and _canadian_content_signal(page_html):
+        return "CA", "high"
+
+    scores: dict[str, float] = {"US": 3.0, "EU": 0.0, "UK": 0.0, "CA": 0.0}
+    strong = False
+
+    # Strong: developer-declared locale. Country subtag (CA) outweighs a
+    # co-firing primary-lang EU so a fr-CA page resolves CA, not France.
+    for fn in (_og_locale_signals, _lang_signals, _geo_region_signals):
+        is_eu, is_ca = fn(page_html)
+        if is_ca:
+            scores["CA"] += 6.0
+            strong = True
+        if is_eu:
+            scores["EU"] += 5.0
+            strong = True
+    if _uk_signals(page_html, url):
+        scores["UK"] += 6.0
+        strong = True
+    if _us_declared_signal(page_html):
+        scores["US"] += 5.0
+        strong = True
+
+    # Strong: operator-identity (incorporation markers in footer / legal text).
+    op = _operator_identity_signal(page_html)
+    if op:
+        scores[op] += 5.0
+        strong = True
+
+    # Medium: supervisory-authority / statute mentions. Weak: currency. Neither
+    # exceeds the US baseline alone, so a single weak signal never flips US.
+    for j in _regulator_signals(page_html):
+        scores[j] += 3.0
+    for j in _currency_signals(page_html):
+        scores[j] += 2.0
+
+    best = max(scores, key=lambda k: scores[k])
+    return best, ("high" if strong else "low")
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
 
-def detect_jurisdiction(page_html: str, url: str) -> str:
-    """Detect regulatory jurisdiction from page HTML and URL.
+def detect_jurisdiction_with_confidence(page_html: str, url: str) -> tuple[str, str]:
+    """Detect ``(jurisdiction, confidence)`` from SCANNER-INDEPENDENT site signals.
 
-    TLD wins first: a clearly EU ccTLD (.de, .fr, .eu, .co.uk) returns EU,
-    .ca returns CA, and a generic US-default commercial TLD (.com, .io, etc.)
-    returns US directly. Content signals (hreflang, lang, geo.region) are used
-    only when the TLD is ambiguous — this prevents international shipping
-    hreflang tags on a .com site from flipping the verdict to EU when the
-    site is actually being tested under CCPA.
-
-    Args:
-        page_html: Raw HTML of the audited page (may be empty string).
-        url: The audited URL (used for TLD heuristic).
-
-    Returns:
-        "EU" | "CA" | "US"
+    A country-code TLD (.de, .fr, .ca, .co.uk) is an unambiguous declaration and
+    returns high confidence directly. Generic TLDs (.com / .io / .net / ...) go
+    through the weighted content scorer, which returns its own confidence ("high"
+    when a strong declared/operator signal fired, "low" for a bare default or a
+    weak-only inference). Confidence is "EU" | "CA" | "UK" | "US".
     """
-    # 1. TLD takes precedence when it is an unambiguous regional signal.
     ext = _TLD_EXTRACT(url) if url else None
     suffix = ext.suffix.lower() if ext else ""
-
     if suffix in _UK_TLDS:
-        return "UK"
+        return "UK", "high"
     if suffix in _EU_TLDS:
-        return "EU"
+        return "EU", "high"
     if suffix in _CA_TLDS:
-        return "CA"
+        return "CA", "high"
+    return _score_jurisdiction(page_html, url)
 
-    # 2. Generic TLD (.com / .io / .net / …). Don't default to US blindly —
-    #    honor explicit developer-set signals first. og:locale, html-lang with
-    #    country subtag, and geo.region are intentionally declared markers
-    #    (set by the developer, not by a CDN shipping list), so they're
-    #    treated as STRONG signals. hreflang tags are weaker (often
-    #    international-shipping noise on a US-primary .com) and skipped here.
-    #    Tesco.com (UK retailer on .com) is the canonical case the old
-    #    "return US immediately on generic TLD" rule got wrong.
-    if suffix in _US_DEFAULT_TLDS:
-        # A .com site that declares a GB region (og:locale en_GB, lang="en-GB",
-        # geo.region GB) is a UK site on a generic TLD (e.g. bbc.com) -> UK GDPR.
-        if _uk_signals(page_html, url):
-            return "UK"
-        # Check CA before EU when both signals fire: a Quebec French page
-        # (lang="fr-CA") trips is_eu=True via the "fr" primary lang code AND
-        # is_ca=True via the country subtag. The country tag is more specific,
-        # so CA wins.
-        any_eu = False
-        for fn in (_og_locale_signals, _lang_signals, _geo_region_signals):
-            is_eu, is_ca = fn(page_html)
-            if is_ca:
-                return "CA"
-            any_eu = any_eu or is_eu
-        if any_eu:
-            # France-vs-Quebec disambiguation — ONLY when the page's declared
-            # language is French. An en-GB / en-US site has no such ambiguity,
-            # so it must never be subjected to the Canadian-content check (that
-            # is what flipped bbc.com to CA). A French .com page carrying
-            # Hydro-Québec / Loi 25 / etc. is Quebec, not France.
-            if _french_language_signal(page_html) and _canadian_content_signal(page_html):
-                return "CA"
-            return "EU"
-        # Operator-identity rescue: a generic-TLD site that declares no regional
-        # locale but whose footer/legal text identifies an EU/UK operator
-        # (GmbH, "registered in England", Companies House, S.r.l., ...).
-        op = _operator_identity_signal(page_html)
-        if op:
-            return op
-        return "US"
 
-    # 3. Truly ambiguous TLD — fall back to all content signals (UK and CA
-    # before EU; country subtag wins over the primary-lang heuristic).
-    if _uk_signals(page_html, url):
-        return "UK"
-    any_eu = False
-    any_ca = False
+def detect_jurisdiction(page_html: str, url: str) -> str:
+    """Jurisdiction string only ("EU" | "CA" | "UK" | "US").
 
-    for fn in (_lang_signals, _hreflang_signals, _geo_region_signals, _og_locale_signals):
-        is_eu, is_ca = fn(page_html)
-        any_eu = any_eu or is_eu
-        any_ca = any_ca or is_ca
-
-    if any_ca:
-        return "CA"
-    if any_eu:
-        if _french_language_signal(page_html) and _canadian_content_signal(page_html):
-            return "CA"
-        return "EU"
-    op = _operator_identity_signal(page_html)
-    if op:
-        return op
-    return "US"
+    Back-compat wrapper over ``detect_jurisdiction_with_confidence``; callers that
+    also want the confidence flag should use that function directly.
+    """
+    return detect_jurisdiction_with_confidence(page_html, url)[0]
 
 
 def country_to_jurisdiction(country_code: str | None) -> str | None:
@@ -524,6 +567,22 @@ def resolve_jurisdiction(explicit_override: str | None, page_html: str, url: str
     if explicit_override:
         return explicit_override
     return detect_jurisdiction(page_html or "", url)
+
+
+def resolve_jurisdiction_with_confidence(
+    explicit_override: str | None, page_html: str, url: str
+) -> tuple[str, str]:
+    """``resolve_jurisdiction`` plus a confidence flag ("high" | "low").
+
+    An explicit operator override is authoritative -> high. Otherwise the
+    confidence comes from the site-signal scorer: high when a country-code TLD
+    or a strong declared/operator signal decided it, low when the verdict rests
+    on the US default or weak corroborating signals only (the report then tells
+    the reader the jurisdiction is inferred and overridable with --jurisdiction).
+    """
+    if explicit_override:
+        return explicit_override, "high"
+    return detect_jurisdiction_with_confidence(page_html or "", url)
 
 
 # ---------------------------------------------------------------------------

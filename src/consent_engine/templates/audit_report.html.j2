@@ -991,7 +991,11 @@
       <div class="signal-value">
         {{ jur_labels.get(result.detected_jurisdiction, result.detected_jurisdiction) }}
       </div>
-      <div class="signal-sub">inferred from site signals; pass --jurisdiction to override</div>
+      {% if result.jurisdiction_confidence == 'low' %}
+      <div class="signal-sub">inferred (low confidence); pass --jurisdiction to override</div>
+      {% else %}
+      <div class="signal-sub">auto-detected from site signals</div>
+      {% endif %}
     </div>
     {% endif %}
     <div class="signal-card">
