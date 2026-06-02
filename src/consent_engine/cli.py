@@ -29,10 +29,12 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
+import traceback
 from pathlib import Path
 
 from consent_engine import __version__
@@ -77,14 +79,15 @@ def _audit_command(args: argparse.Namespace) -> int:
     except Exception as e:  # noqa: BLE001
         # Scan-time failure: navigation timeout, target closed, an HTTP error
         # page, etc. Surface a one-line cause instead of a Python traceback.
+        if os.environ.get("CONSENT_ENGINE_DEBUG") == "1":
+            traceback.print_exc()
         print(f"error: could not complete audit of {url}: {e}", file=sys.stderr)
         return 1
 
     audit_dir = out_dir / bundle.audit_id
     audit_dir.mkdir(parents=True, exist_ok=True)
 
-    # Persist the network evidence per Fred Pike's "glass box" pattern —
-    # every captured request goes to evidence.jsonl, audit-scoped.
+    # Persist every captured request to audit-scoped forensic evidence.
     with (audit_dir / "evidence.jsonl").open("w") as f:
         if bundle.scan_result.request_log:
             for entry in bundle.scan_result.request_log:

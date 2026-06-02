@@ -89,10 +89,10 @@ def _estimate_brand_tier(audit_result: AuditResult) -> tuple[str, int, float]:
 
 _TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
-# KJB logo — read from bundled PNG so it renders in Playwright file:// PDF context
-_RSC_LOGO_PATH = Path(__file__).parent.parent / "rsc-logo.png"
-_RSC_ICON_B64: str = (
-    base64.b64encode(_RSC_LOGO_PATH.read_bytes()).decode() if _RSC_LOGO_PATH.exists() else ""
+# Bundled logo is read as base64 so it renders in Playwright file:// PDF context.
+_BRAND_LOGO_PATH = Path(__file__).parent.parent / "brand-logo.png"
+_BRAND_ICON_B64: str = (
+    base64.b64encode(_BRAND_LOGO_PATH.read_bytes()).decode() if _BRAND_LOGO_PATH.exists() else ""
 )
 
 _METHODOLOGY_LABELS: dict[str, str] = {
@@ -1285,7 +1285,7 @@ def generate_marp_slides(
     audit_result: AuditResult,
     executive_summary: str,
     site_image_url: str | None = None,
-    brand: str = "rsc",
+    brand: str = "kenneth",
     firm_name: str | None = None,
     report_variant: str = "compliance",
     estimated_monthly_ad_spend_usd: int | None = None,
@@ -1792,7 +1792,7 @@ def generate_marp_slides(
             _rc_rows.append(("Script Version", _rc.script_version))
         # On-brand "spec sheet": a navy-accented panel of label/value pairs in a
         # responsive grid, instead of a generic theme-styled <table> (which read
-        # off-brand and left the slide half-empty). KJB palette: #345187 accent
+        # off-brand and left the slide half-empty). Brand palette: #345187 accent
         # rail, #3d6abb kicker labels, #1e293b ink. Values are html.escape()d —
         # they come from the audited site's CMP JS API, so raw interpolation into
         # the deck HTML would be an injection sink (no Jinja autoescape here).
@@ -2003,7 +2003,7 @@ def generate_marp_slides(
         f'object-fit:contain;display:block;" /></div>'
     )
 
-    # KJB brand bar: absolutely positioned at the bottom of the title slide
+    # Brand bar: absolutely positioned at the bottom of the title slide.
     _audit_id_full = audit_result.audit_id
     _meta_date = audit_result.timestamp.strftime("%B %d, %Y")
     _meta_method = (
@@ -2017,25 +2017,25 @@ def generate_marp_slides(
     _audit_id_style = (
         "font-family:'Inter';font-weight:500;font-size:0.48em;color:#9ca3af;letter-spacing:0.02em;"
     )
-    # Brand selector — "rsc" uses KJB logo + name; "kjb" uses just Kenneth Buchanan (unbranded)
-    if brand == "kjb":
+    # Brand selector: legacy brand names resolve to the public maintainer credit.
+    if brand in {"kjb", "kenneth"}:
         _brand_primary = "Kenneth Buchanan"
         _brand_logo_html = ""
         _closing_kicker = "CONSENT COMPLIANCE INTELLIGENCE"
     else:
-        _brand_primary = "KJB"
+        _brand_primary = "Kenneth Buchanan"
         _brand_logo_html = (
-            f'<img src="data:image/png;base64,{_RSC_ICON_B64}" '
+            f'<img src="data:image/png;base64,{_BRAND_ICON_B64}" '
             f'style="height:44px;width:44px;border-radius:8px;flex-shrink:0;" />'
-            if _RSC_ICON_B64
+            if _BRAND_ICON_B64
             else ""
         )
-        _closing_kicker = "ROSE SKY CONSULTING INC."
-    _rsc_brand_html = (
+        _closing_kicker = "CONSENT COMPLIANCE INTELLIGENCE"
+    _brand_bar_html = (
         '<div style="position:absolute;bottom:50px;left:72px;right:72px;">'
         '<div style="border-top:1px solid #e7e3d8;padding-top:18px;'
         'display:flex;justify-content:space-between;align-items:center;">'
-        # Left: brand logo + name (KJB) or plain name
+        # Left: brand logo + name, or plain name.
         f'<div style="display:flex;align-items:center;gap:14px;">'
         f"{_brand_logo_html}"
         f"<div><div style=\"font-family:'Inter';font-weight:700;font-size:0.65em;color:#14182b;line-height:1.2;\">{_brand_primary}</div>"
@@ -2109,7 +2109,7 @@ style: |
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
 
   :root {{
-    /* LIGHT theme — warm cream, Anthropic-style, KJB accents */
+    /* Light theme with brand accents */
     --bg:    #f6f4ee;          /* warm cream */
     --s:     #ffffff;          /* surface */
     --s2:    #faf8f2;           /* alt surface */
@@ -2118,8 +2118,8 @@ style: |
     --t:     #14182b;          /* headline near-black */
     --body:  #1f2944;          /* body near-navy */
     --m:     #6b7794;          /* muted */
-    --a:     #3d6abb;          /* KJB blue accent */
-    --navy:  #2b3954;          /* KJB navy — section markers */
+    --a:     #3d6abb;          /* brand blue accent */
+    --navy:  #2b3954;          /* brand navy section markers */
     --g:     #2f7a4f;          /* green */
     --gs:    #e4f1e6;          /* green-soft */
     --r:     #b34d4d;          /* red */
@@ -2254,7 +2254,7 @@ style: |
 
 ## Consent Compliance Report
 
-{_rsc_brand_html}
+{_brand_bar_html}
 
 ---
 

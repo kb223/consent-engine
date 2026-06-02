@@ -11,11 +11,14 @@ Register in Claude Desktop config:
     {
       "mcpServers": {
         "consent-engine": {
-          "command": "uvx",
+          "command": "/Users/you/.local/bin/uvx",
           "args": ["--from", "consent-engine[mcp]", "consent-engine-mcp"]
         }
       }
     }
+
+Use the absolute path from `which uvx`; macOS GUI apps do not inherit the
+shell PATH.
 """
 
 from __future__ import annotations

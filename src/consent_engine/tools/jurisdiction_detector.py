@@ -259,9 +259,14 @@ def _lang_signals(html: str) -> tuple[bool, bool]:
     for part in parts[1:]:
         if len(part) == 2:
             country = part.upper()
-    is_eu = primary in _EU_LANG_CODES or country in _EU_COUNTRY_CODES
-    is_ca = country == "CA"
-    return is_eu, is_ca
+    if country:
+        # A country subtag narrows ambiguous languages: es-MX / pt-BR / fr-CA
+        # are not EU merely because the primary language is used in Europe.
+        is_eu = country in _EU_COUNTRY_CODES
+        is_ca = country == "CA"
+        return is_eu, is_ca
+    is_eu = primary in _EU_LANG_CODES
+    return is_eu, False
 
 
 def _hreflang_signals(html: str) -> tuple[bool, bool]:
@@ -279,10 +284,13 @@ def _hreflang_signals(html: str) -> tuple[bool, bool]:
         for part in parts[1:]:
             if len(part) == 2:
                 country = part.upper()
-        if primary in _EU_LANG_CODES or country in _EU_COUNTRY_CODES:
+        if country:
+            if country in _EU_COUNTRY_CODES:
+                is_eu = True
+            if country == "CA":
+                is_ca = True
+        elif primary in _EU_LANG_CODES:
             is_eu = True
-        if country == "CA":
-            is_ca = True
     return is_eu, is_ca
 
 
@@ -306,11 +314,17 @@ def _og_locale_signals(html: str) -> tuple[bool, bool]:
         return False, False
     locale = match.group(1)  # e.g. "fr_FR", "en_US", "en_CA"
     parts = locale.replace("-", "_").split("_")
-    country = parts[1].upper() if len(parts) > 1 else ""
+    country = ""
+    for part in parts[1:]:
+        if len(part) == 2:
+            country = part.upper()
     lang = parts[0].lower()
-    is_eu = lang in _EU_LANG_CODES or country in _EU_COUNTRY_CODES
-    is_ca = country == "CA"
-    return is_eu, is_ca
+    if country:
+        is_eu = country in _EU_COUNTRY_CODES
+        is_ca = country == "CA"
+        return is_eu, is_ca
+    is_eu = lang in _EU_LANG_CODES
+    return is_eu, False
 
 
 def _tld_signals(url: str) -> tuple[bool, bool]:
@@ -453,7 +467,7 @@ def _score_jurisdiction(page_html: str, url: str) -> tuple[str, str]:
         return "CA", "high"
 
     scores: dict[str, float] = {"US": 3.0, "EU": 0.0, "UK": 0.0, "CA": 0.0}
-    strong = False
+    strong_jurisdictions: set[str] = set()
 
     # Strong: developer-declared locale. Country subtag (CA) outweighs a
     # co-firing primary-lang EU so a fr-CA page resolves CA, not France.
@@ -461,22 +475,22 @@ def _score_jurisdiction(page_html: str, url: str) -> tuple[str, str]:
         is_eu, is_ca = fn(page_html)
         if is_ca:
             scores["CA"] += 6.0
-            strong = True
-        if is_eu:
+            strong_jurisdictions.add("CA")
+        elif is_eu:
             scores["EU"] += 5.0
-            strong = True
+            strong_jurisdictions.add("EU")
     if _uk_signals(page_html, url):
         scores["UK"] += 6.0
-        strong = True
+        strong_jurisdictions.add("UK")
     if _us_declared_signal(page_html):
         scores["US"] += 5.0
-        strong = True
+        strong_jurisdictions.add("US")
 
     # Strong: operator-identity (incorporation markers in footer / legal text).
     op = _operator_identity_signal(page_html)
     if op:
         scores[op] += 5.0
-        strong = True
+        strong_jurisdictions.add(op)
 
     # Medium: supervisory-authority / statute mentions. Weak: currency. Neither
     # exceeds the US baseline alone, so a single weak signal never flips US.
@@ -486,7 +500,12 @@ def _score_jurisdiction(page_html: str, url: str) -> tuple[str, str]:
         scores[j] += 2.0
 
     best = max(scores, key=lambda k: scores[k])
-    return best, ("high" if strong else "low")
+    confidence = (
+        "high"
+        if best in strong_jurisdictions and len(strong_jurisdictions) == 1
+        else "low"
+    )
+    return best, confidence
 
 
 # ---------------------------------------------------------------------------
@@ -500,8 +519,9 @@ def detect_jurisdiction_with_confidence(page_html: str, url: str) -> tuple[str, 
     A country-code TLD (.de, .fr, .ca, .co.uk) is an unambiguous declaration and
     returns high confidence directly. Generic TLDs (.com / .io / .net / ...) go
     through the weighted content scorer, which returns its own confidence ("high"
-    when a strong declared/operator signal fired, "low" for a bare default or a
-    weak-only inference). Confidence is "EU" | "CA" | "UK" | "US".
+    when a strong declared/operator signal fired without a competing strong
+    jurisdiction, "low" for a bare default, weak-only inference, or conflicting
+    strong signals). Confidence is "high" | "low".
     """
     ext = _TLD_EXTRACT(url) if url else None
     suffix = ext.suffix.lower() if ext else ""

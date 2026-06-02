@@ -10,18 +10,18 @@ If you think you've found a security issue:
 2. Email Kenneth at `kennethbuchanan23@gmail.com` with the details, ideally with a minimal reproducer.
 3. Expect a response within 72 hours. We'll coordinate disclosure timing.
 
-## Threat model (as of v0.5.0)
+## Threat model
 
 The audit pipeline launches a real browser against a remote URL, captures every network request, and writes structured forensic evidence to disk. The biggest risks are:
 
-1. **SSRF** — a caller pointing the scanner at internal IPs (cloud metadata services, internal staging hosts, local Redis, etc.) to either probe the internal network or exfiltrate metadata into a viewer's browser.
-2. **Path traversal** — a malicious `audit_id` reaching the `render-deck` CLI or the MCP server's `read_audit_result` / `query_evidence` tools could escape `./out/`.
-3. **Unauthenticated FastAPI surface** — the `POST /audit` route in `src/consent_engine/api.py` is a remote-code-execution-flavored endpoint by virtue of running Playwright; left open it becomes SSRF-as-a-service.
-4. **XSS in rendered HTML report** — user-controlled inputs (audit URL, `--firm-name`, LLM-written executive summary) flow through Jinja2 templates and are rendered as HTML for the buyer to read.
+1. **SSRF**: a caller pointing the scanner at internal IPs (cloud metadata services, internal staging hosts, local Redis, etc.) to either probe the internal network or exfiltrate metadata into a viewer's browser.
+2. **Path traversal**: a malicious `audit_id` reaching the `render-deck` CLI or the MCP server's `read_audit_result` / `query_evidence` tools could escape `./out/`.
+3. **Unauthenticated FastAPI surface**: the `POST /audit` route in `src/consent_engine/api.py` is a remote-code-execution-flavored endpoint by virtue of running Playwright; left open it becomes SSRF-as-a-service.
+4. **XSS in rendered HTML report**: user-controlled inputs (audit URL, `--firm-name`, LLM-written executive summary) flow through Jinja2 templates and are rendered as HTML for the buyer to read.
 
-## v0.5.0 mitigations
+## Core mitigations
 
-### SSRF — `_validate_audit_url()` in `src/consent_engine/audit.py`
+### SSRF: `_validate_audit_url()` in `src/consent_engine/audit.py`
 
 Every `run_audit()` call resolves the target hostname and rejects:
 
@@ -31,13 +31,13 @@ Every `run_audit()` call resolves the target hostname and rejects:
 
 Override with `CONSENT_ENGINE_ALLOW_INTERNAL=1` if you're self-hosting and auditing internal staging sites. This bypass is intentional and documented.
 
-### Path traversal — `_validate_audit_id()` + `_safe_audit_dir()`
+### Path traversal: `_validate_audit_id()` + `_safe_audit_dir()`
 
 `src/consent_engine/cli.py` (`render-deck`) and `src/consent_engine/mcp_server.py` (`read_audit_result`, `query_evidence`) validate every `audit_id` against the UUID4 regex before joining it to `./out/`. Defense-in-depth via `Path.resolve()` containment check on the MCP side. Audit IDs are always `uuid.uuid4()` values; non-UUIDs are rejected with `ValueError`.
 
-### Unauthenticated FastAPI — `_require_token()` + 127.0.0.1 default
+### Unauthenticated FastAPI: `_require_token()` + 127.0.0.1 default
 
-The `POST /audit` endpoint now requires a bearer token via the `CONSENT_ENGINE_API_TOKEN` env var. If the env var is unset, the route returns `503 Service Unavailable` — the unauthenticated default that shipped in v0.1.x–v0.4.x is **closed** in v0.5.0. The `uvicorn.run()` call binds `127.0.0.1` by default; override with `CONSENT_ENGINE_HOST=0.0.0.0` only after setting the token.
+The `POST /audit` endpoint now requires a bearer token via the `CONSENT_ENGINE_API_TOKEN` env var. If the env var is unset, the route returns `503 Service Unavailable`. The unauthenticated default that shipped in v0.1.x-v0.4.x is **closed** in v0.5.0. The `uvicorn.run()` call binds `127.0.0.1` by default; override with `CONSENT_ENGINE_HOST=0.0.0.0` only after setting the token.
 
 Accepted token headers:
 - `Authorization: Bearer <token>`
@@ -45,18 +45,17 @@ Accepted token headers:
 
 Constant-time compare via `secrets.compare_digest`.
 
-### XSS — Jinja2 `autoescape=True`
+### XSS: Jinja2 `autoescape=True`
 
-The template environment in `tool_08_report_generator.py` sets `autoescape=True` unconditionally, so every `{{ ... }}` expression is HTML-escaped. (Earlier versions used `select_autoescape(['html'])`, which keys off the final filename extension — the template is `audit_report.html.j2`, so the `.j2` suffix left autoescape OFF. Fixed in v0.6.2.) User inputs (`firm_name`, `result.url`, `executive_summary`, cookie names, observed notes) all flow through `{{ ... }}` escape. Two sinks render trusted HTML: the `| markdown` filter returns `markupsafe.Markup` and is only applied to package-bundled wiki content (`data/wiki/*.md`), and the action-item lists (`remediation` / `open_gaps`) are rendered `| safe` — those strings are built in `audit.py::_derive_action_items`, where every site-derived value interpolated into them (cookie names, GCS raw, vendor name, ssGTM domain) is escaped with `html.escape()` at construction.
+The template environment in `tool_08_report_generator.py` sets `autoescape=True` unconditionally, so every `{{ ... }}` expression is HTML-escaped. Earlier versions used `select_autoescape(['html'])`, which keys off the final filename extension. The template is `audit_report.html.j2`, so the `.j2` suffix left autoescape OFF. Fixed in v0.6.2. User inputs (`firm_name`, `result.url`, `executive_summary`, cookie names, observed notes) all flow through `{{ ... }}` escape. Two sinks render trusted HTML: the `| markdown` filter returns `markupsafe.Markup` and is only applied to package-bundled wiki content (`data/wiki/*.md`), and the action-item lists (`remediation` / `open_gaps`) are rendered `| safe`. Those strings are built in `audit.py::_derive_action_items`, where every site-derived value interpolated into them (cookie names, GCS raw, vendor name, ssGTM domain) is escaped with `html.escape()` at construction.
 
 ### Dependency hygiene
 
-- `jinja2>=3.1.6` (was `>=3.1.0`) — closes the floor on CVE-2025-27516 (sandbox bypass via `|attr` filter).
-- See [docs/release-v0.5.0/cve-scan.md](docs/release-v0.5.0/cve-scan.md) for the full dependency posture.
+- `jinja2>=3.1.6` (was `>=3.1.0`): closes the floor on CVE-2025-27516 (sandbox bypass via `|attr` filter).
 
-## Known limitations (v0.5.0)
+## Known limitations
 
-These ship as documented gaps in v0.5.0 and may be hardened in later releases:
+These are documented gaps to account for in production deployments:
 
 1. **No CAPTCHA / WAF evasion controls.** The Scrapling/Camoufox stealthy fallback exists to *complete* a scan against sites with bot detection, not to bypass *anti-abuse* controls. Don't use this tool to circumvent rate limits on sites you don't own.
 2. **Network log retention is local.** `out/<audit_id>/evidence.jsonl` writes to your filesystem with no encryption, no rotation, no purge. If you scan many sites, treat the `out/` directory as sensitive (HAR data + cookie content + headers).

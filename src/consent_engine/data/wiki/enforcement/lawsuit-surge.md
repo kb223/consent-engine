@@ -5,9 +5,8 @@
 > that maps to active litigation patterns.
 >
 > Last updated: 2026-05-16
-> Source talks: Fred Pike (MeasureSummit May 2026), Stephanie Balaconis
-> (Lifesight, MeasureSummit May 2026), Denis Golubovskyi (Stape,
-> MeasureSummit May 2026), plus public docket research.
+> Sources: public docket research, enforcement actions, and public
+> consent-compliance industry talks.
 
 ## TL;DR — why this is a market right now
 
@@ -113,30 +112,26 @@ Three independent vectors compound:
 The demand-letter pipeline is industrialised. Firms run their own
 Playwright + capture tools — the same shape as `consent-engine` —
 against thousands of sites and auto-generate the letters. **This used to
-require an expert. It no longer does.** Fred Pike's MeasureSummit talk
-describes the inbound wave from the receiving end.
+require an expert. It no longer does.** The same inspection pattern that once
+required a specialist can now be automated and repeated at scale.
 
 ### Vector 2 — AI browsers default to consent-reject
 
-Per Denis Golubovskyi (Stape, MeasureSummit May 2026): AI browsers
-(Arc-AI, Perplexity Browser, Comet, Dia) **reject consent by default and
-restrict tracking out of the box**. Sites that depend on opt-in tracking
+AI browsers and privacy-preserving browser agents can **reject consent by
+default and restrict tracking out of the box**. Sites that depend on opt-in tracking
 will increasingly see automated rejections from non-human user agents.
 Any tag that fires after the AI browser sends `Sec-GPC: 1` is a
 documented violation.
 
-> "A lot of people think AI browsers aren't popular. I ask: did you check
-> Google Analytics and not find AI browser visitors? Their reality is they
-> have customers of AI browsers, but they don't track them. The browsers
-> limit tracking. They never had visibility."
+The measurement problem is circular: if the browser blocks or suppresses
+tracking, conventional analytics may never show the affected visitor segment.
 
 ### Vector 3 — the attribution mirage hides the cost
 
-Per Stephanie Balaconis (Lifesight, MeasureSummit May 2026): platforms
-over-attribute conversions to themselves by 2–3×. Companies see "Meta
-delivered $25M" when actual revenue is $10M, justify continued Pixel
-spend, and the Pixel keeps firing through every privacy boundary. The
-upstream over-attribution **rationalises the downstream legal exposure**.
+Ad platforms can over-attribute conversions to themselves. Companies may see
+"Meta delivered $25M" when actual incremental revenue is materially lower,
+justify continued Pixel spend, and let the Pixel keep firing through privacy
+boundaries. The upstream attribution claim **rationalises the downstream legal exposure**.
 The Uber case study (paused $1M/month Meta spend for three months → zero
 revenue impact) is the smoking gun.
 
@@ -160,8 +155,8 @@ If a consent-engine audit returns red findings, the practical sequence:
 2. **Document the remediation date.** Future firings after this date are
    "intentional" by CCPA standards.
 3. **Re-audit at least weekly** for the first 90 days post-remediation.
-   Drift is real. Fred Pike's experience: even CMP vendors' own marketing
-   sites fail their own audit.
+   Drift is real. Even privacy vendors can regress if tag changes are not
+   tested after release.
 4. **Brief legal counsel.** This document is evidence, not advice.
 
 ## Citation hygiene

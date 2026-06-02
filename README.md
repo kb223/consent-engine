@@ -1,6 +1,6 @@
 # consent-engine
 
-> Forensic agent that compares cookie + tag enforcement against user consent
+> Forensic engine that compares cookie + tag enforcement against user consent
 > preferences. Built for enterprises facing privacy-litigation demand letters.
 
 [![CI](https://github.com/kb223/consent-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/kb223/consent-engine/actions/workflows/ci.yml)
@@ -23,10 +23,8 @@ a client-ready Marp slide deck.
 
 The audit is **deterministic**. Decisions are made at build time, not at
 runtime. The LLM writes the executive summary; everything else is code.
-That distinction (credit to [Fred Pike's "Consent Chaos" talk at MeasureSummit
-May 2026](https://www.youtube.com/results?search_query=fred+pike+consent+chaos+measuresummit))
-is the thing that makes the output legally defensible instead of
-plausibly-correct.
+That distinction is what makes the output legally defensible instead of
+plausibly correct.
 
 | | Agentic | Deterministic |
 |---|---|---|
@@ -158,10 +156,10 @@ as a secret in your platform's environment config.
 This isn't an academic project. Demand-letter law firms have built a pipeline
 around exactly the failure modes this tool detects:
 
-> "We went to your website, clicked decline, and yet we saw tags firing,
-> traffic going to LinkedIn, to Google Analytics, to Meta. You have violated
-> our privacy. Pay us $10,000, $15,000, $25,000, $50,000." (Fred Pike,
-> describing the inbound wave that drove him to build a similar tool.)
+The common pattern is simple: a visitor rejects tracking, but advertising,
+analytics, or social tags continue firing anyway. Demand letters typically
+argue that this creates privacy exposure and seek settlements in the
+$10,000 to $50,000 range.
 
 CCPA fines are **$2,500 per non-intentional violation, $7,500 per intentional
 violation**. CIPA (California Invasion of Privacy Act) wiretap claims are
@@ -263,12 +261,7 @@ MIT. See `LICENSE`.
 
 ## Credits
 
-Built by [Kenneth Buchanan](https://kennethjbuchanan.com).
-
-Architecture credit to **Fred Pike** (Northwoods) for the agentic-vs-
-deterministic split + the glass-box reporting pattern, and to **Phil Pearce**
-for the 67%-of-Consent-Mode-v2-implementations-fail-basic-compliance
-baseline. Both presented at MeasureSummit, May 2026.
+Created and maintained by [Kenneth Buchanan](https://kennethjbuchanan.com).
 
 The Open Cookie Database (~3,200 entries) is included under the project's
 permissive license.

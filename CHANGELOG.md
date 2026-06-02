@@ -3,9 +3,30 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.12] - 2026-06-01 - public release cleanup + scorer edge-case hardening
+
+### Fixed
+- **Jurisdiction scorer edge cases.** Ambiguous EU language tags now respect
+  explicit non-EU country subtags: `es-MX` and `pt_BR` stay out of the EU bucket,
+  while `fr-CA` resolves to Canada. Conflicting strong signals, such as a US
+  locale plus an EU operator identity, now keep the deterministic winner but mark
+  jurisdiction confidence as low.
+- **CLI debug escape hatch.** Normal audit failures still print a one-line
+  `error: ...` message, while `CONSENT_ENGINE_DEBUG=1` prints the traceback for
+  maintainers debugging scan-time failures.
+- **Public docs cleanup.** Removed stale release-artifact links, process
+  wording, and obsolete chat-command references from public docs. Credits now
+  identify Kenneth Buchanan as creator and maintainer.
+
+### Verified
+- No-MCP lane: ruff, mypy, and pytest.
+- MCP lane: mypy and full pytest with the `[mcp]` extra installed.
+- `uv build`.
+- Live CLI sanity checks against `https://example.com` and `https://www.bbc.co.uk`.
+
 ## [0.6.11] - 2026-06-01 - weighted jurisdiction scorer + no-GCS claims discipline
 
-Fast-follows from the v0.6.10 launch stress test.
+Follow-up to the v0.6.10 release validation run.
 
 ### Added
 - **Weighted jurisdiction content-scorer with confidence.** Generic-TLD
@@ -32,9 +53,9 @@ Fast-follows from the v0.6.10 launch stress test.
   labeling. It cannot correct a site that serves geo-localized markup declaring a
   different region to the scan's egress IP; use --jurisdiction for those.
 
-## [0.6.10] - 2026-06-01 - launch stress-test hardening
+## [0.6.10] - 2026-06-01 - release hardening
 
-A 50-site live stress run (real CMPs across US/EU/UK/CA plus failure and SSRF
+A 50-site live validation run (real CMPs across US/EU/UK/CA plus failure and SSRF
 probes) surfaced several defects, all fixed here with regression tests.
 
 ### Fixed
@@ -74,7 +95,7 @@ probes) surfaced several defects, all fixed here with regression tests.
 ### Changed
 - Public-facing copy (README, report, deck) scrubbed of em dashes per the project
   voice rules.
-- Removed stale planning notes and the `docs/release-v0.5.0/` artifacts folder plus
+- Removed obsolete maintainer notes and the `docs/release-v0.5.0/` artifacts folder plus
   their dangling references.
 
 ## [0.6.9] — 2026-05-29 — CLI --jurisdiction accepts UK (+ list-sync guard)
@@ -229,8 +250,7 @@ bbc.com, cnn.com. All tests pass, ruff + mypy strict clean.
 
 ## [0.6.3] — 2026-05-28 — Full scan in production + jurisdiction-aware exposure
 
-Repositioned from an outreach lead-magnet (fast scan) to a give-away / portfolio
-tool: the FULL scan is now the production path, and financial-exposure reporting
+The FULL scan is now the production path, and financial-exposure reporting
 is correct per jurisdiction. 113 tests pass (9 new), ruff + mypy strict clean.
 
 ### Changed — the full scan is now production
@@ -278,12 +298,12 @@ is correct per jurisdiction. 113 tests pass (9 new), ruff + mypy strict clean.
 
 ## [0.6.2] — 2026-05-28 — Second-review hardening (P0/P1/P2 fixes)
 
-A deeper multi-agent review of the full pipeline (not just the diff) before the
-public launch. Found that the false-positive problem ran deeper than v0.6.1
-closed, plus two genuinely exploitable security holes. Five P0s, nine P1s, eight
-P2s. All fixed; 104 tests pass (22 new), ruff + mypy strict clean.
+A deeper review of the full pipeline (not just the diff) found that the
+false-positive problem ran deeper than v0.6.1 closed, plus two genuinely
+exploitable security holes. Five P0s, nine P1s, eight P2s. All fixed; 104 tests
+pass (22 new), ruff + mypy strict clean.
 
-### Fixed — P0 (launch-blocking)
+### Fixed — P0 (release-blocking)
 - **Stored XSS in the HTML report.** The Jinja env used
   `autoescape=select_autoescape(["html"])`, but the template is
   `audit_report.html.j2` — `select_autoescape` keys off the final extension, so
@@ -353,11 +373,10 @@ P2s. All fixed; 104 tests pass (22 new), ruff + mypy strict clean.
 
 ## [0.6.1] — 2026-05-26 — Peer-review hardening (P0/P1/P2 fixes)
 
-Addresses an external code review (Codex 5.5) before the public LinkedIn
-launch. Two P0 accuracy bugs, three P1 correctness/security gaps, and CI
-hardening.
+Addresses an external code review. Two P0 accuracy bugs, three P1
+correctness/security gaps, and CI hardening.
 
-### Fixed — P0 (accuracy, launch-blocking)
+### Fixed — P0 (accuracy, release-blocking)
 - **Clean sites no longer falsely report OneTrust.** The scanner injects
   `OptanonConsent` + `OptanonAlertBoxClosed` as opt-out state before
   navigation; the v0.5.6 cookie-name backstop, the v0.6.0 legacy-cookie
@@ -557,13 +576,13 @@ Same-day patch addressing two findings from a live audit of `hydroquebec.com`.
 ### Removed
 - **Dead template `audit_deck.marp.md.j2`** — superseded by Python-generated
   deck in `tool_08_report_generator.py` since v0.5.0 light-theme refactor.
-  Still referenced "Founder, KJB" voice violation. Zero remaining
+  Still referenced stale founder copy. Zero remaining
   references in source, tests, or docs.
 
-## [0.5.5] — 2026-05-25 — Canadian jurisdiction, public-launch polish
+## [0.5.5] — 2026-05-25 — Canadian jurisdiction + public copy polish
 
-First post-launch polish pass. Drops internal-jargon ("S3" methodology
-prefix) from user-facing report and deck labels, fixes the Quebec-on-`.com`
+Drops implementation jargon ("S3" methodology prefix) from user-facing report
+and deck labels, fixes the Quebec-on-`.com`
 jurisdiction case, fills in Canadian regulatory coverage, and corrects the
 MCP install command in README + error message.
 
@@ -608,14 +627,12 @@ MCP install command in README + error message.
   failure). New "CPPA 2024–2026 Enforcement Pattern" section synthesizes
   the five recurring violation types every audit should map to.
 
-### Internal
+### Release metadata
 - Version bumped to 0.5.5 in `pyproject.toml` and `__init__.py`.
 
 ## [0.5.4] — 2026-05-19 — mypy strict-clean, 4 new eval cases, more CMP URLs
 
-Continued pre-launch polish toward the Thursday LinkedIn announcement.
-Tightening pass across types, regression coverage, and CMP detection
-breadth.
+Tightening pass across types, regression coverage, and CMP detection breadth.
 
 ### Fixed — mypy strict-mode now fully clean
 
@@ -642,7 +659,7 @@ the clean state.
 `evals/cases/`:
 - **005-truyo-cmp-detection.yaml** — Truyo's late-loaded CDN catches the
   post-scan URL refinement path (not the in-scan JS-global path).
-  Internal-only per Bounteous restriction.
+  Client-specific case excluded from public artifacts.
 - **006-cookiebot-eu-tld.yaml** — Cookiebot on a `.com` TLD resolves to
   EU via content signals (post-v0.5.1 generic-TLD escalation).
 - **007-ketch-headless-cmp.yaml** — Ketch is `dom_type: headless_api` (no
@@ -681,7 +698,7 @@ for your stack" updated.
 
 ## [0.5.3] — 2026-05-19 — vendor library expansion (36 → 77) + E2E smoke
 
-Pre-launch polish before the Thursday LinkedIn announcement.
+Public-release polish.
 
 ### Added — vendor library expanded from 36 to 77
 
@@ -745,15 +762,15 @@ it — useful as a positive control.
 
 ## [0.5.2] — 2026-05-18 — public-repo cleanup pass + API/MCP/skill tests
 
-Pre-launch hygiene before LinkedIn announcement. No runtime behavior change.
+Public-repo hygiene. No runtime behavior change.
 
 ### Removed (cleanup)
-- **`HANDOFF.md`** at repo root — internal dev-handoff doc from the v0.1.5
+- **Legacy maintainer notes** at repo root — obsolete notes from the v0.1.5
   bring-up. Not appropriate for a public OSS repo.
 - **`RELEASING.md`** at repo root — exposed the GitHub-environment name +
   workflow-trust-publisher details. Not a security vulnerability per se
-  (Trusted Publishing is OIDC, no secrets in the file), but internal
-  release-engineering process shouldn't live in a public repo. The
+  (Trusted Publishing is OIDC, no secrets in the file), but maintainer
+  release-process details should not live in a public repo. The
   release flow runs the same way; the docs just live in the maintainer's
   private notes now.
 - **`AGENTS.md`** replaced with a symlink to `CLAUDE.md` — the two were
@@ -776,12 +793,11 @@ Pre-launch hygiene before LinkedIn announcement. No runtime behavior change.
   Shopify, Pandectes, PiwikPRO, Transcend, Ensighten, DataGrail, CCM19,
   Wix, plus IAB TCF + GPC/GPP). Was misleadingly saying "ships with
   OneTrust" as if it were the only one.
-- **README credits trimmed** to Fred Pike + Phil Pearce (the two
-  MeasureSummit speakers whose frameworks materially shaped the
-  architecture). Removed third-party-vendor name-drops.
+- **README credits trimmed** to the project maintainer and durable project
+  dependencies. Removed third-party-vendor name-drops.
 - **`docs/sample-audit/README.md`** removed the "Once GitHub Pages is
   enabled" instructional block (Pages is enabled). Removed reference to
-  a Bounteous-channel client; replaced with `onetrust.com` and
+  a client-specific example; replaced with `onetrust.com` and
   `apple.com` as suggested demo targets.
 
 ### Added (tests)
@@ -841,11 +857,11 @@ cover surfaces that the v0.5.0 audit identified as under-tested.
 - `uvx --refresh consent-engine audit https://tesco.com` now produces an
   EU/GDPR-framed report (was US/CCPA in v0.5.0).
 
-## [0.5.0] — 2026-05-18 — FDE-portfolio public release
+## [0.5.0] — 2026-05-18 — public release
 
-Cornerstone release. Internal security audit closed all HIGH + MED findings;
-new SECURITY.md + CONTRIBUTING.md ship at repo root; broken `chat`
-subcommand removed; defaults hardened.
+Cornerstone release. Security review closed all HIGH + MED findings; new
+SECURITY.md + CONTRIBUTING.md ship at repo root; broken `chat` subcommand
+removed; defaults hardened.
 
 ### Security — HIGH findings closed
 - **SSRF guard** (`audit.py::_validate_audit_url`). Every `run_audit()` call
@@ -1090,7 +1106,7 @@ Google pages, not the project's own wiki, when discussing findings.
 ### Changed
 - **Marp deck switched to a light theme.** Replaced the navy dark scheme with
   a warm-cream (`#f6f4ee`) background, near-black headlines (`#14182b`),
-  KJB blue (`#3d6abb`) accents, and KJB navy (`#2b3954`) for section markers.
+  brand-blue (`#3d6abb`) accents, and brand-navy (`#2b3954`) section markers.
   Same Source Serif 4 + Inter typography. All inline marp styles updated in
   the same pass (`color:#f9fafb` → `color:#14182b`, `background:#111927` →
   `background:#ffffff`, `'Outfit'` / `'Raleway'` → `'Inter'`, dark borders →
@@ -1138,8 +1154,8 @@ Google pages, not the project's own wiki, when discussing findings.
   `templates/audit_deck.marp.md.j2` but that file is dead — Marp markdown is
   generated **inline** in `tool_08_report_generator.generate_marp_slides()`,
   and that inline CSS still used the old `Outfit/Raleway` + `#0d1117` palette.
-  Rewrote the inline `<style>` block with the KJB navy `#2b3954` +
-  blue `#3d6abb` palette and Anthropic-style typography (Source Serif 4 for
+  Rewrote the inline `<style>` block with the brand navy `#2b3954` +
+  blue `#3d6abb` palette and editorial typography (Source Serif 4 for
   headlines + big numbers, Inter 300 for body, generous padding, restrained
   chrome). Decks now render the way v0.2.0 promised.
 
@@ -1159,7 +1175,7 @@ Google pages, not the project's own wiki, when discussing findings.
   dollarization (monthly + annual recoverable ranges, formula breakdown).
   Only effective when paired with `--variant signal`.
 
-## [0.2.0] — 2026-05-17 — KJB-branded report, GPC scan, auto-remediation
+## [0.2.0] — 2026-05-17 — branded report, GPC scan, auto-remediation
 
 ### Added
 - **`--with-gpc` flag** on `consent-engine audit`. Runs a second scan with
@@ -1181,15 +1197,15 @@ Google pages, not the project's own wiki, when discussing findings.
   Rendered in a new **Open Gaps** section.
 
 ### Changed (visual)
-- **Marp deck restyled** to Anthropic-style typography with the locked
-  KJB palette: Source Serif 4 for headlines + big numbers, Inter 300 for
-  body, single-idea slides, navy `#2b3954` background, KJB blue `#3d6abb`
+- **Marp deck restyled** to editorial typography with the locked
+  brand palette: Source Serif 4 for headlines + big numbers, Inter 300 for
+  body, single-idea slides, navy `#2b3954` background, brand blue `#3d6abb`
   accent, off-white `#e8edf5` body, generous padding. Replaces the prior
   cyan/sky scheme.
-- **HTML report restyled** with the same Anthropic + KJB system in a
+- **HTML report restyled** with the same editorial brand system in a
   light variant: warm-cream `#f6f4ee` background, navy headlines,
-  KJB blue accents, Inter throughout, restrained card borders, no heavy
-  shadows. The CTA block now uses the KJB navy as a dark inversion at
+  brand blue accents, Inter throughout, restrained card borders, no heavy
+  shadows. The CTA block now uses the brand navy as a dark inversion at
   the bottom of the report.
 
 ## [0.1.8] — 2026-05-17 — revert v0.1.7 patchright swap
@@ -1394,8 +1410,7 @@ resolved the page.
 
 ### Design decisions
 - Deterministic by default. LLM scoped to executive-summary generation
-  only. Credit to Fred Pike (MeasureSummit May 2026) for the explicit
-  framing.
+  only.
 - Markdown wiki replaces vector DB. Karpathy LLM-wiki pattern. Zero
   embeddings, zero Pinecone, zero fine-tuning. The whole knowledge layer
   is version-controlled markdown.

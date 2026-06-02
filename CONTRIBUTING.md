@@ -6,7 +6,7 @@ Thanks for considering a contribution. This project is MIT-licensed and welcomes
 
 - **Deterministic by design.** The audit pipeline is eight standalone tools (see `docs/scenarios.md`). The LLM is scoped to executive-summary generation only. Don't add LLM calls to other tools without discussion.
 - **Wiki-grounded.** Regulatory + technical claims in the report come from `src/consent_engine/data/wiki/`. New claims need a wiki entry first, with a citation.
-- **Test gate is real.** `release.yml` runs `uv run pytest` before publishing to PyPI. If your PR breaks tests, the release pipeline will halt — please run tests locally first.
+- **Test gate is real.** `release.yml` runs `uv run pytest` before publishing to PyPI. If your PR breaks tests, the release pipeline will halt. Please run tests locally first.
 
 ## Local setup
 
@@ -18,17 +18,19 @@ uv run playwright install chromium
 uv run pytest tests/ -q
 ```
 
-If you hit `BrowserType.launch: Executable doesn't exist`, run `uv run playwright install chromium` again — the first install can take ~2 minutes.
+If you hit `BrowserType.launch: Executable doesn't exist`, run `uv run playwright install chromium` again. The first install can take ~2 minutes.
 
 ## Lint + type-check before opening a PR
 
 ```sh
 uv run ruff check src/ tests/
-uv run mypy src/                       # advisory; some warnings are documented
+uv run mypy src/
+uv run --extra mcp mypy src/
 uv run pytest tests/ -q
 ```
 
-A PR with `ruff` errors will fail CI. mypy warnings are advisory in v0.5.0 (see `docs/release-v0.5.0/type-coverage.md`) — please don't add new ones if you can avoid it.
+A PR with `ruff` or `mypy` errors will fail CI. The MCP lane is checked
+separately because the optional `[mcp]` extra changes the type-check surface.
 
 ## Adding a vendor
 
@@ -49,7 +51,7 @@ Edit `src/consent_engine/data/vendor_library/vendors.json`:
 }
 ```
 
-`legal_exposure` values: `"high" | "medium" | "low" | "unknown"`. Cite the source in `notes` — preferably an entry in `data/wiki/enforcement/`.
+`legal_exposure` values: `"high" | "medium" | "low" | "unknown"`. Cite the source in `notes`, preferably an entry in `data/wiki/enforcement/`.
 
 ### Standard / well-known
 

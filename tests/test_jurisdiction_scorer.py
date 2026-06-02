@@ -40,10 +40,35 @@ def test_declared_us_locale_is_high_confidence() -> None:
     ) == ("US", "high")
 
 
+def test_non_eu_country_subtag_narrows_ambiguous_language() -> None:
+    # Spanish, Portuguese, and French primary-language tags are EU signals only
+    # when no non-EU country subtag is present. A generic Latin American or
+    # Canadian localized page must not become EU on language alone.
+    assert detect_jurisdiction_with_confidence(
+        '<html lang="es-MX"><body>Noticias</body></html>', "https://news.com"
+    ) == ("US", "low")
+    assert detect_jurisdiction_with_confidence(
+        '<html><head><meta property="og:locale" content="pt_BR"></head></html>',
+        "https://shop.com",
+    ) == ("US", "low")
+    assert detect_jurisdiction_with_confidence(
+        '<html lang="fr-CA"><body>Bonjour</body></html>', "https://brand.com"
+    ) == ("CA", "high")
+
+
 def test_operator_identity_is_high_confidence() -> None:
     assert detect_jurisdiction_with_confidence(
         "<html><body>Acme GmbH</body></html>", "https://acme.com"
     ) == ("EU", "high")
+
+
+def test_conflicting_strong_signals_lower_confidence() -> None:
+    # A US-localized page with an EU operator is a real ambiguity. Keep the
+    # deterministic winner, but do not present the jurisdiction as high confidence.
+    assert detect_jurisdiction_with_confidence(
+        '<html lang="en-US"><body>Acme GmbH, Berlin</body></html>',
+        "https://acme.com",
+    ) == ("US", "low")
 
 
 # --- weak signals only corroborate (never flip US alone) ---------------------

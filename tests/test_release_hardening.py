@@ -1,6 +1,6 @@
-"""Regression tests for the v0.6.10 launch-stress-test fixes.
+"""Regression tests for release-hardening fixes.
 
-Each test pins a defect surfaced by the pre-launch live stress run (50 real
+Each test pins a defect surfaced by the release validation run (50 real
 sites + failure/SSRF probes) so it cannot silently recur:
 
   F1      methodology enum must never render as raw text in the report
@@ -157,3 +157,37 @@ def test_cli_audit_clean_error_on_ssrf_reject(capsys) -> None:
     err = capsys.readouterr().err
     assert "error:" in err.lower()
     assert "Traceback" not in err  # the whole point: no stacktrace leaks to the user
+
+
+def test_cli_audit_scan_exception_hides_traceback_by_default(capsys, monkeypatch, tmp_path) -> None:
+    import consent_engine.audit as audit_mod
+    from consent_engine.cli import main
+
+    async def _boom(*args, **kwargs):
+        raise RuntimeError("synthetic scan failure")
+
+    monkeypatch.setattr(audit_mod, "run_audit", _boom)
+    monkeypatch.delenv("CONSENT_ENGINE_DEBUG", raising=False)
+
+    rc = main(["audit", "https://example.com", "--no-open", "--output-dir", str(tmp_path)])
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "synthetic scan failure" in err
+    assert "Traceback" not in err
+
+
+def test_cli_audit_debug_env_prints_traceback(capsys, monkeypatch, tmp_path) -> None:
+    import consent_engine.audit as audit_mod
+    from consent_engine.cli import main
+
+    async def _boom(*args, **kwargs):
+        raise RuntimeError("synthetic scan failure")
+
+    monkeypatch.setattr(audit_mod, "run_audit", _boom)
+    monkeypatch.setenv("CONSENT_ENGINE_DEBUG", "1")
+
+    rc = main(["audit", "https://example.com", "--no-open", "--output-dir", str(tmp_path)])
+    err = capsys.readouterr().err
+    assert rc == 1
+    assert "Traceback" in err
+    assert "RuntimeError: synthetic scan failure" in err

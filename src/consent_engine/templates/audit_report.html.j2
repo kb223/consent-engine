@@ -8,15 +8,15 @@
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
 
   :root {
-    --bg:           #f6f4ee;   /* warm cream, Anthropic-style */
+    --bg:           #f6f4ee;   /* warm cream */
     --surface:      #ffffff;
     --surface-2:    #faf8f2;
     --text:         #1f2944;   /* near-navy body for high readability */
     --text-strong:  #14182b;
     --muted:        #6b7794;
-    --kjb-navy:     #2b3954;   /* KJB locked */
-    --kjb-blue:     #3d6abb;   /* KJB locked */
-    --kjb-divider:  #345187;   /* KJB locked */
+    --brand-navy:   #2b3954;
+    --brand-blue:   #3d6abb;
+    --brand-divider:#345187;
     --border:       #e7e3d8;
     --border-strong:#d8d2c2;
     --red:          #b34d4d;
@@ -59,7 +59,7 @@
   h3 {
     font-size: 0.72rem;
     font-weight: 600;
-    color: var(--kjb-blue);
+    color: var(--brand-blue);
     text-transform: uppercase;
     letter-spacing: 0.12em;
     margin: 0 0 10px;
@@ -74,7 +74,7 @@
     margin-bottom: 28px;
     border: 1px solid var(--border);
     background: var(--surface);
-    border-left: 3px solid var(--kjb-blue);
+    border-left: 3px solid var(--brand-blue);
   }
   .verdict.violation { border-left-color: var(--red); background: var(--red-soft); border-color: #e9c9c0; }
   .verdict.clean     { border-left-color: var(--green); background: var(--green-soft); border-color: #c8e0cd; }
@@ -175,7 +175,7 @@
   .gpc-panel.respected { border-left-color: var(--green); }
   .gpc-panel.ignored   { border-left-color: var(--red); }
   .gpc-panel.untested  { border-left-color: var(--border-strong); }
-  .gpc-panel h3 { margin: 0 0 14px; font-size: 0.7rem; color: var(--kjb-navy); letter-spacing: 0.12em; }
+  .gpc-panel h3 { margin: 0 0 14px; font-size: 0.7rem; color: var(--brand-navy); letter-spacing: 0.12em; }
   .gpc-panel .tag {
     display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em;
     text-transform: uppercase; padding: 3px 8px; border-radius: 3px; margin-left: 8px;
@@ -244,7 +244,7 @@
   .remediation {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--kjb-blue);
+    border-left: 3px solid var(--brand-blue);
     border-radius: 5px;
     padding: 20px 24px;
     margin-bottom: 28px;
@@ -270,17 +270,17 @@
   .reg-chunk {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--kjb-blue);
+    border-left: 3px solid var(--brand-blue);
     border-radius: 5px;
     padding: 18px 22px;
     margin-bottom: 18px;
   }
   .reg-source {
-    font-size: 0.66rem; font-weight: 700; color: var(--kjb-blue);
+    font-size: 0.66rem; font-weight: 700; color: var(--brand-blue);
     text-transform: uppercase; letter-spacing: 0.1em;
     margin-bottom: 12px; display: flex; align-items: center;
   }
-  .reg-source::before { content: "§"; margin-right: 6px; font-size: 1rem; color: var(--kjb-blue); flex-shrink: 0; }
+  .reg-source::before { content: "§"; margin-right: 6px; font-size: 1rem; color: var(--brand-blue); flex-shrink: 0; }
   .reg-text { font-size: 0.88rem; color: var(--text); line-height: 1.7; word-break: break-word; }
   .reg-text h1,.reg-text h2,.reg-text h3 {
     font-family: 'Inter', sans-serif;
@@ -322,7 +322,7 @@
   /* CTA before footer */
   .next-step {
     display: flex; align-items: center; justify-content: space-between; gap: 28px;
-    background: var(--kjb-navy);
+    background: var(--brand-navy);
     border: none;
     border-radius: 6px;
     padding: 28px 32px;
@@ -331,7 +331,7 @@
   }
   .next-step-eyebrow {
     font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--kjb-blue); font-weight: 700; margin-bottom: 8px;
+    color: var(--brand-blue); font-weight: 700; margin-bottom: 8px;
   }
   .next-step-title {
     font-family: 'Source Serif 4', Georgia, serif;
@@ -341,7 +341,7 @@
   .next-step-sub { font-size: 0.85rem; color: #c4cde0; margin-top: 6px; line-height: 1.55; }
   .next-step-btn {
     flex-shrink: 0; display: inline-block;
-    background: var(--kjb-blue); color: #fff !important;
+    background: var(--brand-blue); color: #fff !important;
     text-decoration: none; font-size: 0.85rem; font-weight: 600;
     padding: 14px 22px; border-radius: 5px; white-space: nowrap;
     letter-spacing: 0.02em;
@@ -635,7 +635,7 @@
 <div class="container">
 
   {% if firm_name %}
-  <div style="font-size: 0.7rem; color: var(--kjb-blue); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 600; margin-bottom: 8px;">
+  <div style="font-size: 0.7rem; color: var(--brand-blue); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 600; margin-bottom: 8px;">
     Prepared for {{ firm_name }} · Confidential
   </div>
   {% endif %}

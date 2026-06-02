@@ -7,7 +7,7 @@ style: |
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
 
   :root {
-    /* LIGHT theme — warm cream, Anthropic-style, KJB accents */
+    /* LIGHT theme — warm cream, brand accents */
     --bg:    #f6f4ee;          /* warm cream */
     --s:     #ffffff;          /* surface */
     --s2:    #faf8f2;           /* alt surface */
@@ -16,8 +16,8 @@ style: |
     --t:     #14182b;          /* headline near-black */
     --body:  #1f2944;          /* body near-navy */
     --m:     #6b7794;          /* muted */
-    --a:     #3d6abb;          /* KJB blue accent */
-    --navy:  #2b3954;          /* KJB navy — section markers */
+    --a:     #3d6abb;          /* brand blue accent */
+    --navy:  #2b3954;          /* brand navy section markers */
     --g:     #2f7a4f;          /* green */
     --gs:    #e4f1e6;          /* green-soft */
     --r:     #b34d4d;          /* red */
