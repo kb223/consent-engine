@@ -1446,6 +1446,50 @@ def generate_marp_slides(
             f"</div>"
         )
 
+    def _severity_tag(severity: str) -> str:
+        color = (
+            "#ef4444"
+            if severity in {"critical", "high"}
+            else "#f59e0b"
+            if severity == "medium"
+            else "#6b7280"
+        )
+        return _tag(severity.upper(), color)
+
+    def _theme_row(label: str, severity: str, evidence: str, action: str) -> str:
+        return (
+            '<div style="display:grid;grid-template-columns:1.5fr 0.8fr 2fr 2fr;'
+            'gap:14px;align-items:start;padding:10px 0;border-bottom:1px solid #e7e3d8;'
+            'font-size:0.66em;">'
+            f'<div style="color:#14182b;font-weight:600;">{html.escape(label)}</div>'
+            f"<div>{_severity_tag(severity)}</div>"
+            f'<div style="color:#4b5563;line-height:1.45;">{html.escape(evidence)}</div>'
+            f'<div style="color:#6b7280;line-height:1.45;">{html.escape(action)}</div>'
+            "</div>"
+        )
+
+    def _inventory_row(
+        vendor: str,
+        evidence_type: str,
+        risk: str,
+        gpc_observed: bool,
+        contract_review_needed: bool,
+    ) -> str:
+        risk_color = "#ef4444" if risk == "likely" else "#f59e0b" if risk == "possible" else "#6b7280"
+        gpc_text = "Observed" if gpc_observed else "Not observed"
+        contract_text = "Needed" if contract_review_needed else "Low"
+        return (
+            '<div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;'
+            'gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid #e7e3d8;'
+            'font-size:0.65em;">'
+            f'<div style="color:#14182b;font-weight:600;">{html.escape(vendor)}</div>'
+            f'<div style="color:#4b5563;">{html.escape(evidence_type.replace("_", " ").title())}</div>'
+            f'<div>{_tag(risk.upper(), risk_color)}</div>'
+            f'<div style="color:#6b7280;">{gpc_text}</div>'
+            f'<div style="color:#6b7280;">{contract_text}</div>'
+            "</div>"
+        )
+
     def _vendor_card(name: str, cookies: str, category: str, exposure: str) -> str:
         e_color = (
             "#ef4444" if exposure == "high" else "#f59e0b" if exposure == "medium" else "#6b7280"
@@ -1907,6 +1951,73 @@ def generate_marp_slides(
             f"{_gpc_footer}\n"
         )
 
+    # Enforcement pattern map and inventory slides. These are deterministic
+    # rollups of scan facts, intended for counsel and privacy engineering triage.
+    _enforcement_slide_md = ""
+    if audit_result.enforcement_themes:
+        _theme_rows = ""
+        for _theme in audit_result.enforcement_themes[:6]:
+            _theme_rows += _theme_row(
+                _theme.label,
+                _theme.severity,
+                "; ".join(_theme.evidence) or "Mapped from scan evidence",
+                _theme.recommended_action,
+            )
+        if len(audit_result.enforcement_themes) > 6:
+            _theme_rows += (
+                '<p style="font-size:0.58em;color:#6b7280;margin-top:8px;">'
+                f"+{len(audit_result.enforcement_themes) - 6} additional theme(s) "
+                "documented in the full report.</p>"
+            )
+        _enforcement_slide_md = (
+            "---\n\n"
+            "<!-- _class: compact -->\n\n"
+            "### ENFORCEMENT PATTERN MAP\n\n"
+            "# Current Enforcement Themes\n\n"
+            '<div style="display:grid;grid-template-columns:1.5fr 0.8fr 2fr 2fr;'
+            'gap:14px;padding-bottom:7px;border-bottom:2px solid #d8d2c2;'
+            'font-size:0.56em;color:#6b7794;text-transform:uppercase;letter-spacing:0.12em;">'
+            "<div>Theme</div><div>Severity</div><div>Evidence</div><div>Action</div></div>"
+            f"{_theme_rows}\n"
+        )
+
+    _inventory_slide_md = ""
+    if audit_result.tracking_inventory:
+        _inventory_rows = ""
+        _sorted_inventory = sorted(
+            audit_result.tracking_inventory,
+            key=lambda row: (
+                {"likely": 0, "possible": 1, "none": 2}.get(row.sale_or_sharing_risk, 3),
+                row.vendor_name.lower(),
+            ),
+        )
+        for _row in _sorted_inventory[:8]:
+            _inventory_rows += _inventory_row(
+                _row.vendor_name,
+                _row.evidence_type,
+                _row.sale_or_sharing_risk,
+                _row.observed_under_gpc,
+                _row.contract_review_needed,
+            )
+        if len(_sorted_inventory) > 8:
+            _inventory_rows += (
+                '<p style="font-size:0.58em;color:#6b7280;margin-top:8px;">'
+                f"+{len(_sorted_inventory) - 8} additional row(s) documented in the "
+                "full report and JSON artifact.</p>"
+            )
+        _inventory_slide_md = (
+            "---\n\n"
+            "<!-- _class: compact -->\n\n"
+            "### TRACKING TECHNOLOGY INVENTORY\n\n"
+            "# Vendors Requiring Review\n\n"
+            '<div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;'
+            'gap:12px;padding-bottom:7px;border-bottom:2px solid #d8d2c2;'
+            'font-size:0.56em;color:#6b7794;text-transform:uppercase;letter-spacing:0.12em;">'
+            "<div>Vendor</div><div>Evidence</div><div>Sale / Sharing</div>"
+            "<div>GPC</div><div>Contract</div></div>"
+            f"{_inventory_rows}\n"
+        )
+
     # Immediate actions (two-panel)
     _imm = []
     for f in violations[:3]:
@@ -2285,6 +2396,10 @@ style: |
 {_gpc_slide_md}
 
 {_cmp_runtime_slide_md}
+
+{_enforcement_slide_md}
+
+{_inventory_slide_md}
 
 ---
 

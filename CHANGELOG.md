@@ -3,6 +3,38 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.13] - 2026-06-04 - enforcement pattern map + tracking inventory
+
+### Added
+- **Deterministic enforcement-pattern map.** Audit results now include
+  `enforcement_themes`, a regulator-facing mapping from observed scan facts to
+  current US enforcement patterns: opt-out mechanism failure, GPC / universal
+  opt-out failure, consent asymmetry, vendor governance, sensitive-context
+  sharing, minors privacy, tracking inventory, and server-side consent gaps.
+- **Tracking-technology inventory.** Reports now normalize observed cookies,
+  pixels, and server-side tag paths into `tracking_inventory` rows with vendor,
+  category, evidence type, opt-out observation, GPC observation, sale/sharing
+  review risk, contract-review flag, and inferred sensitive context.
+- **Report and deck sections.** `report.html` now renders an Enforcement
+  Pattern Map and Tracking Technology Inventory. The Marp deck now includes
+  compact slides for the same review queues when evidence exists.
+- **2025-2026 US enforcement wiki page.** Added a primary-source-backed wiki
+  page for current US enforcement patterns covering opt-out mechanics, GPC /
+  UOOM, consent friction, vendor contracts, sensitive context, minors, and
+  inventory/scanning obligations.
+
+### Changed
+- **RAG retrieval now understands enforcement themes.** US scans with mapped
+  enforcement themes pull the new 2025-2026 enforcement-pattern page alongside
+  the existing CCPA, GPC, class-action, and technical context pages.
+- **Public docs updated.** README and scenario docs now describe the
+  enforcement-pattern map and tracking inventory as deterministic derived
+  artifacts, not legal conclusions.
+- **Sample audit refreshed.** `docs/sample-audit/` was regenerated from
+  v0.6.13 so the public demo JSON includes the new schema fields.
+- **Public-repo hygiene.** A stale eval note that referenced an internal
+  relationship was replaced with neutral regression-fixture language.
+
 ## [0.6.12] - 2026-06-01 - public release cleanup + scorer edge-case hardening
 
 ### Fixed

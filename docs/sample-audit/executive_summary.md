@@ -1,1 +1,1 @@
-No confirmed consent violations were detected at https://example.com under the s3_inconclusive_unknown_cmp methodology.
+No confirmed consent violations were detected at https://example.com under the Inconclusive (CMP not recognised, injection unverified) methodology.

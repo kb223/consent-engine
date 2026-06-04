@@ -15,8 +15,8 @@ notes: |
      calls `detect_cmp_from_network_only` when the in-scan detector
      returns "unknown" or low-confidence.
 
-  Per memory, this site is a Bounteous-channel client. Do NOT use this
-  case in public copy / LinkedIn / case studies — internal eval only.
+  This case uses a publicly reachable site as a regression fixture. Do
+  not present it as an endorsement, customer case study, or relationship.
 expected:
   has_definitive_findings: true
   consent_state: "opted_out"

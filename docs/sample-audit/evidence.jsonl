@@ -1,1 +1,2 @@
-{"url": "https://example.com/", "method": "GET", "timestamp": "2026-05-28T17:06:46.105960Z", "status_code": 200, "request_type": "document", "initiator": "about:blank"}
+{"url": "https://example.com/", "method": "GET", "timestamp": "2026-06-04T02:13:50.383159Z", "status_code": 200, "request_type": "document", "initiator": "about:blank"}
+{"url": "https://example.com/", "method": "GET", "timestamp": "2026-06-04T02:13:58.477921Z", "status_code": 200, "request_type": "document", "initiator": "https://example.com/"}

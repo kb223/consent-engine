@@ -3,20 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Consent Compliance Audit — https://example.com</title>
+<title>Consent Compliance Audit: https://example.com</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
 
   :root {
-    --bg:           #f6f4ee;   /* warm cream, editorial */
+    --bg:           #f6f4ee;   /* warm cream */
     --surface:      #ffffff;
     --surface-2:    #faf8f2;
     --text:         #1f2944;   /* near-navy body for high readability */
     --text-strong:  #14182b;
     --muted:        #6b7794;
-    --brand-navy:     #2b3954;   /* brand color */
-    --brand-blue:     #3d6abb;   /* brand color */
-    --brand-divider:  #345187;   /* brand color */
+    --brand-navy:   #2b3954;
+    --brand-blue:   #3d6abb;
+    --brand-divider:#345187;
     --border:       #e7e3d8;
     --border-strong:#d8d2c2;
     --red:          #b34d4d;
@@ -78,6 +78,7 @@
   }
   .verdict.violation { border-left-color: var(--red); background: var(--red-soft); border-color: #e9c9c0; }
   .verdict.clean     { border-left-color: var(--green); background: var(--green-soft); border-color: #c8e0cd; }
+  .verdict.inconclusive { border-left-color: var(--amber); background: var(--amber-soft); border-color: #ecdcb6; }
   .verdict-title {
     font-family: 'Source Serif 4', Georgia, serif;
     font-size: 1.35rem; font-weight: 500; margin: 0 0 6px;
@@ -85,6 +86,7 @@
   }
   .verdict.violation .verdict-title { color: var(--red); }
   .verdict.clean     .verdict-title { color: var(--green); }
+  .verdict.inconclusive .verdict-title { color: var(--amber); }
   .verdict-sub { font-size: 0.85rem; color: var(--muted); margin: 0; }
 
   /* Executive summary */
@@ -635,7 +637,7 @@
   
 
   <h1>Consent Compliance Audit</h1>
-  <p class="meta">https://example.com &nbsp;·&nbsp; 2026-05-28 17:06:52 UTC &nbsp;·&nbsp; Inconclusive (CMP not recognised, injection unverified)</p>
+  <p class="meta">https://example.com &nbsp;·&nbsp; 2026-06-04 02:14:00 UTC &nbsp;·&nbsp; Inconclusive (CMP not recognised, injection unverified)</p>
 
   <!-- SECTION A — EXECUTIVE SUMMARY -->
 
@@ -643,24 +645,26 @@
   
   
   
-  <div class="verdict clean">
+  
+  
+  <div class="verdict inconclusive">
     <p class="verdict-title">
       
-        No Consent Violations Detected
+        Consent Enforcement Not Verified
       
     </p>
     <p class="verdict-sub">
       
-        0 confirmed violations &nbsp;·&nbsp;
-        0 vendors analyzed &nbsp;·&nbsp;
-        s3_inconclusive_unknown_cmp
+        0 vendors observed (indicative) &nbsp;·&nbsp;
+        consent enforcement could not be verified &nbsp;·&nbsp;
+        Inconclusive (CMP not recognised, injection unverified)
       
     </p>
   </div>
 
   <div class="exec-summary">
     <h2>Executive Summary</h2>
-    <p>No confirmed consent violations were detected at https://example.com under the s3_inconclusive_unknown_cmp methodology.</p>
+    <p>No confirmed consent violations were detected at https://example.com under the Inconclusive (CMP not recognised, injection unverified) methodology.</p>
   </div>
 
   
@@ -677,7 +681,7 @@
   <div class="inconclusive-banner">
     <p style="margin: 0 0 4px;">
       <span class="lbl">Methodology: Inconclusive</span>
-      <strong>CMP not recognized — further investigation required.</strong>
+      <strong>CMP not recognized. Further investigation required.</strong>
     </p>
     <p style="margin: 0; font-size: 0.85rem;">
       Consent cookies were injected but a denied Google Consent Mode signal was not observed; the consent platform could not be identified. Treat findings as indicative, not legally defensible.
@@ -724,8 +728,11 @@
       </div>
     </div>
     <p style="margin: 10px 0 0; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
-      Under CCPA/CPRA, GPC is a legally binding opt-out signal. California's CPPA has stated
-      GPC non-compliance is enforceable without prior notice.
+      
+      
+        Under CCPA/CPRA, GPC is a legally binding opt-out signal. California's CPPA has stated
+        GPC non-compliance is enforceable without prior notice.
+      
     </p>
   </div>
   
@@ -762,13 +769,15 @@
       <div class="signal-value">
         United States (CCPA / State Laws)
       </div>
-      <div class="signal-sub">auto-detected</div>
+      
+      <div class="signal-sub">inferred (low confidence); pass --jurisdiction to override</div>
+      
     </div>
     
     <div class="signal-card">
       <div class="signal-label">Server-Side GTM</div>
       <div class="signal-value">Not detected</div>
-      <div class="signal-sub">&mdash;</div>
+      <div class="signal-sub">—</div>
     </div>
     <div class="signal-card">
       <div class="signal-label">GPC Tested</div>
@@ -779,6 +788,10 @@
     
     
   </div>
+
+  
+
+  
 
   
 
@@ -921,6 +934,7 @@ Format: <code>G1AB</code> where <code>A</code> = ad_storage, <code>B</code> = an
       <h2>Manual Validation Checklist</h2>
     </div>
     <div style="padding: 10px 16px 4px; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
+      
       Reproduce each finding in a browser to confirm audit accuracy. All steps assume incognito mode with a California VPN or geolocation override.
     </div>
     <div style="padding: 8px 20px 16px;">
@@ -933,7 +947,7 @@ Format: <code>G1AB</code> where <code>A</code> = ad_storage, <code>B</code> = an
           <strong>Check:</strong> Verify consent banner appears for California visitors.
         </div>
         <div style="font-size: 0.78rem; color: #4b5563; line-height: 1.5; margin-bottom: 6px;">
-          <strong>Steps:</strong> Open an incognito window. Use a VPN set to Los Angeles, CA (or Chrome DevTools > Sensors > Location: Los Angeles). Navigate to the site. The consent banner should appear on first visit.
+          <strong>Steps:</strong> Open an incognito window. Use a VPN set to a California location (or Chrome DevTools &gt; Sensors &gt; Location). Navigate to the site. The consent banner should appear on first visit.
         </div>
         <div style="font-size: 0.78rem; color: #374151; line-height: 1.5; background: #fff; border-radius: 4px; padding: 8px 10px; border: 1px solid #e5e7eb;">
           <strong>Expected:</strong> Banner appears with Reject/Deny option. Our scan detected consent banner via cookie injection.Our scan did NOT see a visible banner. The CMP may be IP-gated to specific regions.
@@ -948,10 +962,10 @@ Format: <code>G1AB</code> where <code>A</code> = ad_storage, <code>B</code> = an
           <strong>Check:</strong> Verify the site respects the Global Privacy Control signal.
         </div>
         <div style="font-size: 0.78rem; color: #4b5563; line-height: 1.5; margin-bottom: 6px;">
-          <strong>Steps:</strong> Install a GPC browser extension (e.g., OptMeowt or Privacy Badger with GPC enabled). Navigate to the site. Check: (1) Does the CMP auto-set to opt-out? (2) In DevTools > Network, do request headers include 'Sec-GPC: 1'? (3) Does navigator.globalPrivacyControl return true in Console?
+          <strong>Steps:</strong> Install a GPC browser extension (e.g., OptMeowt or Privacy Badger with GPC enabled). Navigate to the site. Check: (1) Does the CMP auto-set to opt-out? (2) In DevTools &gt; Network, do request headers include &#39;Sec-GPC: 1&#39;? (3) Does navigator.globalPrivacyControl return true in Console?
         </div>
         <div style="font-size: 0.78rem; color: #374151; line-height: 1.5; background: #fff; border-radius: 4px; padding: 8px 10px; border: 1px solid #e5e7eb;">
-          <strong>Expected:</strong> Under CCPA/CPRA, GPC is a legally binding opt-out signal. The CMP should auto-deny consent when GPC is detected. California's CPPA has stated GPC non-compliance is enforceable without prior notice.
+          <strong>Expected:</strong> The CMP should auto-deny consent when GPC is detected. Under CCPA/CPRA, GPC is a legally binding opt-out signal. California&#39;s CPPA has stated GPC non-compliance is enforceable without prior notice.
         </div>
       </div>
       
@@ -973,7 +987,7 @@ Format: <code>G1AB</code> where <code>A</code> = ad_storage, <code>B</code> = an
   </div>
 
   <footer>
-    Generated by consent-engine &nbsp;·&nbsp; Audit ID: 87cea70e-9719-4421-8b1d-530d144a30d4
+    Generated by consent-engine &nbsp;·&nbsp; Audit ID: 59691183-4b35-46e9-8262-22bd6aa272f4
   </footer>
 
 </div>

@@ -16,7 +16,8 @@ flowchart LR
     PIX --> VL
     VL --> CLA[tool_02 violation classifier]
     SSG --> CLA
-    CLA --> WIK[tool_07 wiki retrieve]
+    CLA --> MAP[derived enforcement map + inventory]
+    MAP --> WIK[tool_07 wiki retrieve]
     WIK --> REP[tool_08 report + deck]
     REP --> OUT[(report.html<br/>audit_result.json<br/>evidence.jsonl<br/>deck.marp.md)]
 ```
@@ -105,6 +106,30 @@ headers, opt-out propagation through the GTM Server container).
    timing context, references the relevant wiki page on tag ordering
    races, returns a grounded answer with line numbers from the evidence.
 
+## Scenario E: enforcement-pattern map and tracking inventory
+
+**Input**: a US retail or content site with a CMP, advertising pixels, and GPC
+testing enabled.
+
+**Flow**:
+1. tool_03 captures the post-reject network state and the GPC network state.
+2. tool_06b normalizes pixel endpoint firings by vendor, category, and exposure.
+3. The derived enforcement mapper groups observed cookies, pixels, and
+   server-side endpoints into `tracking_inventory` rows.
+4. The mapper adds `enforcement_themes` for facts such as opt-out mechanism
+   failure, GPC / universal opt-out failure, consent asymmetry, vendor
+   governance, sensitive-context sharing, minors privacy, or server-side consent
+   propagation gaps.
+5. tool_07 retrieves the 2025-2026 US enforcement-pattern wiki page when those
+   themes are present.
+6. tool_08 renders the theme map and inventory in `report.html`,
+   `audit_result.json`, and the Marp deck.
+
+**Output**: a report that shows both the raw evidence and the review queue:
+which vendors fired, which enforcement patterns the evidence maps to, which
+vendors likely need sale/sharing or contract review, and which items require
+manual legal or privacy review.
+
 ## Inputs / outputs reference
 
 | Input | Source | Required? |
@@ -121,3 +146,5 @@ headers, opt-out propagation through the GTM Server container).
 | Marp slide deck | `deck.marp.md` | client / executive |
 | Network evidence | `evidence.jsonl` | legal, MCP evidence queries |
 | Executive summary | embedded in report | CMO / privacy officer |
+| Enforcement pattern map | `audit_result.json`, `report.html`, `deck.marp.md` | privacy, legal, engineering |
+| Tracking technology inventory | `audit_result.json`, `report.html`, `deck.marp.md` | privacy operations, vendor governance |

@@ -1,7 +1,7 @@
 # Consent Compliance Wiki — Master Index
 
-Last updated: 2026-04-11
-Total pages: 15
+Last updated: 2026-06-03
+Total pages: 23
 
 ---
 
@@ -38,6 +38,7 @@ Total pages: 15
 | [enforcement/gdpr-fines.md](enforcement/gdpr-fines.md) | GDPR landmark fines — Meta €1.2B, Amazon €746M, LinkedIn €310M, Google/CNIL €150M |
 | [enforcement/us-enforcement.md](enforcement/us-enforcement.md) | US cases — Sephora $1.2M (GPC), Aspen Dental $18.5M (health), Epic $520M (dark patterns) |
 | [enforcement/emerging-trends.md](enforcement/emerging-trends.md) | Pixel-as-sale, LI rejection, server-side bypass, health data, children's data, LLM disclosure |
+| [enforcement/us-2026-enforcement-patterns.md](enforcement/us-2026-enforcement-patterns.md) | 2025-2026 US enforcement patterns: opt-out testing, GPC/UOOM, vendor inventory, sensitive context, minors |
 
 ---
 
@@ -56,20 +57,20 @@ Total pages: 15
 
 | Audit Finding | Read These Pages |
 |---|---|
-| US violations / pixel fires after opt-out | ccpa → us-state-laws → gpc-signal → us-enforcement |
-| GPC signal + pixel fired | gpc-signal → ccpa → us-enforcement |
+| US violations / pixel fires after opt-out | us-2026-enforcement-patterns → ccpa → us-state-laws → gpc-signal → us-enforcement |
+| GPC signal + pixel fired | gpc-signal → us-2026-enforcement-patterns → ccpa → us-enforcement |
 | GCS=G100 in network | consent-mode-v2 → consent-mode-impact |
 | GCS=G101/G110 partial opt-out | consent-mode-v2 → cmp-profiles → ccpa |
 | Unknown CMP detected | cmp-profiles → cmp-failures |
 | CMP JS API fails / shadow DOM | cmp-profiles → cmp-failures |
-| SSGTM detected | ssgtm-risk → google-tag-gateway → emerging-trends |
+| SSGTM detected | ssgtm-risk → google-tag-gateway → us-2026-enforcement-patterns → emerging-trends |
 | EU jurisdiction | gdpr → tcf → gdpr-fines |
 | Quebec / Canada | quebec-law25 → pipeda → consent-mode-v2 |
 | Canada (non-Quebec, federal floor) | pipeda → quebec-law25 → consent-mode-v2 |
 | Meta/TikTok pixel violations | cipa-vppa → us-enforcement → emerging-trends |
-| Health-adjacent site | cipa-vppa → emerging-trends → ccpa |
-| Video content + pixels | cipa-vppa → us-enforcement |
-| Dark patterns / UX issues | dark-patterns → gdpr → gdpr-fines |
+| Health-adjacent site | us-2026-enforcement-patterns → cipa-vppa → emerging-trends → ccpa |
+| Video content + pixels | us-2026-enforcement-patterns → cipa-vppa → us-enforcement |
+| Dark patterns / UX issues | dark-patterns → us-2026-enforcement-patterns → gdpr → gdpr-fines |
 | CMP failure / race condition | cmp-failures → consent-mode-v2 |
 | Clean scan | consent-mode-impact → consent-mode-v2 |
 | enforcement/live-fines-db.md | Live GDPR Fines DB | Live enforcement data from EnforcementTracker (3,000+ cases) | consent, fines, gdpr, enforcement |

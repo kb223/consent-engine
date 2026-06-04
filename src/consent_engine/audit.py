@@ -29,12 +29,18 @@ from consent_engine.models.audit_result import (
     AuditResult,
     HarAnalysis,
     MethodologyFlag,
+    PixelFiring,
     VendorFinding,
     ViolationStatus,
 )
 from consent_engine.models.scan_result import ScanResult
 from consent_engine.security import validate_audit_url
 from consent_engine.tools.cmp_detector import detect_cmp_from_network_only
+from consent_engine.tools.enforcement_mapper import (
+    build_enforcement_themes,
+    build_tracking_inventory,
+    infer_sensitive_contexts,
+)
 from consent_engine.tools.jurisdiction_detector import (
     jurisdiction_copy,
     resolve_jurisdiction_with_confidence,
@@ -674,6 +680,7 @@ async def run_audit(
     gpc_vendors_after_signal = 0
     gpc_pixel_count_baseline = 0
     gpc_pixel_count_with_gpc = 0
+    gpc_pixels: list[PixelFiring] = []
     if gpc_scan is not None:
         gpc_pixels = detect_pixel_firings(gpc_scan.network_requests)
         baseline_count = len(pixel_firings)
@@ -723,6 +730,20 @@ async def run_audit(
         gpc_pixel_count_with_gpc=gpc_pixel_count_with_gpc,
         cmp_runtime_config=scan.cmp_runtime_config,
         consent_events=scan.consent_events,
+    )
+
+    # 5a. Map the raw forensic evidence to current enforcement patterns and a
+    # normalized tracking-technology inventory. These are derived artifacts, not
+    # independent scan inputs.
+    sensitive_contexts = infer_sensitive_contexts(url, scan.page_html)
+    audit_result.tracking_inventory = build_tracking_inventory(
+        audit_result,
+        gpc_pixel_firings=gpc_pixels,
+        sensitive_contexts=sensitive_contexts,
+    )
+    audit_result.enforcement_themes = build_enforcement_themes(
+        audit_result,
+        sensitive_contexts=sensitive_contexts,
     )
 
     # 5b. Derive concrete remediation steps + open gaps from the assembled

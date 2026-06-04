@@ -1,12 +1,16 @@
-# Sample audit — `example.com`
+# Sample audit - `example.com`
 
-> Captured 2026-05-26 from consent-engine v0.6.0 against `https://example.com`. Committed here so cold readers can see what an audit bundle looks like before running the tool themselves.
+> Captured 2026-06-04 from consent-engine v0.6.13 against `https://example.com`. Committed here so cold readers can see what an audit bundle looks like before running the tool themselves.
 >
 > Because `example.com` has no CMP and no trackers, the engine reports
-> `detected_cmp: null` and methodology `s3_inconclusive_unknown_cmp` — it
+> `detected_cmp: null` and methodology `s3_inconclusive_unknown_cmp`. It
 > injected an opt-out state but could not verify any CMP honored it, so it
 > declines to call the result definitive. That conservative posture is the
 > point: the tool does not fabricate findings on a site with nothing to find.
+>
+> The v0.6.13 `tracking_inventory` and `enforcement_themes` fields are present
+> in `audit_result.json` and empty for this sample because no tracking
+> technologies or enforcement-pattern evidence were observed.
 
 ## Files
 
@@ -34,13 +38,13 @@ That's the whole thing. ~30 seconds. The other 5 files are produced by the same 
 
 ## Why `example.com` and not a more interesting target
 
-`example.com` is RFC 2606 reserved, has no tracking, and produces a deterministic clean-pass audit. It's the safest demo target — no risk of a future page change invalidating this sample.
+`example.com` is RFC 2606 reserved, has no tracking, and produces a deterministic clean-pass audit. It's the safest demo target, with no risk of a future page change invalidating this sample.
 
 For more interesting demo runs (vendor leaks, GPC ignored, multi-jurisdiction), try these on your own machine:
 
-- `https://onetrust.com` — the CMP vendor itself; well-configured, useful baseline
-- `https://canadiantire.ca` — jurisdiction CA, OneTrust CMP, multiple confirmed violations
-- `https://tesco.com` — UK retailer on `.com`; content-signal jurisdiction detection
-- `https://apple.com` — large enterprise site, sophisticated stack
+- `https://onetrust.com` - the CMP vendor itself; well-configured, useful baseline
+- `https://canadiantire.ca` - jurisdiction CA, OneTrust CMP, multiple confirmed violations
+- `https://tesco.com` - UK retailer on `.com`; content-signal jurisdiction detection
+- `https://apple.com` - large enterprise site, sophisticated stack
 
 Run any of those yourself to see the violation-heavy variant.

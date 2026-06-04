@@ -24,7 +24,14 @@ _WIKI_ROOT = Path(__file__).parent.parent / "data" / "wiki"
 # Each entry is a list of wiki page paths relative to _WIKI_ROOT.
 # Primary pages are listed first; secondary pages follow.
 _FINDING_PAGE_MAP: dict[str, list[str]] = {
+    "us_2026_enforcement_patterns": [
+        "enforcement/us-2026-enforcement-patterns.md",
+        "regulations/ccpa.md",
+        "regulations/us-state-laws.md",
+        "concepts/gpc-signal.md",
+    ],
     "us_violation": [
+        "enforcement/us-2026-enforcement-patterns.md",
         "regulations/ccpa.md",
         "regulations/us-state-laws.md",
         "concepts/gpc-signal.md",
@@ -34,6 +41,7 @@ _FINDING_PAGE_MAP: dict[str, list[str]] = {
     ],
     "gpc_violation": [
         "concepts/gpc-signal.md",
+        "enforcement/us-2026-enforcement-patterns.md",
         "regulations/ccpa.md",
         "enforcement/us-enforcement.md",
         "enforcement/us-class-actions.md",
@@ -45,6 +53,7 @@ _FINDING_PAGE_MAP: dict[str, list[str]] = {
     "ssgtm": [
         "concepts/ssgtm-risk.md",
         "technical/google-tag-gateway.md",
+        "enforcement/us-2026-enforcement-patterns.md",
         "enforcement/emerging-trends.md",
     ],
     "eu_jurisdiction": [
@@ -70,16 +79,19 @@ _FINDING_PAGE_MAP: dict[str, list[str]] = {
         "enforcement/emerging-trends.md",
     ],
     "health_site": [
+        "enforcement/us-2026-enforcement-patterns.md",
         "concepts/cipa-vppa.md",
         "enforcement/emerging-trends.md",
         "regulations/ccpa.md",
     ],
     "video_site": [
+        "enforcement/us-2026-enforcement-patterns.md",
         "concepts/cipa-vppa.md",
         "enforcement/us-enforcement.md",
     ],
     "dark_patterns": [
         "concepts/dark-patterns.md",
+        "enforcement/us-2026-enforcement-patterns.md",
         "regulations/gdpr.md",
         "enforcement/gdpr-fines.md",
     ],
@@ -185,6 +197,18 @@ def _select_page_keys(audit_result: AuditResult) -> list[str]:
     is_us = jurisdiction == "US"
     if has_violations and is_us:
         keys.append("us_violation")
+
+    if audit_result.enforcement_themes and is_us:
+        keys.append("us_2026_enforcement_patterns")
+        theme_keys = {theme.key for theme in audit_result.enforcement_themes}
+        if "gpc_uoom_failure" in theme_keys:
+            keys.append("gpc_violation")
+        if "sensitive_data_purpose_limitation" in theme_keys:
+            keys.append("health_site")
+        if "consent_asymmetry" in theme_keys:
+            keys.append("dark_patterns")
+        if "server_side_consent_gap" in theme_keys:
+            keys.append("ssgtm")
 
     # EU/Canada-specific regulatory context — only when jurisdiction warrants it.
     if jurisdiction == "EU":

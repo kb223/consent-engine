@@ -8,16 +8,20 @@
 ![MIT License](https://img.shields.io/badge/license-MIT-green)
 
 Scans any web page with consent pre-set to **reject all** (S3 forensic
-methodology), captures every network request, then asks five questions:
+methodology), captures every network request, then asks seven questions:
 
 1. What fires pre-consent (on landing)?
 2. What fires post-accept?
 3. What fires post-reject?
 4. Is GPC (Global Privacy Control) being honored?
 5. Is Consent Mode (Basic or Advanced) wired correctly?
+6. Which current enforcement patterns do the observed facts map to?
+7. Which tracking technologies need inventory or contract review?
 
 Returns a structured audit result, an HTML report, an executive summary, and
-a client-ready Marp slide deck.
+a client-ready Marp slide deck. The JSON, report, and deck include a
+deterministic enforcement-pattern map and tracking-technology inventory when
+the scan produces enough evidence to build them.
 
 ## Why "engine" not "agent"
 
@@ -50,6 +54,7 @@ The eight-tool pipeline below is all deterministic.
    │ tool_05  Vendor library lookup (custom + Open Cookie DB)         │
    │ tool_06  Server-side GTM detector                                │
    │ tool_06b Pixel detector (out-of-GTM tracking)                    │
+   │ derived  Enforcement-pattern map + tracking inventory            │
    │ tool_07  Knowledge-base retriever (markdown wiki, no vector DB)  │
    │ tool_08  Report + slide deck generator (LLM exec summary only)   │
    └─────────────────────────────────────┬────────────────────────────┘
@@ -160,6 +165,12 @@ The common pattern is simple: a visitor rejects tracking, but advertising,
 analytics, or social tags continue firing anyway. Demand letters typically
 argue that this creates privacy exposure and seek settlements in the
 $10,000 to $50,000 range.
+
+Recent regulator actions also test the mechanics behind the policy: GPC and
+universal opt-out handling, whether reject is as easy as accept, whether vendor
+contracts limit ad-tech use, and whether the company maintains a current
+tracking-technology inventory. consent-engine maps scan evidence to those
+patterns without turning the mapping into legal advice.
 
 CCPA fines are **$2,500 per non-intentional violation, $7,500 per intentional
 violation**. CIPA (California Invasion of Privacy Act) wiretap claims are

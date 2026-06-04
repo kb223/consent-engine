@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .vendor import Vendor
 
@@ -101,6 +101,54 @@ class PixelFiring(BaseModel):
     is_acm_ping: bool = (
         False  # True = Google ACM cookieless ping (G100+npa=1) — expected behavior, not a violation
     )
+
+
+class TrackingTechnology(BaseModel):
+    """A normalized inventory row for tracking technologies observed in a scan.
+
+    Regulators increasingly ask for a current inventory of deployed tracking
+    technologies. This model is intentionally derived from forensic evidence the
+    engine already captures: cookies, pixel endpoints, and server-side tag paths.
+    """
+
+    vendor_name: str
+    category: str
+    evidence_type: Literal["cookie", "pixel", "server_side", "consent_signal"]
+    observed_after_opt_out: bool = True
+    observed_under_gpc: bool = False
+    request_count: int = 0
+    sample_urls: list[str] = Field(default_factory=list)
+    cookies_observed: list[str] = Field(default_factory=list)
+    sale_or_sharing_risk: Literal["none", "possible", "likely"] = "possible"
+    contract_review_needed: bool = False
+    sensitive_contexts: list[str] = Field(default_factory=list)
+    enforcement_theme_keys: list[str] = Field(default_factory=list)
+
+
+class EnforcementThemeFinding(BaseModel):
+    """Regulator-facing theme mapped from scan evidence.
+
+    The engine detects concrete facts first. This model explains which current
+    US enforcement pattern those facts map to, without turning that mapping into
+    a legal conclusion.
+    """
+
+    key: Literal[
+        "opt_out_mechanism_failure",
+        "gpc_uoom_failure",
+        "consent_asymmetry",
+        "vendor_governance",
+        "sensitive_data_purpose_limitation",
+        "minors_privacy",
+        "privacy_notice_governance",
+        "tracking_inventory",
+        "server_side_consent_gap",
+    ]
+    label: str
+    severity: Literal["info", "medium", "high", "critical"]
+    evidence: list[str] = Field(default_factory=list)
+    regulatory_context: str = ""
+    recommended_action: str = ""
 
 
 class VendorFinding(BaseModel):
@@ -212,6 +260,8 @@ class AuditResult(BaseModel):
     pixel_firings: list[
         PixelFiring
     ] = []  # Network-level pixel endpoint detections (plaintiff evidence)
+    tracking_inventory: list[TrackingTechnology] = Field(default_factory=list)
+    enforcement_themes: list[EnforcementThemeFinding] = Field(default_factory=list)
     open_gaps: list[str] = []
     remediation: list[str] = []
     # CMP runtime introspection — what the CMP reports about itself via its

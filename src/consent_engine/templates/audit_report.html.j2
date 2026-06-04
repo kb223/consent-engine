@@ -1040,6 +1040,116 @@
   </div>
   {% endif %}
 
+  {% if result.enforcement_themes %}
+  <div class="section">
+    <div class="section-header">
+      <h2>Enforcement Pattern Map</h2>
+    </div>
+    <div class="responsive-table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>Theme</th>
+            <th>Severity</th>
+            <th>Evidence</th>
+            <th>Regulatory Context</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for theme in result.enforcement_themes %}
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">{{ theme.label }}</td>
+            <td data-label="Severity">
+              {% if theme.severity in ('critical', 'high') %}
+                <span class="badge badge-red">{{ theme.severity }}</span>
+              {% elif theme.severity == 'medium' %}
+                <span class="badge badge-yellow">{{ theme.severity }}</span>
+              {% else %}
+                <span class="badge badge-gray">{{ theme.severity }}</span>
+              {% endif %}
+            </td>
+            <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
+              {{ theme.evidence | join('; ') or 'Derived from scan evidence' }}
+            </td>
+            <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">{{ theme.regulatory_context }}</td>
+            <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">{{ theme.recommended_action }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.tracking_inventory %}
+  <div class="section">
+    <div class="section-header">
+      <h2>Tracking Technology Inventory</h2>
+    </div>
+    <div class="responsive-table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Evidence</th>
+            <th>Category</th>
+            <th>Opt-Out</th>
+            <th>GPC</th>
+            <th>Sale / Sharing Risk</th>
+            <th>Contract Review</th>
+            <th>Sensitive Context</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in result.tracking_inventory %}
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">{{ row.vendor_name }}</td>
+            <td data-label="Evidence"><span>{{ row.evidence_type | replace('_', ' ') | capitalize }}</span></td>
+            <td data-label="Category"><span>{{ row.category | replace('_', ' ') | capitalize }}</span></td>
+            <td data-label="Opt-Out">
+              {% if row.observed_after_opt_out %}
+                <span class="badge badge-red">Observed</span>
+              {% else %}
+                <span class="badge badge-gray">Not Tested</span>
+              {% endif %}
+            </td>
+            <td data-label="GPC">
+              {% if row.observed_under_gpc %}
+                <span class="badge badge-red">Observed</span>
+              {% elif result.gpc_tested %}
+                <span class="badge badge-green">Not Observed</span>
+              {% else %}
+                <span class="badge badge-gray">Not Tested</span>
+              {% endif %}
+            </td>
+            <td data-label="Sale / Sharing Risk">
+              {% if row.sale_or_sharing_risk == 'likely' %}
+                <span class="badge badge-red">Likely</span>
+              {% elif row.sale_or_sharing_risk == 'possible' %}
+                <span class="badge badge-yellow">Possible</span>
+              {% else %}
+                <span class="badge badge-gray">None</span>
+              {% endif %}
+            </td>
+            <td data-label="Contract Review">
+              {% if row.contract_review_needed %}
+                <span class="badge badge-yellow">Needed</span>
+              {% else %}
+                <span class="badge badge-gray">Low</span>
+              {% endif %}
+            </td>
+            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
+              {{ row.sensitive_contexts | join(', ') or 'None inferred' }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- SECTION B — TECHNICAL EVIDENCE -->
 
   <div class="section">
