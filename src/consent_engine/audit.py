@@ -329,7 +329,7 @@ def _derive_action_items(
         if not _definitive or finding.status != "confirmed_violation":
             continue
         # These strings are rendered with `| safe`, so every site-derived value
-        # (cookie names, GCS raw, vendor name, ssGTM domain) MUST be HTML-escaped
+        # (cookie names, GCS raw, vendor name, sGTM domain) MUST be HTML-escaped
         # at construction — otherwise a malicious cookie name like
         # `</code><script>…` is a stored-XSS sink even with template autoescape on.
         vendor_name = html.escape(finding.vendor.name)
@@ -651,7 +651,7 @@ async def run_audit(
             )
         )
 
-    # 3. sSGTM + pixel-firing detection on the captured network log.
+    # 3. sGTM + pixel-firing detection on the captured network log.
     ssgtm = await detect_ssgtm(scan.network_requests, url)
     pixel_firings = detect_pixel_firings(scan.network_requests)
 

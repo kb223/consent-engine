@@ -114,9 +114,9 @@ def _capture_response_status(
 
 _GCS_RE = re.compile(r"[?&;]gcs=([^&;]+)")
 _GCD_RE = re.compile(r"[?&;]gcd=([^&;]+)")
-_GCS_FRAG_RE = re.compile(r"/gcs=([^/&;]+)")  # Handle path-based signals in some SSGTM setups
+_GCS_FRAG_RE = re.compile(r"/gcs=([^/&;]+)")  # Handle path-based signals in some sGTM setups
 
-# Stape custom loader / SSGTM first-party collect detection
+# Stape custom loader / sGTM first-party collect detection
 _FIRST_PARTY_COLLECT_RE = re.compile(r"/g/collect\b")
 _STAPE_LOADER_HINTS = re.compile(r"x-gtm-|stape\.io|cf-worker|/sky/|custom.loader", re.IGNORECASE)
 
@@ -243,7 +243,7 @@ _GTM_URL_ID_RE = re.compile(r"[?&]id=(GTM-[A-Z0-9]+)")
 
 
 def _is_custom_loader_gtm(url: str) -> bool:
-    """Return True if the URL looks like a Stape/SSGTM custom loader GTM script.
+    """Return True if the URL looks like a Stape/sGTM custom loader GTM script.
 
     Custom loaders serve gtm.js from first-party paths like /sky/?a6k=GTM-XXXX
     instead of googletagmanager.com/gtm.js. We detect them by looking for
@@ -553,7 +553,7 @@ async def _extract_gtm_from_page(
             return gtm_id, gtm_js_body, GTMExtractionMethod.LIVE
 
     # Method 2: Evaluate window.google_tag_manager — keys only, then JSON for smallest container.
-    # SSGTM sites expose huge google_tag_manager objects with circular DOM refs;
+    # sGTM sites expose huge google_tag_manager objects with circular DOM refs;
     # JSON.parse(JSON.stringify(window.google_tag_manager)) can hang indefinitely on them.
     try:
         gtm_ids: list[str] = await asyncio.wait_for(
@@ -1436,7 +1436,7 @@ async def _scan_gpc(url: str, proxy_url: str | None = None) -> ScanResult:
     Sends the Global Privacy Control signal on every request. Used to test
     whether the site honors GPC as an opt-out mechanism.
 
-    Note: GPC cannot be forwarded to server-side GTM containers. If SSGTM
+    Note: GPC cannot be forwarded to server-side GTM containers. If sGTM
     is detected, Tool 6 will flag this as an automatic enforcement gap.
     """
     domain = _domain_from_url(url)
@@ -2205,7 +2205,7 @@ async def scan_page(
         )
 
     # Safety net: abort any scan that exceeds 150s to prevent indefinite hangs
-    # (e.g., SSGTM sites with giant google_tag_manager objects or streaming connections
+    # (e.g., sGTM sites with giant google_tag_manager objects or streaming connections
     # that prevent networkidle from resolving).
     if methodology == MethodologyFlag.S1:
         return await asyncio.wait_for(_scan_s1(url, proxy_url=proxy_url), timeout=150)

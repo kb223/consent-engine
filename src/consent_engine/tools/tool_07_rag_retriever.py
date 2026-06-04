@@ -253,7 +253,7 @@ def _select_page_keys(audit_result: AuditResult) -> list[str]:
             # Granted state during opt-out test = CMP not updating Consent Mode
             keys.append("cmp_failure")
 
-    # SSGTM
+    # sGTM
     if audit_result.ssgtm_detected:
         keys.append("ssgtm")
 
