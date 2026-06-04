@@ -3,6 +3,18 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.15] - 2026-06-04 - public sample refresh + sGTM casing
+
+### Changed
+- **Public sample audit refreshed with a higher-signal target.** `docs/sample-audit/`
+  now uses a point-in-time `ulta.com` audit that exercises OneTrust detection,
+  post-opt-out pixels, Google Consent Mode signal analysis, GPC testing,
+  tracking inventory, and enforcement-theme mapping.
+- **Visible server-side GTM acronym standardized to `sGTM`.** Generated HTML
+  reports, Marp decks, public docs, and wiki prose now use `sGTM` in reader-facing
+  copy while keeping existing lowercase `ssgtm_*` JSON fields and module names
+  stable for compatibility.
+
 ## [0.6.14] - 2026-06-04 - review-status report labels
 
 ### Fixed
@@ -391,7 +403,7 @@ pass (22 new), ruff + mypy strict clean.
   the guard (ipaddress rejects octal; DNS didn't canonicalize) but Chromium
   connects to loopback. New `_canonical_ipv4()` mirrors the browser/`inet_aton`
   parser before classifying.
-- **SSRF via the ssGTM detector's httpx fetch** (`follow_redirects=True`, no
+- **SSRF via the sGTM detector's httpx fetch** (`follow_redirects=True`, no
   guard) — now validated + no-redirect.
 - **Vendor false attribution from generic short cookie names** (`C`, `uid`, `sp`,
   `tp`, `dpm`, `fr`…). Tier-1 ignored the cookie domain; Tier-2 let blank-domain
@@ -1011,7 +1023,7 @@ the structured-evidence plumbing.
   triggered the request).
 - **`ScanResult.request_log: list[NetworkRequest]`** runs parallel to the
   existing `network_requests: list[str]` so existing detectors (Tool 6
-  sSGTM, Tool 6b pixel detection) keep reading the flat URL list
+  sGTM, Tool 6b pixel detection) keep reading the flat URL list
   unchanged while the rich log is available for downstream consumers.
 - **Two module-level helpers** in `tool_03_browser_scanner.py`
   (`_capture_request`, `_capture_response_status`) wire Playwright
@@ -1420,7 +1432,7 @@ resolved the page.
 
 ### Added
 - `consent_engine.audit.run_audit(url) -> AuditBundle` — single entry point
-  that owns the full pipeline (scan → per-vendor classify → sSGTM detect →
+  that owns the full pipeline (scan → per-vendor classify → sGTM detect →
   pixel detect → jurisdiction detect → GTM parse → HAR analyze → assemble
   AuditResult → wiki retrieve → LLM exec summary → HTML report + Marp deck)
 - `consent_engine.audit.run_audit_sync()` for callers outside an event loop

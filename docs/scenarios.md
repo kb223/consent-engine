@@ -9,7 +9,7 @@ flowchart LR
     URL[user-supplied URL] --> SCAN[tool_03 Playwright scan]
     SCAN --> GTM[tool_01 GTM parse]
     SCAN --> HAR[tool_04 HAR analyze]
-    SCAN --> SSG[tool_06 sSGTM detect]
+    SCAN --> SSG[tool_06 sGTM detect]
     SCAN --> PIX[tool_06b pixel detect]
     GTM --> VL[tool_05 vendor lookup]
     HAR --> VL
@@ -57,7 +57,7 @@ running the audit on a quarterly cadence.
 2. tool_05 confirms `fbevents.js` is in the lawsuit-annotated vendor
    library, flagged as `category=advertising` with a Meta Pixel CIPA
    precedent.
-3. tool_06 finds no server-side GTM in front of it. This firing is
+3. tool_06 finds no sGTM in front of it. This firing is
    client-side and the consent enforcement code should have blocked it.
 4. tool_02 classifies: **C0004 violation, definitive (S3 methodology),
    per-firing CCPA exposure $7,500**.
@@ -70,23 +70,23 @@ running the audit on a quarterly cadence.
 **Output**: a report that survives legal scrutiny because the audit ID,
 timestamps, and network capture are all preserved.
 
-## Scenario C: Server-Side GTM gap
+## Scenario C: sGTM gap
 
-**Input**: a B2B SaaS site with sSGTM running in front of analytics.
+**Input**: a B2B SaaS site with sGTM running in front of analytics.
 User opt-out at the banner does not propagate to the server-side container
 (common misconfiguration).
 
 **Flow**:
 1. tool_03 captures requests. Sees outbound to `gtm.<customer-domain>.com`
    even after reject.
-2. tool_06 detects sSGTM and flags that **client-side enforcement cannot
+2. tool_06 detects sGTM and flags that **client-side enforcement cannot
    block server-side firing**. The server is making the calls regardless.
 3. tool_02 marks the finding as **server-side bypass, manual remediation
    required** (the engine cannot validate server-side behavior; it can
    only detect the gap).
-4. tool_07 pulls the wiki page on sSGTM consent propagation requirements.
+4. tool_07 pulls the wiki page on sGTM consent propagation requirements.
 5. tool_08 surfaces this as a Tier-1 risk, since most enterprises don't
-   audit sSGTM at all and only discover the gap during litigation.
+   audit sGTM at all and only discover the gap during litigation.
 
 **Output**: a focused report calling out the architectural gap with
 remediation patterns (server-side consent forwarding via custom HTTP

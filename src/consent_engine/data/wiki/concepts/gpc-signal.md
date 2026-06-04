@@ -49,7 +49,7 @@ A compliant site must:
 Common failures:
 - GPC signal detected but not mapped into the CMP's consent state
 - CMP treats GPC as a "soft preference" rather than a binding opt-out
-- Server-side GTM not receiving GPC header (stripped at server — see [[concepts/ssgtm-risk]])
+- sGTM not receiving GPC header (stripped at server — see [[concepts/ssgtm-risk]])
 
 ## Enforcement Precedent
 

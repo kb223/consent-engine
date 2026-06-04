@@ -743,7 +743,7 @@
       <strong>${{ "{:,}".format(recovery.monthly_recoverable_usd) }}/month recovered conversion value</strong>.
       Brand tier ({{ recovery.brand_tier_label }}) is auto-derived from scan signals (vendor breadth, sGTM presence, CMP sophistication), so the math defaults to the
       scale of the audited site rather than a generic mid-market anchor. Re-run with <code>--monthly-ad-spend</code> for a sharper estimate.
-      Recovery is realized by routing post-consent signal through server-side GTM → Meta CAPI, Google Enhanced Conversions, and TikTok Events API.
+      Recovery is realized by routing post-consent signal through sGTM → Meta CAPI, Google Enhanced Conversions, and TikTok Events API.
     </p>
   </div>
   {% endif %}
@@ -856,7 +856,7 @@
       <strong>CMP not recognized. Further investigation required.</strong>
     </p>
     <p style="margin: 0; font-size: 0.85rem;">
-      Consent cookies were injected but a denied Google Consent Mode signal was not observed{% if not result.detected_cmp %}; the consent platform could not be identified{% endif %}. Treat findings as indicative, not legally defensible.
+      Consent cookies were injected but a denied Google Consent Mode signal was not observed{% if not result.detected_cmp %}; the consent platform could not be identified{% endif %}. Treat findings as indicative and requiring manual validation.
     </p>
   </div>
   {% endif %}
@@ -868,7 +868,7 @@
       <strong>Tags fire regardless of the CMP's stored consent state.</strong>
     </p>
     <p style="margin: 0; font-size: 0.85rem;">
-      {% if result.detected_cmp %}{{ result.detected_cmp }} was detected{% else %}A CMP was detected{% endif %} and denial was injected, but GCM beacons kept firing with <code>GCS=G111</code> (all granted). Findings are legally defensible.
+      {% if result.detected_cmp %}{{ result.detected_cmp }} was detected{% else %}A CMP was detected{% endif %} and denial was injected, but GCM beacons kept firing with <code>GCS=G111</code> (all granted). Findings are supported by observed consent-signal evidence.
     </p>
   </div>
   {% endif %}
@@ -999,7 +999,7 @@
     </div>
     {% endif %}
     <div class="signal-card">
-      <div class="signal-label">Server-Side GTM</div>
+      <div class="signal-label">sGTM</div>
       <div class="signal-value">{{ 'Detected' if result.ssgtm_detected else 'Not detected' }}</div>
       <div class="signal-sub">{{ result.ssgtm_domain or '—' }}</div>
     </div>
@@ -1033,7 +1033,7 @@
 
   {% if result.ssgtm_detected %}
   <div class="ssgtm-warning">
-    <strong>Server-Side GTM Detected ({{ result.ssgtm_domain }})</strong><br>
+    <strong>sGTM Detected ({{ result.ssgtm_domain }})</strong><br>
     Client-side consent enforcement scripts cannot block server-to-server calls.
     GPC (Sec-GPC: 1) headers are not forwarded to server-side containers.
     Server-side data collection may occur regardless of client consent state.

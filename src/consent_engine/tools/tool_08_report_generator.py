@@ -753,11 +753,11 @@ def _build_executive_summary_prompt(
     )
 
     ssgtm_note = (
-        f"SSGTM detected at {audit_result.ssgtm_domain}. "
+        f"sGTM detected at {audit_result.ssgtm_domain}. "
         f"Client-side JavaScript cannot block server-to-server calls — "
         f"consent enforcement may not extend to server-side data flows."
         if audit_result.ssgtm_detected
-        else "SSGTM: not detected."
+        else "sGTM: not detected."
     )
 
     gpc_note = (
@@ -800,7 +800,7 @@ Rules:
 - Lead with the biggest scale ceiling: broken consent wiring > sGTM gap > partial GCS > pixel leakage > clean.
 - If violations exist: describe them as "signal the ad AI is not receiving" or "data the ad platform cannot optimize on" — not as legal violations.
 - If recoverable-revenue estimate is provided, cite the $/mo range as the scale unlock.
-- If SSGTM detected without server-side conversions: frame as "server events never reach ad AI."
+- If sGTM detected without server-side conversions: frame as "server events never reach ad AI."
 - If GCS=G100 (both denied) with violations: note ACM is configured correctly; the gap is the non-Google vendors leaking signal out.
 - If GCS=G101 (partial): frame as partial signal loss — analytics AI still optimizing on data that consent denied.
 - If clean: state the stack is AI-ready and note what that unlocks.
@@ -831,7 +831,7 @@ Rules:
 - If GPC was detected with violations: state whether GPC is binding in the governing jurisdiction. It is a legally binding opt-out under US CCPA/CPRA, but not a statutory opt-out under GDPR / UK GDPR / Quebec Law 25 (where it is still evidence the consent banner is not enforcing the user's choice). Do not cite CCPA for a non-US site.
 - If GCS=G100 (both denied) present with confirmed violations: note that Advanced Consent Mode is correctly implemented (cookieless pings only, no PII cookie IDs transmitted). The violations are the actual cookie sets by {vendors}, not the G100 pings. Do not frame G100 pings as a violation — they are compliant ACM behavior.
 - If GCS=G101 (ad_storage denied, analytics_storage granted): this is a PARTIAL opt-out. The brand's CMP only denies ad tracking; analytics tracking continues post opt-out. Frame this as an incomplete opt-out under the governing regime: a valid opt-out must cover analytics profiling, not just ad delivery. This is still a compliance gap even though it shows partial effort.
-- If SSGTM detected: note the server-side consent gap risk.
+- If sGTM detected: note the server-side consent gap risk.
 - If clean: state it plainly and note ACM modeling activity if present.
 - Use specific enforcement case names or fine amounts from the regulatory context where relevant.
 - NOTE: The scan runs from a fixed browser geolocation (Los Angeles, US). That is the scan vantage, not the site's jurisdiction (which is detected separately from the site's own signals), so do not describe the audited site as based in California. If the CMP was not visually detected but its underlying cookies were targeted for injection, this indicates IP-gating where the CMP is active globally but hidden from users outside specific regions. Mention this risk if applicable.
@@ -1126,21 +1126,21 @@ def _build_manual_validation(audit_result: AuditResult) -> list[dict[str, str]]:
             }
         )
 
-    # 6. If SSGTM detected: server-side verification
+    # 6. If sGTM detected: server-side verification
     if audit_result.ssgtm_detected:
         steps.append(
             {
-                "title": f"Server-Side GTM ({audit_result.ssgtm_domain})",
+                "title": f"sGTM ({audit_result.ssgtm_domain})",
                 "what": "Verify server-side container is proxying requests.",
                 "how": (
                     f"In DevTools > Network, look for requests to {audit_result.ssgtm_domain}. "
                     "These may appear as first-party requests (same domain or subdomain). "
                     "Check if the response sets cookies or forwards data to third parties. "
-                    "Also check: does the SSGTM domain appear in DNS as a CNAME to googletagmanager.com?"
+                    "Also check: does the sGTM domain appear in DNS as a CNAME to googletagmanager.com?"
                 ),
                 "expect": (
-                    "Server-side GTM containers cannot be blocked by client-side consent enforcement. "
-                    "If SSGTM is forwarding user data to ad platforms post-opt-out, this is a consent "
+                    "sGTM containers cannot be blocked by client-side consent enforcement. "
+                    "If sGTM is forwarding user data to ad platforms post-opt-out, this is a consent "
                     "bypass that requires server-side consent logic (not detectable from client-side)."
                 ),
             }
@@ -1629,7 +1629,7 @@ def generate_marp_slides(
         _gcs_icon = _SVG_DASH
     _fr += _findings_row("Consent Mode (GCS)", _gcs_display, _gcs_icon)
     _fr += _findings_row(
-        "Server-Side GTM",
+        "sGTM",
         f"<strong style='color:#f59e0b'>{audit_result.ssgtm_domain}</strong> (consent bypass risk)"
         if audit_result.ssgtm_detected
         else "Not detected",
@@ -2025,7 +2025,7 @@ def generate_marp_slides(
             f"Disable <strong style='color:#14182b'>{f.vendor.name}</strong> tag in GTM until consent logic is verified"
         )
     if audit_result.ssgtm_detected:
-        _imm.append("Audit SSGTM container for consent signal passthrough enforcement")
+        _imm.append("Audit sGTM container for consent signal passthrough enforcement")
     _30d = []
     if violations:
         _30d += [
@@ -2357,7 +2357,7 @@ style: |
 
 <style>section:first-of-type > footer {{ display: none !important; }}</style>
 
-### FORENSIC PRIVACY AUDIT · {jurisdiction} · CONFIDENTIAL
+### FORENSIC PRIVACY AUDIT · {jurisdiction} · COMPLIANCE ASSESSMENT
 
 {_site_img_html}
 
@@ -2448,7 +2448,7 @@ style: |
 <div style="display:flex;gap:10px;margin-top:28px;">
   <div style="flex:1;background:var(--s);border-radius:10px;padding:20px;border-top:2px solid var(--a);">
     <div style="font-family:'Inter';font-weight:600;font-size:0.62em;color:var(--a);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:10px;">Forensic Auditing</div>
-    <div style="font-size:0.72em;color:#6b7280;line-height:1.8;">Post-denial traffic analysis<br>GPC signal testing<br>SSGTM detection</div>
+    <div style="font-size:0.72em;color:#6b7280;line-height:1.8;">Post-denial traffic analysis<br>GPC signal testing<br>sGTM detection</div>
   </div>
   <div style="flex:1;background:var(--s);border-radius:10px;padding:20px;border-top:2px solid var(--a);">
     <div style="font-family:'Inter';font-weight:600;font-size:0.62em;color:var(--a);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:10px;">Regulatory Intelligence</div>

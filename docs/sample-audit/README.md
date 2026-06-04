@@ -1,18 +1,18 @@
-# Sample audit - `apple.com`
+# Sample audit - `ulta.com`
 
-> Captured 2026-06-04 from consent-engine v0.6.14 against `https://www.apple.com`.
+> Captured 2026-06-04 from consent-engine v0.6.15 against `https://www.ulta.com`.
 > Committed here so cold readers can see what an audit bundle looks like before
 > running the tool themselves.
 >
 > This is a point-in-time public-surface scan of a well-known US brand. It is
-> not an endorsement, customer reference, legal conclusion, or claim that Apple
-> has a confirmed consent violation. The audit result reports zero confirmed
-> violations and two findings that require further investigation because the CMP
-> opt-out state could not be independently verified.
+> not an endorsement, customer reference, legal conclusion, or claim about the
+> brand's current production state. The audit result reports deterministic
+> technical findings observed during this specific run. Public websites and
+> consent configurations change frequently.
 >
-> The v0.6.14 `tracking_inventory` and `enforcement_themes` fields are populated
-> in `audit_result.json`, so this sample shows the inventory and enforcement-map
-> output added in the current release.
+> This sample was selected because it exercises the strongest public-demo
+> surface: OneTrust detection, post-opt-out pixels, Google Consent Mode signal
+> analysis, GPC testing, tracking inventory, and enforcement-theme mapping.
 
 ## Files
 
@@ -33,7 +33,7 @@
 ## How this was generated
 
 ```sh
-uvx --refresh consent-engine audit https://www.apple.com
+uvx --refresh consent-engine audit https://www.ulta.com
 ```
 
 The other bundle files are produced by the same command. The `deck.html` file
@@ -42,11 +42,15 @@ is auto-rendered when `npx` is on PATH.
 ## What this sample shows
 
 - Jurisdiction detection: `US`
-- Methodology: `s3_inconclusive_unknown_cmp`
-- Findings: `2`, both `requires_further_investigation`
-- Confirmed violations: `0`
-- Tracking inventory rows: `2`
-- GPC result: inconclusive because baseline pixel count was `0`
+- CMP detection: `OneTrust`
+- Methodology: `s3_consent_wiring_broken`
+- Google Consent Mode state after opt-out: `G111`
+- Findings: `37`
+- Confirmed technical findings: `34`
+- Pixel endpoints observed after opt-out: `27`
+- Tracking inventory rows: `55`
+- GPC result: not respected in this run; baseline pixel activity moved from `27` to `25`
+- sGTM: not detected
 
 Public websites change frequently. Re-running the command later may produce a
 different inventory, methodology result, or evidence set.
@@ -56,5 +60,5 @@ different inventory, methodology result, or evidence set.
 Run your own scan when you need current evidence. Good comparison targets:
 
 - `https://onetrust.com` - CMP vendor baseline
-- `https://www.ibm.com` - large enterprise site with broader inventory output
-- `https://www.apple.com` - the sample target committed here
+- `https://www.kohls.com` - OneTrust site with high inventory output in the June 2026 batch
+- `https://www.lowes.com` - TrustArc site with high pixel and inventory output in the June 2026 batch

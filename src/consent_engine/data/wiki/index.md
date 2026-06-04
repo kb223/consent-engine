@@ -24,7 +24,7 @@ Total pages: 23
 |---|---|
 | [concepts/consent-mode-v2.md](concepts/consent-mode-v2.md) | GCS/GCD parameters, Basic vs Advanced Mode, 67% failure rate, March 2024 mandate |
 | [concepts/gpc-signal.md](concepts/gpc-signal.md) | Sec-GPC: 1 header — mandatory opt-out in CA/CO/CT/TX/MT/OR/NJ, enforcement precedent |
-| [concepts/ssgtm-risk.md](concepts/ssgtm-risk.md) | Server-side GTM consent bypass — how to detect, GPC stripping, legal liability |
+| [concepts/ssgtm-risk.md](concepts/ssgtm-risk.md) | sGTM consent bypass — how to detect, GPC stripping, legal liability |
 | [concepts/cipa-vppa.md](concepts/cipa-vppa.md) | CIPA wiretapping litigation + VPPA video tracking — $5K/violation, 4K lawsuits in 2024 |
 | [concepts/dark-patterns.md](concepts/dark-patterns.md) | Prohibited CMP UX patterns — asymmetric choice, pre-consent drops, bundled consent |
 | [concepts/cmp-failures.md](concepts/cmp-failures.md) | Root causes of 67% Consent Mode failure rate — race conditions, default granted, direct pixels |
@@ -46,7 +46,7 @@ Total pages: 23
 
 | Page | Summary |
 |---|---|
-| [technical/google-tag-gateway.md](technical/google-tag-gateway.md) | GTG vs custom SSGTM — how to distinguish compliant from non-compliant server-side setup |
+| [technical/google-tag-gateway.md](technical/google-tag-gateway.md) | GTG vs custom sGTM — how to distinguish compliant from non-compliant server-side setup |
 | [technical/consent-mode-impact.md](technical/consent-mode-impact.md) | Data loss estimates (30–50%), ROAS impact, modeling reality (23% vs 65% promise) |
 | [technical/cmp-profiles.md](technical/cmp-profiles.md) | 35+ CMP technical profiles — JS globals, cookie names, JS APIs, shadow DOM, injection values (April 2026) |
 | [technical/scanner-methodology.md](technical/scanner-methodology.md) | Pre-set opted-out scan methodology, baseline vs opt-out vs GPC passes, false positive patterns, EU vs US scanner differences |
@@ -63,7 +63,7 @@ Total pages: 23
 | GCS=G101/G110 partial opt-out | consent-mode-v2 → cmp-profiles → ccpa |
 | Unknown CMP detected | cmp-profiles → cmp-failures |
 | CMP JS API fails / shadow DOM | cmp-profiles → cmp-failures |
-| SSGTM detected | ssgtm-risk → google-tag-gateway → us-2026-enforcement-patterns → emerging-trends |
+| sGTM detected | ssgtm-risk → google-tag-gateway → us-2026-enforcement-patterns → emerging-trends |
 | EU jurisdiction | gdpr → tcf → gdpr-fines |
 | Quebec / Canada | quebec-law25 → pipeda → consent-mode-v2 |
 | Canada (non-Quebec, federal floor) | pipeda → quebec-law25 → consent-mode-v2 |

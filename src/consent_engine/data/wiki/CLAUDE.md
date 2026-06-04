@@ -34,7 +34,7 @@ Use these mappings to select wiki pages:
 | Violations in US (any state) | `regulations/ccpa.md`, `regulations/us-state-laws.md` | `concepts/gpc-signal.md`, `enforcement/us-enforcement.md` |
 | GPC signal received + pixel fired | `concepts/gpc-signal.md`, `regulations/us-state-laws.md` | `enforcement/us-enforcement.md` |
 | GCS=G100/G110 in network traffic | `concepts/consent-mode-v2.md`, `technical/consent-mode-impact.md` | `regulations/ccpa.md` |
-| SSGTM detected | `concepts/ssgtm-risk.md`, `technical/google-tag-gateway.md` | `enforcement/emerging-trends.md` |
+| sGTM detected | `concepts/ssgtm-risk.md`, `technical/google-tag-gateway.md` | `enforcement/emerging-trends.md` |
 | EU jurisdiction | `regulations/gdpr.md`, `regulations/tcf.md` | `enforcement/gdpr-fines.md` |
 | Quebec / Canada | `regulations/quebec-law25.md`, `regulations/pipeda.md` | `concepts/consent-mode-v2.md` |
 | Meta Pixel / TikTok Pixel violations | `concepts/cipa-vppa.md`, `enforcement/us-enforcement.md` | `enforcement/emerging-trends.md` |

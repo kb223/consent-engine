@@ -131,7 +131,7 @@ def build_tracking_inventory(
     gpc_pixel_firings: list[PixelFiring] | None = None,
     sensitive_contexts: list[str] | None = None,
 ) -> list[TrackingTechnology]:
-    """Normalize cookies, pixel endpoints, and sSGTM into inventory rows."""
+    """Normalize cookies, pixel endpoints, and sGTM into inventory rows."""
     contexts = sensitive_contexts or []
     by_key: dict[tuple[str, str, str], TrackingTechnology] = {}
     observed_after_opt_out = audit_result.methodology != MethodologyFlag.S1

@@ -1,11 +1,11 @@
-"""Tool 6 — Server-Side GTM Detector.
+"""Tool 6 — sGTM Detector.
 
-Detects SSGTM by fetching first-party JavaScript response bodies and scanning
+Detects sGTM by fetching first-party JavaScript response bodies and scanning
 for GTM fingerprints. URL pattern matching alone is unreliable — Stape's custom
 loader and similar solutions use fully obfuscated script names and paths.
 
-If SSGTM detected: client-side consent enforcement may be bypassed.
-GPC Sec-GPC:1 header cannot be forwarded to server-side containers.
+If sGTM detected: client-side consent enforcement may be bypassed.
+GPC Sec-GPC:1 header cannot be forwarded to sGTM containers.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ _TLD_EXTRACT = tldextract.TLDExtract(suffix_list_urls=())
 _GTM_ID_RE = re.compile(r"GTM-[A-Z0-9]+")
 _BODY_LIMIT_CHARS = 20_480  # 20 KB — sufficient to catch fingerprints in loader preamble (applied to str, not bytes)
 
-# Known third-party GTM/analytics domains — never flagged as SSGTM
+# Known third-party GTM/analytics domains — never flagged as sGTM
 _THIRD_PARTY_DOMAINS = frozenset(
     [
         "googletagmanager.com",

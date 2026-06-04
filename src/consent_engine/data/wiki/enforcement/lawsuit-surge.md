@@ -142,7 +142,7 @@ revenue impact) is the smoking gun.
 | Tag fires after `Reject All` | CCPA $7,500/event; CIPA $5,000/event | this page |
 | Meta Pixel on healthcare URL | Meta Pixel class action ($6M–$12M settlement range) | this page |
 | Video-page tracker without consent | VPPA $2,500/violation | this page |
-| Server-side GTM bypassing client-side enforcement | CCPA + CIPA (architectural gap) | `data/wiki/technical/ssgtm-consent.md` |
+| sGTM bypassing client-side enforcement | CCPA + CIPA (architectural gap) | `data/wiki/technical/ssgtm-consent.md` |
 | GPC signal not honored | CCPA explicit GPC requirement | `data/wiki/regulations/ccpa-gpc.md` |
 | Consent Mode in Basic mode (cookies blocked entirely) | Lost measurement, no legal violation | `data/wiki/technical/consent-mode-modes.md` |
 | Pixel firing on AI-browser request | CIPA + future CCPA action | this page |
@@ -171,5 +171,5 @@ this file can be updated.
 - `data/wiki/regulations/ccpa-gpc.md` — GPC + CCPA specifics
 - `data/wiki/regulations/cipa.md` — California Invasion of Privacy Act
 - `data/wiki/regulations/vppa.md` — Video Privacy Protection Act
-- `data/wiki/technical/ssgtm-consent.md` — server-side bypass patterns
+- `data/wiki/technical/ssgtm-consent.md` — sGTM bypass patterns
 - `data/wiki/technical/consent-mode-modes.md` — Basic vs Advanced

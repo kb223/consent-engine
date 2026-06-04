@@ -159,3 +159,5 @@ def test_report_and_deck_render_enforcement_outputs() -> None:
     assert "Meta Pixel" in report_html
     assert "ENFORCEMENT PATTERN MAP" in deck_md
     assert "TRACKING TECHNOLOGY INVENTORY" in deck_md
+    assert "sGTM" in report_html
+    assert "sGTM detection" in deck_md

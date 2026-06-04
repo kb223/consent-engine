@@ -25,7 +25,7 @@ Following **LinkedIn €310M** (Oct 2024), EU supervisory authorities are system
 
 ## 3. Server-Side Bypass Risk (New in 2026)
 
-Regulators are beginning to specifically examine whether SSGTM is used to circumvent client-side consent enforcement.
+Regulators are beginning to specifically examine whether sGTM is used to circumvent client-side consent enforcement.
 
 **Key ruling (emerging):** A server-side container that fires advertising tags regardless of consent state carries the same legal liability as a client-side pixel. The mechanism of transmission is irrelevant to the violation.
 
