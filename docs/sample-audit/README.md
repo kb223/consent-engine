@@ -1,16 +1,18 @@
-# Sample audit - `example.com`
+# Sample audit - `apple.com`
 
-> Captured 2026-06-04 from consent-engine v0.6.13 against `https://example.com`. Committed here so cold readers can see what an audit bundle looks like before running the tool themselves.
+> Captured 2026-06-04 from consent-engine v0.6.13 against `https://www.apple.com`.
+> Committed here so cold readers can see what an audit bundle looks like before
+> running the tool themselves.
 >
-> Because `example.com` has no CMP and no trackers, the engine reports
-> `detected_cmp: null` and methodology `s3_inconclusive_unknown_cmp`. It
-> injected an opt-out state but could not verify any CMP honored it, so it
-> declines to call the result definitive. That conservative posture is the
-> point: the tool does not fabricate findings on a site with nothing to find.
+> This is a point-in-time public-surface scan of a well-known US brand. It is
+> not an endorsement, customer reference, legal conclusion, or claim that Apple
+> has a confirmed consent violation. The audit result reports zero confirmed
+> violations and two findings that require further investigation because the CMP
+> opt-out state could not be independently verified.
 >
-> The v0.6.13 `tracking_inventory` and `enforcement_themes` fields are present
-> in `audit_result.json` and empty for this sample because no tracking
-> technologies or enforcement-pattern evidence were observed.
+> The v0.6.13 `tracking_inventory` and `enforcement_themes` fields are populated
+> in `audit_result.json`, so this sample shows the inventory and enforcement-map
+> output added in the current release.
 
 ## Files
 
@@ -31,20 +33,28 @@
 ## How this was generated
 
 ```sh
-uvx --refresh consent-engine audit https://example.com
+uvx --refresh consent-engine audit https://www.apple.com
 ```
 
-That's the whole thing. ~30 seconds. The other 5 files are produced by the same command. The `deck.html` is auto-rendered when `npx` is on PATH.
+The other bundle files are produced by the same command. The `deck.html` file
+is auto-rendered when `npx` is on PATH.
 
-## Why `example.com` and not a more interesting target
+## What this sample shows
 
-`example.com` is RFC 2606 reserved, has no tracking, and produces a deterministic clean-pass audit. It's the safest demo target, with no risk of a future page change invalidating this sample.
+- Jurisdiction detection: `US`
+- Methodology: `s3_inconclusive_unknown_cmp`
+- Findings: `2`, both `requires_further_investigation`
+- Confirmed violations: `0`
+- Tracking inventory rows: `2`
+- GPC result: inconclusive because baseline pixel count was `0`
 
-For more interesting demo runs (vendor leaks, GPC ignored, multi-jurisdiction), try these on your own machine:
+Public websites change frequently. Re-running the command later may produce a
+different inventory, methodology result, or evidence set.
 
-- `https://onetrust.com` - the CMP vendor itself; well-configured, useful baseline
-- `https://canadiantire.ca` - jurisdiction CA, OneTrust CMP, multiple confirmed violations
-- `https://tesco.com` - UK retailer on `.com`; content-signal jurisdiction detection
-- `https://apple.com` - large enterprise site, sophisticated stack
+## Try another public target
 
-Run any of those yourself to see the violation-heavy variant.
+Run your own scan when you need current evidence. Good comparison targets:
+
+- `https://onetrust.com` - CMP vendor baseline
+- `https://www.ibm.com` - large enterprise site with broader inventory output
+- `https://www.apple.com` - the sample target committed here

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Consent Compliance Audit: https://example.com</title>
+<title>Consent Compliance Audit: https://www.apple.com</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
 
@@ -637,7 +637,7 @@
   
 
   <h1>Consent Compliance Audit</h1>
-  <p class="meta">https://example.com &nbsp;·&nbsp; 2026-06-04 02:14:00 UTC &nbsp;·&nbsp; Inconclusive (CMP not recognised, injection unverified)</p>
+  <p class="meta">https://www.apple.com &nbsp;·&nbsp; 2026-06-04 02:57:13 UTC &nbsp;·&nbsp; Inconclusive (CMP not recognised, injection unverified)</p>
 
   <!-- SECTION A — EXECUTIVE SUMMARY -->
 
@@ -655,7 +655,7 @@
     </p>
     <p class="verdict-sub">
       
-        0 vendors observed (indicative) &nbsp;·&nbsp;
+        2 vendors observed (indicative) &nbsp;·&nbsp;
         consent enforcement could not be verified &nbsp;·&nbsp;
         Inconclusive (CMP not recognised, injection unverified)
       
@@ -664,7 +664,7 @@
 
   <div class="exec-summary">
     <h2>Executive Summary</h2>
-    <p>No confirmed consent violations were detected at https://example.com under the Inconclusive (CMP not recognised, injection unverified) methodology.</p>
+    <p>No confirmed consent violations were detected at https://www.apple.com under the Inconclusive (CMP not recognised, injection unverified) methodology.</p>
   </div>
 
   
@@ -770,7 +770,7 @@
         United States (CCPA / State Laws)
       </div>
       
-      <div class="signal-sub">inferred (low confidence); pass --jurisdiction to override</div>
+      <div class="signal-sub">auto-detected from site signals</div>
       
     </div>
     
@@ -792,7 +792,154 @@
   
 
   
+  <div class="section">
+    <div class="section-header">
+      <h2>Enforcement Pattern Map</h2>
+    </div>
+    <div class="responsive-table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>Theme</th>
+            <th>Severity</th>
+            <th>Evidence</th>
+            <th>Regulatory Context</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">Vendor and third-party governance</td>
+            <td data-label="Severity">
+              
+                <span class="badge badge-red">high</span>
+              
+            </td>
+            <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
+              2 inventory row(s) likely require sale/sharing review
+            </td>
+            <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">California enforcement has treated missing or overbroad ad-tech contract terms as a primary violation, not just a paperwork issue.</td>
+            <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Confirm each ad-tech, analytics, and pixel vendor has purpose-limited contract terms and is classified in the tracking inventory.</td>
+          </tr>
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">Sensitive data / purpose limitation</td>
+            <td data-label="Severity">
+              
+                <span class="badge badge-red">high</span>
+              
+            </td>
+            <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
+              Sensitive context(s): video_or_streaming; 2 likely sale/sharing row(s)
+            </td>
+            <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Healthline and GM show that regulators are applying purpose limitation to sensitive page context, location, driving, and other service data reused for advertising or data-broker purposes.</td>
+            <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Block advertising and behavioral tracking on sensitive-context pages unless a specific consent and purpose basis exists.</td>
+          </tr>
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">Tracking technology inventory</td>
+            <td data-label="Severity">
+              
+                <span class="badge badge-gray">info</span>
+              
+            </td>
+            <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
+              2 inventory row(s) generated
+            </td>
+            <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Recent orders require current inventories of tracking technologies and periodic scanning to catch drift.</td>
+            <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Review and export this inventory quarterly and after every tag release.</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
 
+  
+  <div class="section">
+    <div class="section-header">
+      <h2>Tracking Technology Inventory</h2>
+    </div>
+    <div class="responsive-table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Evidence</th>
+            <th>Category</th>
+            <th>Opt-Out</th>
+            <th>GPC</th>
+            <th>Sale / Sharing Risk</th>
+            <th>Contract Review</th>
+            <th>Sensitive Context</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Adobe Analytics</td>
+            <td data-label="Evidence"><span>Cookie</span></td>
+            <td data-label="Category"><span>Analytics</span></td>
+            <td data-label="Opt-Out">
+              
+                <span class="badge badge-red">Observed</span>
+              
+            </td>
+            <td data-label="GPC">
+              
+                <span class="badge badge-green">Not Observed</span>
+              
+            </td>
+            <td data-label="Sale / Sharing Risk">
+              
+                <span class="badge badge-red">Likely</span>
+              
+            </td>
+            <td data-label="Contract Review">
+              
+                <span class="badge badge-yellow">Needed</span>
+              
+            </td>
+            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
+              video_or_streaming
+            </td>
+          </tr>
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Adobe Target</td>
+            <td data-label="Evidence"><span>Cookie</span></td>
+            <td data-label="Category"><span>Targeting</span></td>
+            <td data-label="Opt-Out">
+              
+                <span class="badge badge-red">Observed</span>
+              
+            </td>
+            <td data-label="GPC">
+              
+                <span class="badge badge-green">Not Observed</span>
+              
+            </td>
+            <td data-label="Sale / Sharing Risk">
+              
+                <span class="badge badge-red">Likely</span>
+              
+            </td>
+            <td data-label="Contract Review">
+              
+                <span class="badge badge-yellow">Needed</span>
+              
+            </td>
+            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
+              video_or_streaming
+            </td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+  </div>
   
 
   <!-- SECTION B — TECHNICAL EVIDENCE -->
@@ -802,7 +949,57 @@
       <h2>Vendor Tracking Findings</h2>
     </div>
     
-    <div class="empty-state">No significant tracking vendors detected during this scan.</div>
+    <div class="responsive-table-wrap">
+      <table class="responsive-table">
+        <thead>
+          <tr>
+            <th>Vendor</th>
+            <th>Signal / Cookie</th>
+            <th>Category</th>
+            <th>Legal Risk</th>
+            <th>Status</th>
+            <th>Observation</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Adobe Target</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>at_check</span></td>
+            <td data-label="Category"><span>Targeting</span></td>
+            <td data-label="Legal Risk">
+              
+                <span class="badge badge-yellow">Medium</span>
+              
+            </td>
+            <td data-label="Status">
+              
+                <span class="badge badge-green">Passed</span>
+              
+            </td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Observed firing in the opted-out scan under a non-definitive methodology (the opt-out could not be confirmed). Re-run with a recognised CMP or banner-click methodology to confirm. Adobe Target fired tracking in opted-out consent state (no consent mode). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
+          </tr>
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Adobe Analytics</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>s_fid</span></td>
+            <td data-label="Category"><span>Analytics</span></td>
+            <td data-label="Legal Risk">
+              
+                <span class="badge badge-red">High</span>
+              
+            </td>
+            <td data-label="Status">
+              
+                <span class="badge badge-green">Passed</span>
+              
+            </td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Observed firing in the opted-out scan under a non-definitive methodology (the opt-out could not be confirmed). Re-run with a recognised CMP or banner-click methodology to confirm. Adobe Analytics fired tracking in opted-out consent state (no consent mode). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
     
   </div>
 
@@ -838,6 +1035,263 @@
     <div style="padding: 16px 20px;">
       
       <div class="reg-chunk">
+        <div class="reg-source">US Privacy Enforcement Patterns, 2025-2026</div>
+        <div class="reg-text-wrap">
+          <div class="reg-text"><h2>Why this matters</h2>
+<p>Recent US privacy enforcement has shifted from reviewing policies in isolation to testing whether privacy mechanisms actually work. Regulators are checking opt-out flows, Global Privacy Control handling, tracking pixels, contracts with advertising vendors, sensitive-context sharing, and whether companies maintain an inventory of deployed tracking technologies.</p>
+<p>The practical takeaway for consent-engine is direct: a report should not stop at "cookies fired." It should map observed network facts to the enforcement pattern they resemble and produce a tracking-technology inventory that privacy, legal, and engineering teams can review.</p>
+<h2>Enforcement patterns to test</h2>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>What to test</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Opt-out mechanism failure</td>
+<td>Reject-all flow, Do Not Sell or Share link, logged-in and logged-out state</td>
+<td>California actions against Honda, Todd Snyder, Tractor Supply, Healthline, Disney, and others focus on whether opt-outs actually suppress sale/sharing activity.</td>
+</tr>
+<tr>
+<td>GPC / universal opt-out failure</td>
+<td><code>Sec-GPC: 1</code>, <code>navigator.globalPrivacyControl</code>, and network traffic under the signal</td>
+<td>California, Connecticut, Colorado, Oregon, Minnesota, and other states treat universal opt-out signals as enforceable or soon-enforceable privacy choices.</td>
+</tr>
+<tr>
+<td>Consent asymmetry and friction</td>
+<td>Equal ease of accept vs reject, no verification for opt-out, no account creation requirement</td>
+<td>Honda and Todd Snyder show that privacy UX and request mechanics can be standalone enforcement issues.</td>
+</tr>
+<tr>
+<td>Vendor contract gaps</td>
+<td>Whether ad-tech, analytics, and pixel vendors have purpose-limited CCPA contract terms</td>
+<td>Healthline and Tractor Supply both included vendor-contract allegations, not only technical tracking allegations.</td>
+</tr>
+<tr>
+<td>Sensitive-context sharing</td>
+<td>Health, location, driving, video-viewing, financial, student, and child contexts</td>
+<td>Healthline and GM show heightened risk when ad-tech or data-broker sharing touches sensitive context or precise location/driving data.</td>
+</tr>
+<tr>
+<td>Minors and teens</td>
+<td>Under-13, 13-15, student, game, streaming, and child-directed contexts</td>
+<td>Jam City, Tilting Point, Roku, and related actions focus on child and teen data, affirmative opt-in, and default protections.</td>
+</tr>
+<tr>
+<td>Inventory and scanning</td>
+<td>Current list of cookies, pixels, SDKs, server-side endpoints, owners, purposes, and contracts</td>
+<td>Tractor Supply required scanning digital properties to inventory tracking technologies. This makes inventory an enforcement artifact, not just a technical appendix.</td>
+</tr>
+</tbody>
+</table></div>
+        </div>
+      </div>
+      
+      <div class="reg-chunk">
+        <div class="reg-source">CCPA/CPRA — California Consumer Privacy Act</div>
+        <div class="reg-text-wrap">
+          <div class="reg-text"><h2>Core Rights</h2>
+<p><strong>§1798.120 — Right to Opt Out of Sale</strong><br />
+California consumers may direct any business to not sell their personal information. The business must:<br />
+- Post a "Do Not Sell My Personal Information" link on homepage<br />
+- Honor opt-out within 15 business days<br />
+- Not sell after receiving a valid opt-out request</p>
+<p><strong>CPRA Extension — Sharing for Cross-Context Behavioral Advertising (effective 2023)</strong><br />
+Opt-out rights now cover "sharing" — defined as disclosing personal information for cross-context behavioral advertising, even with no money exchanged. This directly covers:<br />
+- Passing user identifiers (cookies, device IDs) to ad platforms<br />
+- Meta Pixel / Facebook retargeting<br />
+- Google Ads conversion tracking<br />
+- LinkedIn Insight Tag, TikTok Pixel when fired post-opt-out<br />
+- Third-party audience syndication</p>
+<p><strong>Key interpretation:</strong> A business does not need to receive money for a data transfer to be classified as a "sale." Passing cookies or behavioral data to any ad platform = sale under CCPA/CPRA.</p>
+<h2>Global Privacy Control (GPC)</h2>
+<p>CPRA regulations require businesses to honor the <code>Sec-GPC: 1</code> HTTP header as a valid opt-out of sale and sharing. This is mandatory, not optional.</p>
+<p><strong>Enforcement action:</strong> The California Privacy Protection Agency (CPPA) has explicitly stated that failure to honor GPC is an enforceable violation without requiring prior notice to the business.</p>
+<p><strong>States that mandate GPC:</strong> California, Colorado, Connecticut, Texas, Montana, Oregon.</p>
+<p>If an advertising pixel fires after receiving <code>Sec-GPC: 1</code> from a California user → confirmed CPRA violation, per-consumer fine exposure.</p></div>
+        </div>
+      </div>
+      
+      <div class="reg-chunk">
+        <div class="reg-source">U.S. State Privacy Laws — 2026 Landscape</div>
+        <div class="reg-text-wrap">
+          <div class="reg-text"><h2>Overview</h2>
+<p>As of 2026, 20+ U.S. jurisdictions enforce comprehensive consumer privacy laws. All share a common thread: consumers have the right to opt out of sale or sharing of personal information for targeted advertising. Businesses must honor that right.</p>
+<p><strong>Targeted advertising</strong> (consistent definition across all state laws): displaying ads based on personal data obtained from the consumer's activities across non-affiliated websites. This directly covers Meta Pixel retargeting, Google Ads remarketing, LinkedIn Insight Tag, TikTok Pixel.</p>
+<h2>States with GPC Mandate (Critical for Audits)</h2>
+<p>The following states require honoring the Global Privacy Control (<code>Sec-GPC: 1</code>) as a valid opt-out:</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Law</th>
+<th>GPC Required</th>
+<th>Enforcement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>California</td>
+<td>CCPA/CPRA</td>
+<td>Yes — mandatory, no notice required</td>
+<td>CPPA + AG</td>
+</tr>
+<tr>
+<td>Colorado</td>
+<td>CPA</td>
+<td>Yes</td>
+<td>AG</td>
+</tr>
+<tr>
+<td>Connecticut</td>
+<td>CTDPA</td>
+<td>Yes (as of Jan 2025)</td>
+<td>AG</td>
+</tr>
+<tr>
+<td>Texas</td>
+<td>TDPSA</td>
+<td>Yes</td>
+<td>AG</td>
+</tr>
+<tr>
+<td>Montana</td>
+<td>MCDPA</td>
+<td>Yes</td>
+<td>AG</td>
+</tr>
+<tr>
+<td>Oregon</td>
+<td>OCPA</td>
+<td>Yes (as of Jan 2026)</td>
+<td>AG</td>
+</tr>
+<tr>
+<td>New Jersey</td>
+<td>NJDPA</td>
+<td>Yes</td>
+<td>AG</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Audit rule:</strong> If <code>Sec-GPC: 1</code> is detected AND the user's IP resolves to any GPC-mandate state AND an advertising pixel fires → confirmed violation, per-consumer fine exposure.</p></div>
+        </div>
+      </div>
+      
+      <div class="reg-chunk">
+        <div class="reg-source">Global Privacy Control (GPC) Signal</div>
+        <div class="reg-text-wrap">
+          <div class="reg-text"><h2>What It Is</h2>
+<p>The Global Privacy Control (GPC) is a browser-level privacy signal transmitted as an HTTP request header:<br />
+<code>Sec-GPC: 1</code></p>
+<p>When present, it signals that the user does not want their data sold or shared for targeted advertising. It is a machine-readable, universal opt-out mechanism.</p>
+<h2>Legal Status by State</h2>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>GPC Required</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>California</td>
+<td><strong>Mandatory</strong></td>
+<td>CPPA: non-compliance enforceable without prior notice</td>
+</tr>
+<tr>
+<td>Colorado</td>
+<td>Mandatory</td>
+<td></td>
+</tr>
+<tr>
+<td>Connecticut</td>
+<td>Mandatory (Jan 2025)</td>
+<td></td>
+</tr>
+<tr>
+<td>Texas</td>
+<td>Mandatory</td>
+<td></td>
+</tr>
+<tr>
+<td>Montana</td>
+<td>Mandatory</td>
+<td></td>
+</tr>
+<tr>
+<td>Oregon</td>
+<td>Mandatory (Jan 2026)</td>
+<td></td>
+</tr>
+<tr>
+<td>New Jersey</td>
+<td>Mandatory</td>
+<td></td>
+</tr>
+<tr>
+<td>Virginia</td>
+<td>Not required</td>
+<td></td>
+</tr>
+<tr>
+<td>Iowa</td>
+<td>Not required</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+        </div>
+      </div>
+      
+      <div class="reg-chunk">
+        <div class="reg-source">CIPA and VPPA — Litigation Risk for Web Tracking</div>
+        <div class="reg-text-wrap">
+          <div class="reg-text"><h2>The Litigation Explosion</h2>
+<p>In 2024, nearly 4,000 online privacy lawsuits were filed — up from ~200 in 2023. The primary vehicle: plaintiffs' attorneys repurposing antiquated statutes to target standard web analytics. This is the most immediate financial threat to businesses using digital analytics, exceeding regulatory fines in urgency.</p>
+<hr />
+<h2>California Invasion of Privacy Act (CIPA)</h2>
+<p>CIPA is a 1960s wiretapping statute now weaponized against web tracking. <strong>No actual damages required</strong> — $5,000 statutory penalty per violation. A single misconfigured pixel on a high-traffic site can generate tens of millions in theoretical liability within hours.</p>
+<h3>Three CIPA Theories</h3>
+<p><strong>§ 631(a) — Wiretapping / Interception</strong><br />
+- Target: Google Analytics, Meta Pixel, Hotjar session replay, any third-party analytics<br />
+- Theory: Third-party vendor code "intercepts" communications (clicks, keystrokes, form fills) between user and site without explicit prior consent<br />
+- Status: Extremely active. Courts divided on whether vendor = "tape recorder" extension of first party vs. independent eavesdropper</p>
+<p><strong>§ 632.7 — Cellular Eavesdropping</strong><br />
+- Target: Mobile web browsing, integrated chat widgets<br />
+- Theory: Internet communications from smartphones = cellular communications under the statute<br />
+- Status: Active. Frequently filed alongside § 631(a) to multiply settlement pressure</p>
+<p><strong>§§ 638.50–.51 — Pen Register / Trap-and-Trace</strong><br />
+- Target: IP address trackers, HTTP request headers, basic network routing analytics<br />
+- Theory: Software captures routing/signaling information = illegal trap-and-trace device<br />
+- Status: Emerging in 2026. Courts divided on applying 1990s telecom concepts to HTTP</p>
+<h3>CIPA Audit Implication</h3>
+<p>CIPA lawsuits specifically exploit the gap between a site's privacy policy and the actual behavior of asynchronous JavaScript tags. If a policy says "we don't share data with unauthorized third parties" but a misconfigured Meta Pixel transmits a user's unhashed email or behavioral payload — the technical error fulfills the plaintiff's burden of proof automatically.</p>
+<hr /></div>
+        </div>
+      </div>
+      
+      <div class="reg-chunk">
+        <div class="reg-source">Emerging Enforcement Trends — 2024–2026</div>
+        <div class="reg-text-wrap">
+          <div class="reg-text"><h2>1. Pixel-as-Sale Doctrine (US — CCPA)</h2>
+<p>Multiple AG enforcement actions confirmed: sharing behavioral data with an ad platform via pixel = "selling" personal information under CCPA — even with no money exchanged.</p>
+<p><strong>Implication for every site:</strong> Running Meta Pixel, TikTok Pixel, Google Ads conversion tracking, or similar on pages accessible to California users who opt out = active CCPA enforcement target.</p>
+<p><strong>Enforcement posture:</strong> CPPA uses automated scanning tools to detect GPC failures and pixel fires. The plaintiffs' bar uses the same tools to generate demand letters. These are not targeted investigations — they are systematic sweeps.</p>
+<hr />
+<h2>2. Legitimate Interest Rejection Pattern (EU — GDPR)</h2>
+<p>Following <strong>LinkedIn €310M</strong> (Oct 2024), EU supervisory authorities are systematically rejecting legitimate interest claims for behavioral advertising. The Irish DPC and CNIL have explicitly stated LI cannot be the basis for advertising that involves user profiling.</p>
+<p><strong>Current enforcement posture:</strong> Any audit finding that a site claims LI for ad cookies should be flagged as high-risk and virtually certain to be rejected by EU regulators.</p>
+<p><strong>Audit flag:</strong> If CMP shows "Legitimate Interest" toggle for advertising vendors in the preferences panel → flag as non-compliant.</p>
+<hr /></div>
+        </div>
+      </div>
+      
+      <div class="reg-chunk">
         <div class="reg-source">Consent Mode — Reporting Impact and Business Case</div>
         <div class="reg-text-wrap">
           <div class="reg-text"><h2>Why Compliance ≠ Data Destruction</h2>
@@ -851,74 +1305,6 @@
 - Sites with cookie walls: up to <strong>60% unattributed</strong> in opt-in jurisdictions<br />
 - Advanced Consent Mode with modeling: recovers approximately <strong>65–80%</strong> of lost conversions<br />
 - Basic Consent Mode: no recovery — conversions simply absent from reports</p></div>
-        </div>
-      </div>
-      
-      <div class="reg-chunk">
-        <div class="reg-source">Google Consent Mode V2 — Technical Reference</div>
-        <div class="reg-text-wrap">
-          <div class="reg-text"><h2>What It Does</h2>
-<p>Consent Mode is a signaling system between a CMP and Google tags (GA4, Google Ads). When consent is denied, tags adjust behavior:<br />
-- <strong>Basic Mode:</strong> Tags are completely blocked — no data reaches Google<br />
-- <strong>Advanced Mode:</strong> Tags fire but send cookieless "pings" for behavioral modeling</p>
-<p>Mandatory for EEA/UK advertisers using audience features or remarketing since <strong>March 2024</strong>.</p>
-<h2>GCS Parameter (Network Evidence)</h2>
-<p>The <code>gcs=</code> URL parameter in Google Analytics and DoubleClick requests encodes consent state.<br />
-Format: <code>G1AB</code> where <code>A</code> = ad_storage, <code>B</code> = analytics_storage. <code>0</code> = denied, <code>1</code> = granted, <code>-</code> = unset.</p>
-<table>
-<thead>
-<tr>
-<th>GCS Value</th>
-<th>ad_storage</th>
-<th>analytics_storage</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>G111</code></td>
-<td>granted</td>
-<td>granted</td>
-<td>All consent granted (or Consent Mode not configured)</td>
-</tr>
-<tr>
-<td><code>G100</code></td>
-<td>denied</td>
-<td>denied</td>
-<td>Full opt-out — ACM cookieless pings only</td>
-</tr>
-<tr>
-<td><code>G101</code></td>
-<td>denied</td>
-<td>granted</td>
-<td><strong>Partial opt-out</strong> — ad tracking denied, analytics still active</td>
-</tr>
-<tr>
-<td><code>G110</code></td>
-<td>granted</td>
-<td>denied</td>
-<td>Partial opt-out — analytics denied, ad tracking still active</td>
-</tr>
-<tr>
-<td><code>G1--</code></td>
-<td>unset</td>
-<td>unset</td>
-<td>Consent Mode present but signals not yet set (timing/race condition)</td>
-</tr>
-<tr>
-<td>No gcs=</td>
-<td>n/a</td>
-<td>n/a</td>
-<td>Basic Consent Mode (tag blocked entirely) or no Consent Mode</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Key audit signals for opt-out tests:</strong><br />
-- <code>G100</code> = ACM correctly implemented — cookieless pings only, correct response to opt-out<br />
-- <code>G101</code> = <strong>Partial CCPA compliance</strong> — ad_storage denied but analytics_storage still granted. Under CCPA, "Do Not Sell" must cover analytics profiling, not just ad delivery. This is a compliance gap.<br />
-- <code>G110</code> = Partial compliance (inverse — rare in practice)<br />
-- <code>G111</code> in an opt-out test = CMP integration failure — opt-out not propagating to Consent Mode at all</p>
-<p><strong>Key audit signal:</strong> If <code>gcs=G100</code> appears in network requests → the tag FIRED despite denied consent. This is Advanced Consent Mode — the tag is not blocked, it sends a cookieless ping.</p></div>
         </div>
       </div>
       
@@ -987,7 +1373,7 @@ Format: <code>G1AB</code> where <code>A</code> = ad_storage, <code>B</code> = an
   </div>
 
   <footer>
-    Generated by consent-engine &nbsp;·&nbsp; Audit ID: 59691183-4b35-46e9-8262-22bd6aa272f4
+    Generated by consent-engine &nbsp;·&nbsp; Audit ID: 8efa1638-b8a6-4ce7-ba13-a7e48cc8d02d
   </footer>
 
 </div>

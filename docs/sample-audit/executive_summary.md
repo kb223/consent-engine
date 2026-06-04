@@ -1,1 +1,1 @@
-No confirmed consent violations were detected at https://example.com under the Inconclusive (CMP not recognised, injection unverified) methodology.
+No confirmed consent violations were detected at https://www.apple.com under the Inconclusive (CMP not recognised, injection unverified) methodology.

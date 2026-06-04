@@ -1,7 +1,7 @@
 {
-  "audit_id": "59691183-4b35-46e9-8262-22bd6aa272f4",
-  "url": "https://example.com",
-  "timestamp": "2026-06-04T02:14:00.655058Z",
+  "audit_id": "8efa1638-b8a6-4ce7-ba13-a7e48cc8d02d",
+  "url": "https://www.apple.com",
+  "timestamp": "2026-06-04T02:57:13.430180Z",
   "methodology": "s3_inconclusive_unknown_cmp",
   "gtm_extraction_method": "none",
   "gtm_container_id": null,
@@ -22,15 +22,158 @@
   "bot_detection_encountered": false,
   "scan_mode_used": "playwright",
   "detected_jurisdiction": "US",
-  "jurisdiction_confidence": "low",
+  "jurisdiction_confidence": "high",
   "tag_consent_map": [],
   "gcs_timeline": [],
-  "post_payloads": [],
+  "post_payloads": [
+    "{\"requestId\":\"37b69e6640a9466b92800c73201d00ff\",\"context\":{\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36\",\"timeOffsetInMinutes\":-420,\"channel\":\"web\",\"screen\":{\"width\":1280,\"height\":800,\"orientation\":\"landscape\",\"colorDepth\":24,\"pixelRatio\":1},\"window\":{\"width\":1280,\"height\":800},\"browser\":{\"host\":\"www.apple.com\",\"webGLRenderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)\"},\"address\":{\"url\":\"https://www.apple.com/\",\"referringUrl\":\"\"}},\"experienceCloud\":{\"analytics\":{\"logging\":\"server_side\"}},\"execute\":{\"pageLoad\":{\"parameters\":{\"as_tex\":\"\"}}},\"prefetch\":{\"views\":[{\"parameters\":{\"as_tex\":\"\"}}]}}",
+    "{\"requestId\":\"6f4bc38177f04119a34aeaf9079cbb8b\",\"context\":{\"userAgent\":\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36\",\"timeOffsetInMinutes\":-420,\"channel\":\"web\",\"screen\":{\"width\":1280,\"height\":800,\"orientation\":\"landscape\",\"colorDepth\":24,\"pixelRatio\":1},\"window\":{\"width\":1280,\"height\":800},\"browser\":{\"host\":\"www.apple.com\",\"webGLRenderer\":\"ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)\"},\"address\":{\"url\":\"https://www.apple.com/\",\"referringUrl\":\"\"}},\"id\":{\"tntId\":\"00f4f0168ec243019a712b07adc55e29.35_0\"},\"experienceCloud\":{\"analytics\":{\"logging\":\"server_side\"}},\"execute\":{\"pageLoad\":{\"parameters\":{\"as_tex\":\"\"}}},\"prefetch\":{\"views\":[{\"parameters\":{\"as_tex\":\"\"}}]}}"
+  ],
   "consent_api_responses": [],
-  "findings": [],
+  "findings": [
+    {
+      "vendor": {
+        "name": "Adobe Target",
+        "domains": [
+          "tt.omtrdc.net",
+          "demdex.net"
+        ],
+        "cookie_names": [
+          "mbox",
+          "mboxEdgeCluster",
+          "at_check"
+        ],
+        "category": "targeting",
+        "legal_exposure": "medium",
+        "onetrust_category": "C0004",
+        "notes": "Adobe Target \u2014 A/B testing + personalization. Reads visitor ID for segment membership."
+      },
+      "status": "requires_further_investigation",
+      "methodology": "s3_inconclusive_unknown_cmp",
+      "cookies_observed": [
+        "at_check"
+      ],
+      "gcs_value": null,
+      "gpc_honored": null,
+      "evidence": [],
+      "notes": "Observed firing in the opted-out scan under a non-definitive methodology (the opt-out could not be confirmed). Re-run with a recognised CMP or banner-click methodology to confirm. Adobe Target fired tracking in opted-out consent state (no consent mode). Advanced Consent Mode does not apply to non-Google vendors \u2014 they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal."
+    },
+    {
+      "vendor": {
+        "name": "Adobe Analytics",
+        "domains": [
+          "omtrdc.net",
+          "2o7.net",
+          "demdex.net",
+          "*.sc.omtrdc.net"
+        ],
+        "cookie_names": [
+          "s_cc",
+          "s_sq",
+          "s_fid",
+          "s_vi",
+          "s_ecid",
+          "s_ppv",
+          "s_ips",
+          "AMCVS_",
+          "AMCV_"
+        ],
+        "category": "analytics",
+        "legal_exposure": "high",
+        "onetrust_category": "C0002",
+        "notes": "Adobe Analytics (formerly SiteCatalyst). Visit ID cookies (s_vi, s_ecid) are persistent identifiers shared across the Adobe Marketing Cloud. Frequently invisible in CCPA opt-out implementations because the consent module is configured separately from CMP. Pre-consent firing surfaces in pixel-as-sale enforcement (Sephora theory extends here)."
+      },
+      "status": "requires_further_investigation",
+      "methodology": "s3_inconclusive_unknown_cmp",
+      "cookies_observed": [
+        "s_fid"
+      ],
+      "gcs_value": null,
+      "gpc_honored": null,
+      "evidence": [],
+      "notes": "Observed firing in the opted-out scan under a non-definitive methodology (the opt-out could not be confirmed). Re-run with a recognised CMP or banner-click methodology to confirm. Adobe Analytics fired tracking in opted-out consent state (no consent mode). Advanced Consent Mode does not apply to non-Google vendors \u2014 they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal."
+    }
+  ],
   "pixel_firings": [],
-  "tracking_inventory": [],
-  "enforcement_themes": [],
+  "tracking_inventory": [
+    {
+      "vendor_name": "Adobe Analytics",
+      "category": "analytics",
+      "evidence_type": "cookie",
+      "observed_after_opt_out": true,
+      "observed_under_gpc": false,
+      "request_count": 0,
+      "sample_urls": [],
+      "cookies_observed": [
+        "s_fid"
+      ],
+      "sale_or_sharing_risk": "likely",
+      "contract_review_needed": true,
+      "sensitive_contexts": [
+        "video_or_streaming"
+      ],
+      "enforcement_theme_keys": [
+        "opt_out_mechanism_failure",
+        "sensitive_data_purpose_limitation",
+        "vendor_governance"
+      ]
+    },
+    {
+      "vendor_name": "Adobe Target",
+      "category": "targeting",
+      "evidence_type": "cookie",
+      "observed_after_opt_out": true,
+      "observed_under_gpc": false,
+      "request_count": 0,
+      "sample_urls": [],
+      "cookies_observed": [
+        "at_check"
+      ],
+      "sale_or_sharing_risk": "likely",
+      "contract_review_needed": true,
+      "sensitive_contexts": [
+        "video_or_streaming"
+      ],
+      "enforcement_theme_keys": [
+        "opt_out_mechanism_failure",
+        "sensitive_data_purpose_limitation",
+        "vendor_governance"
+      ]
+    }
+  ],
+  "enforcement_themes": [
+    {
+      "key": "vendor_governance",
+      "label": "Vendor and third-party governance",
+      "severity": "high",
+      "evidence": [
+        "2 inventory row(s) likely require sale/sharing review"
+      ],
+      "regulatory_context": "California enforcement has treated missing or overbroad ad-tech contract terms as a primary violation, not just a paperwork issue.",
+      "recommended_action": "Confirm each ad-tech, analytics, and pixel vendor has purpose-limited contract terms and is classified in the tracking inventory."
+    },
+    {
+      "key": "sensitive_data_purpose_limitation",
+      "label": "Sensitive data / purpose limitation",
+      "severity": "high",
+      "evidence": [
+        "Sensitive context(s): video_or_streaming",
+        "2 likely sale/sharing row(s)"
+      ],
+      "regulatory_context": "Healthline and GM show that regulators are applying purpose limitation to sensitive page context, location, driving, and other service data reused for advertising or data-broker purposes.",
+      "recommended_action": "Block advertising and behavioral tracking on sensitive-context pages unless a specific consent and purpose basis exists."
+    },
+    {
+      "key": "tracking_inventory",
+      "label": "Tracking technology inventory",
+      "severity": "info",
+      "evidence": [
+        "2 inventory row(s) generated"
+      ],
+      "regulatory_context": "Recent orders require current inventories of tracking technologies and periodic scanning to catch drift.",
+      "recommended_action": "Review and export this inventory quarterly and after every tag release."
+    }
+  ],
   "open_gaps": [],
   "remediation": [],
   "cmp_runtime_config": null,
