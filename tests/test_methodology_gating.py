@@ -56,6 +56,21 @@ def _confirmed_finding(cookie: str = "_fbp", vendor_name: str = "Meta") -> Vendo
     )
 
 
+def _review_finding(cookie: str = "_fbp", vendor_name: str = "Meta") -> VendorFinding:
+    return VendorFinding(
+        vendor=Vendor(
+            name=vendor_name,
+            domains=["facebook.com"],
+            category=CookieCategory.TARGETING,
+            legal_exposure=LegalExposure.HIGH,
+        ),
+        status=ViolationStatus.REQUIRES_INVESTIGATION,
+        methodology=MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP,
+        cookies_observed=[cookie],
+        gcs_value=None,
+    )
+
+
 def _audit(
     methodology: MethodologyFlag,
     *,
@@ -150,6 +165,13 @@ def test_inconclusive_report_does_not_claim_violation() -> None:
     html = _render(a)
     assert "Consent Violation Detected" not in html
     assert "Consent Enforcement Not Verified" in html
+
+
+def test_report_labels_review_findings_as_review_required() -> None:
+    a = _audit(MethodologyFlag.INCONCLUSIVE_UNKNOWN_CMP, findings=[_review_finding()])
+    html = _render(a)
+    assert "Review Required" in html
+    assert '<span class="badge badge-green">Passed</span>' not in html
 
 
 def test_definitive_report_claims_violation() -> None:

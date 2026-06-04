@@ -1189,10 +1189,14 @@
                 <span class="badge badge-red">Violation</span>
               {% elif finding.status == 'likely_violation' %}
                 <span class="badge badge-yellow">Likely</span>
+              {% elif finding.status == 'requires_further_investigation' %}
+                <span class="badge badge-yellow">Review Required</span>
               {% elif finding.status == 'acm_cookieless_ping' %}
                 <span class="badge badge-green">ACM Ping</span>
+              {% elif finding.status == 'no_evidence_of_violation' %}
+                <span class="badge badge-green">No Evidence</span>
               {% else %}
-                <span class="badge badge-green">Passed</span>
+                <span class="badge badge-gray">{{ finding.status | replace('_', ' ') | title }}</span>
               {% endif %}
             </td>
             <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">{{ finding.notes or '—' }}</td>

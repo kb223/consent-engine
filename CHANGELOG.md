@@ -3,6 +3,19 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.14] - 2026-06-04 - review-status report labels
+
+### Fixed
+- **Review findings no longer render as passed.** HTML reports now label
+  `requires_further_investigation` rows as `Review Required` instead of
+  `Passed`, so non-definitive scans match the methodology-gated headline and
+  notes. Unknown future statuses now render their status text instead of falling
+  through to a green pass badge.
+
+### Changed
+- **Public sample audit refreshed.** `docs/sample-audit/report.html` was
+  regenerated so the Apple sample report uses the corrected review-status badge.
+
 ## [0.6.13] - 2026-06-04 - enforcement pattern map + tracking inventory
 
 ### Added

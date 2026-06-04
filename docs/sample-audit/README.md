@@ -1,6 +1,6 @@
 # Sample audit - `apple.com`
 
-> Captured 2026-06-04 from consent-engine v0.6.13 against `https://www.apple.com`.
+> Captured 2026-06-04 from consent-engine v0.6.14 against `https://www.apple.com`.
 > Committed here so cold readers can see what an audit bundle looks like before
 > running the tool themselves.
 >
@@ -10,7 +10,7 @@
 > violations and two findings that require further investigation because the CMP
 > opt-out state could not be independently verified.
 >
-> The v0.6.13 `tracking_inventory` and `enforcement_themes` fields are populated
+> The v0.6.14 `tracking_inventory` and `enforcement_themes` fields are populated
 > in `audit_result.json`, so this sample shows the inventory and enforcement-map
 > output added in the current release.
 
