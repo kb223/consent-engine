@@ -17,4 +17,13 @@ import os as _os
 _os.environ.setdefault("LITELLM_LOG", "ERROR")
 _os.environ.setdefault("LITELLM_DROP_PARAMS", "true")
 
-__version__ = "0.6.15"
+# Read the version from installed package metadata so `pyproject.toml` stays the
+# single source of truth. Hardcoding it here previously meant a release could
+# ship with `consent-engine version` reporting the prior number.
+from importlib.metadata import PackageNotFoundError as _PackageNotFoundError  # noqa: E402
+from importlib.metadata import version as _dist_version  # noqa: E402
+
+try:
+    __version__ = _dist_version("consent-engine")
+except _PackageNotFoundError:  # pragma: no cover - source tree with no install
+    __version__ = "0.0.0+unknown"

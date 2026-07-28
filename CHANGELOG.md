@@ -3,6 +3,40 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.16] - 2026-07-28 - MCP server on FastMCP
+
+### Changed
+- **MCP server migrated from the low-level `Server` API to `FastMCP`.** Tool
+  schemas are now generated from type hints and docstrings instead of
+  hand-written JSON. The three tools (`audit_url`, `read_audit_result`,
+  `query_evidence`), their argument names, their defaults, and their required
+  fields are unchanged, so registered MCP hosts need no reconfiguration.
+- **Tool arguments now carry per-argument descriptions** in the generated
+  schema. The hand-written schemas described only the tool, not its arguments.
+- **`mcp dev` now works against this server.** The Python `mcp` CLI supports
+  only `FastMCP` objects and rejected the low-level `Server` class, so the
+  Inspector previously had to be launched through
+  `npx @modelcontextprotocol/inspector`. Debug with
+  `uv run mcp dev src/consent_engine/mcp_server.py --with-editable .`.
+
+### Fixed
+- **Version is no longer hardcoded in two places.** `consent_engine.__version__`
+  now reads from installed package metadata via `importlib.metadata`, making
+  `pyproject.toml` the single source of truth. The two values were previously
+  kept in sync by hand, so a release could ship with `consent-engine version`
+  and the API `/healthz` payload both reporting the prior number.
+
+### Notes
+- Tool responses now include `structuredContent` alongside the existing text
+  block, because FastMCP derives an `outputSchema` from the `-> str` return
+  annotation. Hosts that predate structured output continue to read the text
+  block, per the MCP spec's backward-compatibility rule.
+- An invalid `audit_id` still returns readable error text as a normal tool
+  result rather than raising a protocol-level error, so the model can retry
+  with a corrected id. This is now covered by a regression test.
+- The `_safe_audit_dir` path-traversal guard and its `_AUDIT_ID_PATTERN` regex
+  are untouched by this migration.
+
 ## [0.6.15] - 2026-06-04 - public sample refresh + sGTM casing
 
 ### Changed

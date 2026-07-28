@@ -4,8 +4,14 @@ Exposes the audit pipeline as Model Context Protocol tools so Claude Desktop
 (and any other MCP host) can run an audit, read the result, and query the
 captured evidence from a conversation.
 
+Built on the FastMCP API: tool schemas are generated from the type hints and
+docstrings below rather than hand-written JSON.
+
 Run standalone (the [mcp] extra is required):
     uvx --from 'consent-engine[mcp]' consent-engine-mcp
+
+Debug in the MCP Inspector (from a source clone):
+    uv run mcp dev src/consent_engine/mcp_server.py --with-editable .
 
 Register in Claude Desktop config:
     {
@@ -23,12 +29,11 @@ shell PATH.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import re
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 _AUDIT_ID_PATTERN = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
@@ -66,9 +71,7 @@ def _safe_audit_dir(audit_id: str) -> Path:
 # `pip install consent-engine[mcp]` we get it; otherwise we surface a clear
 # error rather than failing on import.
 try:
-    from mcp.server import Server
-    from mcp.server.stdio import stdio_server
-    from mcp.types import TextContent, Tool
+    from mcp.server.fastmcp import FastMCP
 except ImportError as e:                                          # pragma: no cover
     raise SystemExit(
         "MCP support requires the optional [mcp] extra. Install with one of:\n"
@@ -77,73 +80,23 @@ except ImportError as e:                                          # pragma: no c
         "  uv pip install 'consent-engine[mcp]'                 (uv-managed env)\n"
     ) from e
 
+from pydantic import Field  # noqa: E402  - imported after the optional-extra guard
 
-server: Server = Server("consent-engine")
-
-
-@server.list_tools()
-async def list_tools() -> list[Tool]:
-    return [
-        Tool(
-            name="audit_url",
-            description=(
-                "Run a forensic consent-compliance audit against a URL. "
-                "Returns the audit_id, a one-paragraph executive summary, "
-                "and a violations count. Use read_audit_result / "
-                "query_evidence to drill into specifics."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {"url": {"type": "string"}},
-                "required": ["url"],
-            },
-        ),
-        Tool(
-            name="read_audit_result",
-            description=(
-                "Load the structured audit_result.json for a prior audit. "
-                "Returns the full Pydantic model as JSON."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {"audit_id": {"type": "string"}},
-                "required": ["audit_id"],
-            },
-        ),
-        Tool(
-            name="query_evidence",
-            description=(
-                "Filter the captured network evidence for a prior audit. "
-                "Use this when the user asks 'why did X fire' or 'what was "
-                "happening at time T'. Filter by url substring, "
-                "host substring, or time window."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "audit_id": {"type": "string"},
-                    "url_contains": {"type": "string"},
-                    "host_contains": {"type": "string"},
-                    "max_results": {"type": "integer", "default": 20},
-                },
-                "required": ["audit_id"],
-            },
-        ),
-    ]
+# Named `mcp` because `mcp dev <file>` auto-discovers the server object by
+# looking for `mcp`, `server`, then `app`. Importing FastMCP by name (rather
+# than `import mcp`) means this assignment does not shadow the package.
+mcp = FastMCP("consent-engine")
 
 
-@server.call_tool()
-async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
-    if name == "audit_url":
-        return await _audit_url(arguments["url"])
-    if name == "read_audit_result":
-        return _read_audit_result(arguments["audit_id"])
-    if name == "query_evidence":
-        return _query_evidence(arguments)
-    raise ValueError(f"Unknown tool: {name}")
+@mcp.tool()
+async def audit_url(
+    url: Annotated[str, Field(description="Fully qualified URL to audit, including scheme.")],
+) -> str:
+    """Run a forensic consent-compliance audit against a URL.
 
-
-async def _audit_url(url: str) -> list[TextContent]:
+    Returns the audit_id, a one-paragraph executive summary, and a violations
+    count. Use read_audit_result / query_evidence to drill into specifics.
+    """
     # Lazy import — avoids pulling Playwright at MCP server start
     from consent_engine.audit import run_audit
 
@@ -158,46 +111,65 @@ async def _audit_url(url: str) -> list[TextContent]:
             for entry in bundle.scan_result.request_log:
                 f.write(json.dumps(entry.model_dump(mode="json"), default=str) + "\n")
         else:
-            for url in bundle.scan_result.network_requests:
-                f.write(json.dumps({"url": url}) + "\n")
+            for request_url in bundle.scan_result.network_requests:
+                f.write(json.dumps({"url": request_url}) + "\n")
     (audit_dir / "report.html").write_text(bundle.report_html)
     (audit_dir / "deck.marp.md").write_text(bundle.deck_marp_md)
-    return [TextContent(
-        type="text",
-        text=(
-            f"Audit complete: {bundle.audit_id}\n"
-            f"  URL: {url}\n"
-            f"  Output: {audit_dir}\n"
-            f"  Findings: {len(bundle.audit_result.findings)} vendor finding(s)\n\n"
-            f"Summary:\n{bundle.executive_summary}"
-        ),
-    )]
+    return (
+        f"Audit complete: {bundle.audit_id}\n"
+        f"  URL: {url}\n"
+        f"  Output: {audit_dir}\n"
+        f"  Findings: {len(bundle.audit_result.findings)} vendor finding(s)\n\n"
+        f"Summary:\n{bundle.executive_summary}"
+    )
 
 
-def _read_audit_result(audit_id: str) -> list[TextContent]:
+@mcp.tool()
+def read_audit_result(
+    audit_id: Annotated[str, Field(description="UUID4 audit_id returned by audit_url.")],
+) -> str:
+    """Load the structured audit_result.json for a prior audit.
+
+    Returns the full Pydantic model as JSON.
+    """
     try:
         audit_dir = _safe_audit_dir(audit_id)
     except ValueError as e:
-        return [TextContent(type="text", text=f"error: {e}")]
+        return f"error: {e}"
     path = audit_dir / "audit_result.json"
     if not path.exists():
-        return [TextContent(type="text", text=f"No audit bundle at {path}")]
-    return [TextContent(type="text", text=path.read_text())]
+        return f"No audit bundle at {path}"
+    return path.read_text()
 
 
-def _query_evidence(args: dict[str, Any]) -> list[TextContent]:
-    audit_id = args["audit_id"]
-    max_results = args.get("max_results", 20)
-    url_contains = (args.get("url_contains") or "").lower()
-    host_contains = (args.get("host_contains") or "").lower()
+@mcp.tool()
+def query_evidence(
+    audit_id: Annotated[str, Field(description="UUID4 audit_id returned by audit_url.")],
+    url_contains: Annotated[
+        str, Field(description="Case-insensitive substring to match against the request URL.")
+    ] = "",
+    host_contains: Annotated[
+        str, Field(description="Case-insensitive substring to match against the request host.")
+    ] = "",
+    max_results: Annotated[
+        int, Field(description="Maximum number of matching requests to return.")
+    ] = 20,
+) -> str:
+    """Filter the captured network evidence for a prior audit.
+
+    Use this when the user asks 'why did X fire' or 'what fired on this page'.
+    Filter by url substring or host substring.
+    """
+    url_contains = (url_contains or "").lower()
+    host_contains = (host_contains or "").lower()
 
     try:
         audit_dir = _safe_audit_dir(audit_id)
     except ValueError as e:
-        return [TextContent(type="text", text=f"error: {e}")]
+        return f"error: {e}"
     path = audit_dir / "evidence.jsonl"
     if not path.exists():
-        return [TextContent(type="text", text=f"No evidence at {path}")]
+        return f"No evidence at {path}"
 
     matches: list[dict[str, Any]] = []
     for line in path.read_text().splitlines():
@@ -214,20 +186,12 @@ def _query_evidence(args: dict[str, Any]) -> list[TextContent]:
         if len(matches) >= max_results:
             break
 
-    return [TextContent(
-        type="text",
-        text=f"{len(matches)} match(es):\n" + json.dumps(matches, indent=2, default=str),
-    )]
+    return f"{len(matches)} match(es):\n" + json.dumps(matches, indent=2, default=str)
 
 
 def cli() -> None:
     """Entrypoint registered as `consent-engine-mcp` in pyproject.toml."""
-    asyncio.run(_run())
-
-
-async def _run() -> None:
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(read_stream, write_stream, server.create_initialization_options())
+    mcp.run()
 
 
 if __name__ == "__main__":                                            # pragma: no cover
