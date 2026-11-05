@@ -113,6 +113,7 @@ def _capture_response_status(
 # ---------------------------------------------------------------------------
 
 _GCS_RE = re.compile(r"[?&;]gcs=([^&;]+)")
+_GCS_SHAPE_RE = re.compile(r"G[01-]{3}")
 _GCD_RE = re.compile(r"[?&;]gcd=([^&;]+)")
 _GCS_FRAG_RE = re.compile(r"/gcs=([^/&;]+)")  # Handle path-based signals in some sGTM setups
 
@@ -358,8 +359,11 @@ def parse_gcs_value(gcs_str: str) -> GCSValue:
     def _decode(bit: str) -> str:
         return "granted" if bit == "1" else "denied"
 
-    if len(gcs_str) < 4 or not gcs_str.startswith("G"):
-        return GCSValue(raw=gcs_str, ad_storage="unknown", analytics_storage="unknown")
+    # The value can come from a response body the audited site controls, so
+    # anything that isn't a well-formed GCS code is kept only as inert characters.
+    if not _GCS_SHAPE_RE.fullmatch(gcs_str):
+        safe_raw = re.sub(r"[^A-Za-z0-9-]", "", gcs_str)[:16]
+        return GCSValue(raw=safe_raw, ad_storage="unknown", analytics_storage="unknown")
 
     return GCSValue(
         raw=gcs_str,

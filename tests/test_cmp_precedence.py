@@ -35,3 +35,16 @@ def test_onetrust_alone_still_detected() -> None:
 
 def test_no_cmp_urls_returns_none() -> None:
     assert _match_cmp_urls(["https://example.com/app.js", "https://cdn.x/y.js"]) is None
+
+
+def test_truyo_production_cdn_subdomain_is_detected() -> None:
+    """Truyo also serves from a production CDN host, not just cmp.truyo.com."""
+    assert _match_cmp_urls(["https://truyoproductionuscdn.truyo.com/cmp.js"]) == "Truyo"
+
+
+def test_network_only_refinement_catches_late_loaded_truyo() -> None:
+    """The post-scan pass catches a CDN that loads after the in-scan networkidle window."""
+    from consent_engine.tools.cmp_detector import detect_cmp_from_network_only
+
+    result = detect_cmp_from_network_only(["https://truyoproductionuscdn.truyo.com/cmp.js"])
+    assert result is not None
