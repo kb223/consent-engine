@@ -46,7 +46,7 @@ def audit() -> AuditResult:
     return AuditResult.model_validate(json.loads(SAMPLE.read_text(encoding="utf-8")))
 
 
-@pytest.mark.parametrize("variant", ["compliance", "recovery"])
+@pytest.mark.parametrize("variant", ["compliance", "signal"])
 def test_no_scan_derived_string_reaches_the_deck_as_html(audit: AuditResult, variant: str) -> None:
     deck = generate_marp_slides(_poison(audit), PAYLOAD, report_variant=variant)
     assert "<img src=x" not in deck

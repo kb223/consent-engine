@@ -3,6 +3,13 @@
 All notable changes to consent-engine. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+- **Public sample audit is now anonymized.** `docs/sample-audit/` no longer names
+  the audited site. Identifiers, query strings and raw POST bodies are removed,
+  and the report and deck were regenerated from the anonymized data.
+
 ## [0.6.17] - 2026-11-05 - MCP SDK 2.x, deck escaping, dependency refresh
 
 ### Fixed
@@ -72,7 +79,7 @@ SDK 2.x removed.
 
 ### Changed
 - **Public sample audit refreshed with a higher-signal target.** `docs/sample-audit/`
-  now uses a point-in-time `ulta.com` audit that exercises OneTrust detection,
+  now uses a point-in-time audit of a US retailer that exercises OneTrust detection,
   post-opt-out pixels, Google Consent Mode signal analysis, GPC testing,
   tracking inventory, and enforcement-theme mapping.
 - **Visible server-side GTM acronym standardized to `sGTM`.** Generated HTML
@@ -91,7 +98,7 @@ SDK 2.x removed.
 
 ### Changed
 - **Public sample audit refreshed.** `docs/sample-audit/report.html` was
-  regenerated so the Apple sample report uses the corrected review-status badge.
+  regenerated so the sample report uses the corrected review-status badge.
 
 ## [0.6.13] - 2026-06-04 - enforcement pattern map + tracking inventory
 
