@@ -721,6 +721,7 @@ async def run_audit(
         cmp_detection_confidence=scan.cmp_detection_confidence,
         bot_detection_encountered=scan.bot_detection_encountered,
         scan_mode_used=scan.scan_mode_used,
+        evidence_log_complete=scan.request_log_complete,
         gpc_tested=gpc_tested,
         gpc_header_sent=gpc_header_sent,
         gpc_navigator_api_set=gpc_navigator_api_set,
