@@ -41,7 +41,7 @@ through `uvx` from PyPI instead — see the README's install one-liner.
 - CLI from source: `uv run consent-engine audit <url>`
 - API from source: `uv run uvicorn consent_engine.api:app --reload`
 - MCP server from source: `uv run consent-engine-mcp`
-- MCP server in the Inspector: `uv run mcp dev src/consent_engine/mcp_server.py --with-editable .`
+- MCP server in the Inspector: `uv run --extra mcp --with 'mcp[cli]' mcp dev src/consent_engine/mcp_server.py --with-editable .`
   (`mcp dev` spawns an isolated env, so `--with-editable .` is required for it to
   import `consent_engine`)
 - Test: `uv run pytest tests/ -v`

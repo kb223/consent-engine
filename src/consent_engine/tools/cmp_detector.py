@@ -591,7 +591,7 @@ def detect_cmp_from_network_only(network_requests: list[str]) -> CMPProfile | No
     (no Playwright Page), so it can be invoked from `audit.py` after the scan
     completes when the full network_requests list is available. Catches CMPs
     that load past the in-scan `networkidle` window (Truyo's late-loaded CDN
-    on O'Reilly is the canonical example).
+    is the canonical example).
 
     Returns None when no CMP URL pattern matches.
     """

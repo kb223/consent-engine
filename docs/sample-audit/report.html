@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Consent Compliance Audit: https://www.ulta.com</title>
+<title>Consent Compliance Audit: https://www.retailer.example</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap');
 
@@ -634,84 +634,96 @@
 <body>
 <div class="container">
 
-
+  
 
   <h1>Consent Compliance Audit</h1>
-  <p class="meta">https://www.ulta.com &nbsp;·&nbsp; 2026-06-04 04:20:29 UTC &nbsp;·&nbsp; Definitive (Consent Wiring Broken: tags fire regardless of CMP state)</p>
+  <p class="meta">https://www.retailer.example &nbsp;·&nbsp; 2026-11-05 23:07:16 UTC &nbsp;·&nbsp; Definitive (Consent Wiring Broken: tags fire regardless of CMP state)</p>
 
   <!-- SECTION A — EXECUTIVE SUMMARY -->
 
-
-
-
-
-
-
+  
+  
+  
+  
+  
+  
   <div class="verdict violation">
     <p class="verdict-title">
-
+      
         Consent Violation Detected
-
+      
     </p>
     <p class="verdict-sub">
-
-        34 confirmed violations &nbsp;·&nbsp;
-        37 vendors analyzed &nbsp;·&nbsp;
+      
+        7 confirmed violations &nbsp;·&nbsp;
+        10 vendors analyzed &nbsp;·&nbsp;
         Definitive (Consent Wiring Broken: tags fire regardless of CMP state)
-
+      
     </p>
   </div>
 
   <div class="exec-summary">
     <h2>Executive Summary</h2>
-    <p>This point-in-time audit of https://www.ulta.com identified 34 confirmed technical findings under the S3 Consent Mode wiring-broken methodology. OneTrust was detected, Google Consent Mode remained in a GCS=G111 granted state after opt-out, and 27 pixel endpoints were observed after consent denial. The GPC test sent Sec-GPC: 1 and navigator.globalPrivacyControl=true; observed pixel activity decreased from 27 to 25 requests, so the audit marked the signal as not respected. These are technical observations for compliance review, not legal conclusions.</p>
+    <p>Confirmed consent violations detected at https://www.retailer.example. The following vendors fired tracking technologies despite opted-out consent: Snapchat, Microsoft Clarity, Klaviyo, Pinterest, Meta, Microsoft / Bing, Google. This constitutes a potential violation of CCPA/CPRA and may expose the organization to regulatory enforcement and class-action litigation.</p>
   </div>
 
+  
+  
 
+  
 
+  
+  
 
-
-
-
-
-
-
+  
   <!-- STATUTORY + CLASS-ACTION EXPOSURE (compliance variant only) -->
-
+  
   <div class="exposure-panel">
     <span class="exposure-tag">Estimated Exposure</span>
     <h3 class="exposure-title">Statutory + class-action exposure from observed violations</h3>
     <div class="exposure-range">
-      $1,127,777 to $29,550,000
+      $1,627,777 to $44,550,000
       <span class="exposure-unit">range</span>
     </div>
     <div class="exposure-sub">Grounded in settled case outcomes, additive across statutes that apply to this scan.</div>
     <div class="exposure-components">
-
+      
       <div class="exposure-row">
         <div>
           <div class="exposure-row-statute">CCPA §1798.150 / CPRA</div>
           <div class="exposure-row-anchor">Sephora (CA AG, 2022): $1.2M (GPC = mandatory opt-out, pixel data = &#34;sale&#34;)</div>
         </div>
         <div class="exposure-row-amount">
-
+          
           $100,000 to $1,200,000
-
+          
         </div>
       </div>
-
+      
       <div class="exposure-row">
         <div>
           <div class="exposure-row-statute">CIPA §631 (pixel-as-wiretap)</div>
           <div class="exposure-row-anchor">Aspen Dental (FTC/state AGs): $18.5M (Health data + ad pixels = maximum exposure)</div>
         </div>
         <div class="exposure-row-amount">
-
+          
           $1,027,777 to $18,500,000
-
+          
         </div>
       </div>
-
+      
+      <div class="exposure-row">
+        <div>
+          <div class="exposure-row-statute">sGTM first-party forwarding</div>
+          <div class="exposure-row-anchor">First-party server relay is not a CIPA defense (emerging trend)</div>
+        </div>
+        <div class="exposure-row-amount">
+          
+          $500,000 to $10,000,000
+          
+        </div>
+      </div>
+      
       <div class="exposure-row">
         <div>
           <div class="exposure-row-statute">Aggravated (evidence of intentional violation)</div>
@@ -721,36 +733,36 @@
           —
         </div>
       </div>
-
+      
     </div>
     <p class="exposure-footnote">
       Directional estimate. Actual liability scales with class size and intentionality findings.
       Anchored to published settlements (see Regulatory Basis below).
     </p>
   </div>
+  
+  
 
+  
 
-
-
-
-
+  
   <div class="wiring-broken-banner">
     <p style="margin: 0 0 4px;">
       <span class="lbl">Methodology: Consent Wiring Broken</span>
       <strong>Tags fire regardless of the CMP's stored consent state.</strong>
     </p>
     <p style="margin: 0; font-size: 0.85rem;">
-      OneTrust was detected and denial was injected, but GCM beacons kept firing with <code>GCS=G111</code> (all granted). Findings are supported by observed consent-signal evidence.
+      Shopify was detected and denial was injected, but GCM beacons kept firing with <code>GCS=G111</code> (all granted). Findings are supported by observed consent-signal evidence.
     </p>
   </div>
-
+  
 
   <!-- GPC SIGNAL TEST -->
-
-
-
-
-
+  
+    
+      
+      
+    
   <div class="gpc-panel ignored">
     <h3>GPC Signal Test <span class="tag">Ignored</span></h3>
     <div class="gpc-row">
@@ -767,41 +779,41 @@
     </div>
     <div class="gpc-row">
       <div class="k">Site honored GPC signal</div>
-
+      
       <div class="v bad">
-        NO. 25 vendor pixels
+        NO. 4 vendor pixels
         fired tracking after GPC was asserted
       </div>
-
+      
     </div>
     <div class="gpc-row">
       <div class="k">Baseline pixel firings (post opt-out)</div>
-      <div class="v">27</div>
+      <div class="v">9</div>
     </div>
     <div class="gpc-row">
       <div class="k">Pixel firings under GPC</div>
       <div class="v bad">
-        25
+        4
       </div>
     </div>
     <p style="margin: 10px 0 0; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
-
-
+      
+      
         Under CCPA/CPRA, GPC is a legally binding opt-out signal. California's CPPA has stated
         GPC non-compliance is enforceable without prior notice.
-
+      
     </p>
   </div>
-
+  
 
   <div class="signal-grid">
     <div class="signal-card">
       <div class="signal-label">GCS Signal</div>
       <div class="signal-value">G111</div>
       <div class="signal-sub">
-
+        
           Advanced Consent Mode active
-
+        
       </div>
     </div>
     <div class="signal-card">
@@ -809,58 +821,59 @@
       <div class="signal-value">Not detected</div>
       <div class="signal-sub">none</div>
     </div>
-
+    
     <div class="signal-card">
       <div class="signal-label">CMP Interaction</div>
       <div class="signal-value">
-
-          ccpa_optout
-
+        
+          Cookie injection (Shopify)
+        
       </div>
     </div>
-
-
+    
+    
     <div class="signal-card">
       <div class="signal-label">Jurisdiction</div>
-
+      
       <div class="signal-value">
         United States (CCPA / State Laws)
       </div>
-
-      <div class="signal-sub">auto-detected from site signals</div>
-
+      
+      <div class="signal-sub">inferred (low confidence); pass --jurisdiction to override</div>
+      
     </div>
-
+    
     <div class="signal-card">
       <div class="signal-label">sGTM</div>
-      <div class="signal-value">Not detected</div>
-      <div class="signal-sub">—</div>
+      <div class="signal-value">Detected</div>
+      <div class="signal-sub">www.retailer.example</div>
     </div>
     <div class="signal-card">
       <div class="signal-label">GPC Tested</div>
       <div class="signal-value">Yes</div>
       <div class="signal-sub">Sec-GPC: 1 header</div>
     </div>
-
+    
     <div class="signal-card">
       <div class="signal-label">CMP Detected</div>
-      <div class="signal-value">OneTrust</div>
+      <div class="signal-value">Shopify</div>
       <div class="signal-sub">High confidence</div>
     </div>
-
-
-    <div class="signal-card">
-      <div class="signal-label">CMP Template</div>
-      <div class="signal-value" style="font-size: 1.05em;">Ulta</div>
-      <div class="signal-sub">Opt-out model · CA</div>
-    </div>
-
-
+    
+    
+    
   </div>
 
+  
+  <div class="ssgtm-warning">
+    <strong>sGTM Detected (www.retailer.example)</strong><br>
+    Client-side consent enforcement scripts cannot block server-to-server calls.
+    GPC (Sec-GPC: 1) headers are not forwarded to server-side containers.
+    Server-side data collection may occur regardless of client consent state.
+  </div>
+  
 
-
-
+  
   <div class="section">
     <div class="section-header">
       <h2>Enforcement Pattern Map</h2>
@@ -877,70 +890,112 @@
           </tr>
         </thead>
         <tbody>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">Opt-out mechanism failure</td>
             <td data-label="Severity">
-
+              
                 <span class="badge badge-red">high</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              34 confirmed vendor finding(s); 27 pixel endpoint firing(s)
+              7 confirmed vendor finding(s); 9 pixel endpoint firing(s)
             </td>
             <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Recent CPPA and California Attorney General matters focus on whether opt-out choices suppress downstream tracking, not merely whether an interface records a preference.</td>
             <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Re-test reject-all and GPC paths after each tag or CMP change.</td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">GPC / universal opt-out failure</td>
             <td data-label="Severity">
-
+              
                 <span class="badge badge-red">critical</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              25 pixel endpoint(s) fired under GPC; baseline=27, gpc=25
+              4 pixel endpoint(s) fired under GPC; baseline=9, gpc=4
             </td>
             <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">California, Connecticut, Colorado, Oregon, and other states treat opt-out preference signals as enforceable consumer choices.</td>
             <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Map Sec-GPC: 1 and navigator.globalPrivacyControl to the same denied state used by manual opt-out.</td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">Vendor and third-party governance</td>
             <td data-label="Severity">
-
+              
                 <span class="badge badge-red">high</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              52 inventory row(s) likely require sale/sharing review
+              15 inventory row(s) likely require sale/sharing review
             </td>
             <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">California enforcement has treated missing or overbroad ad-tech contract terms as a primary violation, not just a paperwork issue.</td>
             <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Confirm each ad-tech, analytics, and pixel vendor has purpose-limited contract terms and is classified in the tracking inventory.</td>
           </tr>
-
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">Sensitive data / purpose limitation</td>
+            <td data-label="Severity">
+              
+                <span class="badge badge-red">high</span>
+              
+            </td>
+            <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
+              Sensitive context(s): minor_or_student; 15 likely sale/sharing row(s)
+            </td>
+            <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Healthline and GM show that regulators are applying purpose limitation to sensitive page context, location, driving, and other service data reused for advertising or data-broker purposes.</td>
+            <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Block advertising and behavioral tracking on sensitive-context pages unless a specific consent and purpose basis exists.</td>
+          </tr>
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">Minor / student privacy</td>
+            <td data-label="Severity">
+              
+                <span class="badge badge-red">critical</span>
+              
+            </td>
+            <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
+              Page context suggests children, students, or under-16 users
+            </td>
+            <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Recent California, Florida, Kentucky, and Utah actions prioritize minor data, student contexts, age gating, and affirmative consent.</td>
+            <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Verify under-16 sale/sharing controls, age-appropriate notice, and affirmative consent before targeted advertising.</td>
+          </tr>
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">Tracking technology inventory</td>
             <td data-label="Severity">
-
+              
                 <span class="badge badge-gray">info</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              55 inventory row(s) generated
+              18 inventory row(s) generated
             </td>
             <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Recent orders require current inventories of tracking technologies and periodic scanning to catch drift.</td>
             <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Review and export this inventory quarterly and after every tag release.</td>
           </tr>
-
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Theme">Server-side consent propagation gap</td>
+            <td data-label="Severity">
+              
+                <span class="badge badge-red">high</span>
+              
+            </td>
+            <td class="cell-notes" data-label="Evidence" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
+              www.retailer.example
+            </td>
+            <td class="cell-notes" data-label="Regulatory Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Server-side tags can continue sharing data after client-side opt-out unless consent and GPC signals are explicitly propagated.</td>
+            <td class="cell-notes" data-label="Action" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">Audit the server-side container and verify GPC plus CMP state are read before each outbound server tag fires.</td>
+          </tr>
+          
         </tbody>
       </table>
     </div>
   </div>
+  
 
-
-
+  
   <div class="section">
     <div class="section-header">
       <h2>Tracking Technology Inventory</h2>
@@ -960,1607 +1015,534 @@
           </tr>
         </thead>
         <tbody>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">1rx.io</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Adobe Advertising</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Adobe Audience Manager</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">AppNexus/Xandr</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Beeswax</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Bidswitch</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">bidswitch.net</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Bing Ads UET</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Casale Media</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Criteo</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Criteo</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">DoubleClick/DV360</td>
             <td data-label="Evidence"><span>Pixel</span></td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">DoubleClick/Google Marketing</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Dynatrace</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Analytics</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-yellow">Possible</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Federated Media Publishing</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google</td>
             <td data-label="Evidence"><span>Cookie</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google / DoubleClick</td>
             <td data-label="Evidence"><span>Cookie</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google Ads</td>
             <td data-label="Evidence"><span>Pixel</span></td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google AdSense</td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google Analytics</td>
             <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
+            <td data-label="Category"><span>Analytics</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">HAproxy</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Functional</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-yellow">Possible</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
-                <span class="badge badge-gray">Low</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Impact</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Index Exchange</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">LinkedIn Insight Tag</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">LiveIntent</td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Klaviyo</td>
             <td data-label="Evidence"><span>Cookie</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">LiveRamp</td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Klaviyo</td>
             <td data-label="Evidence"><span>Pixel</span></td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Lotame</td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Meta</td>
             <td data-label="Evidence"><span>Cookie</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Magnite</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Magnite/Rubicon</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Mediamath</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">MediaMath</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Mediarithmics</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Meta Pixel</td>
             <td data-label="Evidence"><span>Pixel</span></td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
+              
+                <span class="badge badge-green">Not Observed</span>
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Microsoft / Bing</td>
             <td data-label="Evidence"><span>Cookie</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Nativo</td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Microsoft Clarity</td>
             <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
+            <td data-label="Category"><span>Analytics</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">openx.net</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Microsoft Clarity</td>
+            <td data-label="Evidence"><span>Pixel</span></td>
+            <td data-label="Category"><span>Session recording</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Pinterest</td>
             <td data-label="Evidence"><span>Cookie</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Pinterest Tag</td>
             <td data-label="Evidence"><span>Pixel</span></td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">PubMatic</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">PubMatic</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Server-side GTM</td>
+            <td data-label="Evidence"><span>Server side</span></td>
+            <td data-label="Category"><span>Tag management</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Rapleaf</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
+              
+                <span class="badge badge-yellow">Possible</span>
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Reddit</td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Shopify</td>
             <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
+            <td data-label="Category"><span>Functional</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
+              
+                <span class="badge badge-yellow">Possible</span>
+              
             </td>
             <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
+              
+                <span class="badge badge-gray">Low</span>
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Smartadserver</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Snapchat</td>
             <td data-label="Evidence"><span>Cookie</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Snapchat Pixel</td>
             <td data-label="Evidence"><span>Pixel</span></td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Opt-Out">
-
+              
                 <span class="badge badge-red">Observed</span>
-
+              
             </td>
             <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Taboola</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
+              
                 <span class="badge badge-green">Not Observed</span>
-
+              
             </td>
             <td data-label="Sale / Sharing Risk">
-
+              
                 <span class="badge badge-red">Likely</span>
-
+              
             </td>
             <td data-label="Contract Review">
-
+              
                 <span class="badge badge-yellow">Needed</span>
-
+              
             </td>
             <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
+              minor_or_student
             </td>
           </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Tapad</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Tealium iQ</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Functional</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-yellow">Possible</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-gray">Low</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">The Trade Desk</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">The Tradedesk</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">TikTok</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">TikTok Pixel</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">TradeDesk</td>
-            <td data-label="Evidence"><span>Pixel</span></td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">TripleLift</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Xandr</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Yahoo</td>
-            <td data-label="Evidence"><span>Cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Opt-Out">
-
-                <span class="badge badge-red">Observed</span>
-
-            </td>
-            <td data-label="GPC">
-
-                <span class="badge badge-green">Not Observed</span>
-
-            </td>
-            <td data-label="Sale / Sharing Risk">
-
-                <span class="badge badge-red">Likely</span>
-
-            </td>
-            <td data-label="Contract Review">
-
-                <span class="badge badge-yellow">Needed</span>
-
-            </td>
-            <td class="cell-notes" data-label="Sensitive Context" style="font-size: 11px; font-family: sans-serif; line-height: 1.45;">
-              None inferred
-            </td>
-          </tr>
-
+          
         </tbody>
       </table>
     </div>
   </div>
-
+  
 
   <!-- SECTION B — TECHNICAL EVIDENCE -->
 
@@ -2568,7 +1550,7 @@
     <div class="section-header">
       <h2>Vendor Tracking Findings</h2>
     </div>
-
+    
     <div class="responsive-table-wrap">
       <table class="responsive-table">
         <thead>
@@ -2582,643 +1564,184 @@
           </tr>
         </thead>
         <tbody>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Snapchat</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>X-AB, _scid, sc_at, _scid_r</span></td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>X-AB, _scid, _scid_r</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Legal Risk">
-
+              
                 <span class="badge badge-red">High</span>
-
+              
             </td>
             <td data-label="Status">
-
+              
                 <span class="badge badge-red">Violation</span>
-
+              
             </td>
             <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Snapchat fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">LiveIntent</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>_li_ss, _li_ss, lidid</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Shopify</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>localization, _shopify_essential</span></td>
+            <td data-label="Category"><span>Functional</span></td>
             <td data-label="Legal Risk">
-
+              
                 <span class="badge badge-gray">Unknown</span>
-
+              
             </td>
             <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
+              
+                <span class="badge badge-green">No Evidence</span>
+              
             </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">LiveIntent fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">—</td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Dynatrace</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>rxVisitor, dtCookie</span></td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Microsoft Clarity</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>CLID, _clck, SM, MUID, MR, ANONCHK, _clsk</span></td>
             <td data-label="Category"><span>Analytics</span></td>
             <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Dynatrace fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">TikTok</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>_ttp, _tt_enable_cookie</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
+              
                 <span class="badge badge-red">High</span>
-
+              
             </td>
             <td data-label="Status">
-
+              
                 <span class="badge badge-red">Violation</span>
-
+              
             </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">TikTok fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Microsoft Clarity fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>_gcl_au, receive-cookie-deprecation</span></td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Klaviyo</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>__kla_id</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
+              
+                <span class="badge badge-yellow">Medium</span>
+              
             </td>
             <td data-label="Status">
-
+              
                 <span class="badge badge-red">Violation</span>
-
+              
             </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Google fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Klaviyo fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
           </tr>
-
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Pinterest</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>tst, _pin_unauth, _pinterest_ct_ua</span></td>
+            <td data-label="Category"><span>Targeting</span></td>
+            <td data-label="Legal Risk">
+              
+                <span class="badge badge-yellow">Medium</span>
+              
+            </td>
+            <td data-label="Status">
+              
+                <span class="badge badge-red">Violation</span>
+              
+            </td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Pinterest fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
+          </tr>
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Meta</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>fr</span></td>
+            <td data-label="Category"><span>Targeting</span></td>
+            <td data-label="Legal Risk">
+              
+                <span class="badge badge-red">High</span>
+              
+            </td>
+            <td data-label="Status">
+              
+                <span class="badge badge-red">Violation</span>
+              
+            </td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Meta fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
+          </tr>
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Microsoft / Bing</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>MUID, MR, MR</span></td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>MUID, MR</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Legal Risk">
-
+              
                 <span class="badge badge-yellow">Medium</span>
-
+              
             </td>
             <td data-label="Status">
-
+              
                 <span class="badge badge-red">Violation</span>
-
+              
             </td>
             <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Microsoft / Bing fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google / DoubleClick</td>
             <td style="font-size: 11px;" data-label="Signal / Cookie"><span>IDE</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Legal Risk">
-
+              
                 <span class="badge badge-red">High</span>
-
+              
             </td>
             <td data-label="Status">
-
+              
                 <span class="badge badge-yellow">Review Required</span>
-
+              
             </td>
             <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">GCS=G111 in opted-out scan — active CMP overriding consent injection. Verify CMP configuration and re-test with banner click methodology.</td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Pinterest</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>_pin_unauth, _pinterest_ct_ua</span></td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>_gcl_au</span></td>
             <td data-label="Category"><span>Targeting</span></td>
             <td data-label="Legal Risk">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Pinterest fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">DoubleClick/Google Marketing</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>__gads</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
+              
                 <span class="badge badge-gray">Unknown</span>
-
+              
             </td>
             <td data-label="Status">
-
+              
                 <span class="badge badge-red">Violation</span>
-
+              
             </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">DoubleClick/Google Marketing fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Google fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google AdSense</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>__gpi, __eoi</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google Analytics</td>
+            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>_ga_XXXXXXXXXX, _ga_XXXXXXXXXX</span></td>
+            <td data-label="Category"><span>Analytics</span></td>
             <td data-label="Legal Risk">
-
+              
                 <span class="badge badge-gray">Unknown</span>
-
+              
             </td>
             <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
+              
+                <span class="badge badge-yellow">Review Required</span>
+              
             </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Google AdSense fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">GCS=G111 in opted-out scan — active CMP overriding consent injection. Verify CMP configuration and re-test with banner click methodology.</td>
           </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Tapad</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>TapAd_TS, TapAd_DID, TapAd_3WAY_SYNCS</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Tapad fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Criteo</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>uid, cto_bundle, cto_bundle</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Criteo fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Adobe Audience Manager</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>demdex, dpm</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Adobe Audience Manager fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Xandr</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>XANDR_PANID, uuid2, anj</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Xandr fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">openx.net</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>i</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">openx.net fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Casale Media</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>CMID, CMPS, CMPRO</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Casale Media fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">PubMatic</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>KRTBCOOKIE_18, KADUSERCOOKIE, SPugT, KRTBCOOKIE_377, PugT</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">PubMatic fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Adobe Advertising</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>everest_g_v2</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Adobe Advertising fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">bidswitch.net</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>tuuid, c, tuuid_lu</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">bidswitch.net fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">HAproxy</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>SERVERID</span></td>
-            <td data-label="Category"><span>Functional</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-green">No Evidence</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">—</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">The Trade Desk</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>TDID</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">The Trade Desk fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Magnite</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>khaos, khaos_p, tvid, tv_UICR, tv_UIRF, audit_p, audit</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Magnite fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Nativo</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>visitor, status, ver</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Nativo fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Yahoo</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>A3, IDSYNC</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Yahoo fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Smartadserver</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>pid, TestIfCookieP, csync</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Smartadserver fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Lotame</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>_cc_dc, _cc_id</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Lotame fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">TripleLift</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>tluid</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">TripleLift fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">1rx.io</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>_rxuuid</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">1rx.io fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Taboola</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>t_gid, t_pt_gid</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Taboola fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Federated Media Publishing</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>ljt_reader</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Federated Media Publishing fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Mediamath</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>uuid</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Mediamath fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Beeswax</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>bito, bitoIsSecure</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Beeswax fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Mediarithmics</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>mics_vid, mics_uaid, mics_lts</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Mediarithmics fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Tealium iQ</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>utag_main</span></td>
-            <td data-label="Category"><span>Functional</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Low</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-green">No Evidence</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">—</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Reddit</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>_rdt_uuid</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Reddit fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">The Tradedesk</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>TDCPM</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">The Tradedesk fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Rapleaf</td>
-            <td style="font-size: 11px;" data-label="Signal / Cookie"><span>rlas3, pxrc</span></td>
-            <td data-label="Category"><span>Targeting</span></td>
-            <td data-label="Legal Risk">
-
-                <span class="badge badge-gray">Unknown</span>
-
-            </td>
-            <td data-label="Status">
-
-                <span class="badge badge-red">Violation</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: sans-serif; line-height: 1.4;" data-label="Observation">Rapleaf fired tracking in opted-out consent state (GCS=G111). Advanced Consent Mode does not apply to non-Google vendors — they must be fully blocked when consent is denied, not converted to cookieless pings. Tag needs a consent gate in GTM or removal.</td>
-          </tr>
-
+          
         </tbody>
       </table>
     </div>
-
+    
   </div>
 
-
+  
   <div class="section">
     <div class="section-header">
       <h2>Consent Signal Breakdown</h2>
@@ -3237,81 +1760,39 @@
           <td data-label="ad_storage"><span>granted</span></td>
           <td data-label="analytics_storage"><span>granted</span></td>
           <td class="cell-notes" data-label="Notes">
-
+            
               Full consent granted, all signals active
-
+            
           </td>
         </tr>
-
+        
         <tr>
           <td class="cell-vendor" data-label="Parameter">GCD</td>
-          <td data-label="Value"><code>13l3l3l3l1l1</code></td>
+          <td data-label="Value"><code>13t3t3t3t5l1</code></td>
           <td colspan="2" data-label="Detail"><span>Consent detail (V2 signal)</span></td>
           <td class="cell-notes" data-label="Notes" style="font-family: sans-serif; font-size: 11px;">
-
-
-
-
-
-
-              Unknown state
-
+            
+            
+            
+            
+            
+            
+              All consent types granted
+            
           </td>
         </tr>
-
+        
       </tbody>
     </table>
     </div>
   </div>
+  
 
+  
 
+  
 
-
-
-  <div class="section">
-    <div class="section-header">
-      <h2>CMP Runtime Configuration <span style="font-size:0.75rem;font-weight:400;color:#6b7280;margin-left:8px;">what the CMP itself reports</span></h2>
-    </div>
-    <p style="font-size:0.9em;color:var(--muted);margin:0 0 12px 0;">Captured directly from the CMP's JavaScript API during the scan. This is ground truth for what the CMP <em>thinks</em> it is doing. Mismatches between this and observed network behavior (below) are forensic evidence of CMP misconfiguration, not gray-area judgment calls.</p>
-    <div class="scroll-table-wrap">
-    <table class="evidence-table" style="min-width: 520px;">
-      <tbody>
-        <tr><th style="text-align:left;white-space:nowrap;">CMP</th><td>OneTrust</td></tr>
-
-        <tr><th style="text-align:left;white-space:nowrap;">Template</th><td><code>Ulta</code></td></tr>
-
-
-        <tr><th style="text-align:left;white-space:nowrap;">Geolocation Rule</th><td>Global</td></tr>
-
-
-        <tr><th style="text-align:left;white-space:nowrap;">Geo Country</th><td>CA</td></tr>
-
-        <tr><th style="text-align:left;white-space:nowrap;">Consent Model</th><td>Opt-out</td></tr>
-
-        <tr><th style="text-align:left;white-space:nowrap;">Script Version</th><td><code>202601.2.0</code></td></tr>
-
-
-        <tr><th style="text-align:left;white-space:nowrap;vertical-align:top;">Expected Cookies (by category)</th><td>
-
-          <div style="margin-bottom:4px;"><strong>C0007</strong>: <span style="color:var(--muted);font-size:0.85em;">58 cookies declared</span></div>
-
-          <div style="margin-bottom:4px;"><strong>C0001</strong>: <span style="color:var(--muted);font-size:0.85em;">26 cookies declared</span></div>
-
-          <div style="margin-bottom:4px;"><strong>C0002</strong>: <span style="color:var(--muted);font-size:0.85em;">128 cookies declared</span></div>
-
-          <div style="margin-bottom:4px;"><strong>C0003</strong>: <span style="color:var(--muted);font-size:0.85em;">20 cookies declared</span></div>
-
-          <div style="margin-bottom:4px;"><strong>C0004</strong>: <span style="color:var(--muted);font-size:0.85em;">185 cookies declared</span></div>
-
-        </td></tr>
-
-      </tbody>
-    </table>
-    </div>
-  </div>
-
-
-
+  
   <div class="section">
     <div class="section-header">
       <h2>Consent Event Stream <span style="font-size:0.75rem;font-weight:400;color:#6b7280;margin-left:8px;">dataLayer pushes (consent-only)</span></h2>
@@ -3328,163 +1809,406 @@
         </tr>
       </thead>
       <tbody>
-
-        <tr>
-          <td>0</td>
-          <td><code>onetrust_loaded</code></td>
-          <td>OneTrustLoaded</td>
-          <td style="font-size:0.85em;">
-            <div><code>OnetrustActiveGroups</code>: ,C0001,</div>
-          </td>
-        </tr>
-
-        <tr>
-          <td>2</td>
-          <td><code>onetrust_groups_updated</code></td>
-          <td>OneTrustGroupsUpdated</td>
-          <td style="font-size:0.85em;">
-            <div><code>OnetrustActiveGroups</code>: ,C0001,</div>
-          </td>
-        </tr>
-
+        
         <tr>
           <td>3</td>
-          <td><code>onetrust_loaded</code></td>
-          <td>OneTrustLoaded</td>
+          <td><code>gtag_consent_default</code></td>
+          <td>—</td>
           <td style="font-size:0.85em;">
-            <div><code>OnetrustActiveGroups</code>: ,C0001,</div>
+            <div><code>ad_storage</code>: granted</div><div><code>ad_user_data</code>: granted</div><div><code>ad_personalization</code>: granted</div><div><code>analytics_storage</code>: granted</div>
           </td>
         </tr>
-
-        <tr>
-          <td>5</td>
-          <td><code>onetrust_groups_updated</code></td>
-          <td>OneTrustGroupsUpdated</td>
-          <td style="font-size:0.85em;">
-            <div><code>OnetrustActiveGroups</code>: ,C0001,</div>
-          </td>
-        </tr>
-
+        
       </tbody>
     </table>
     </div>
   </div>
+  
 
-
-
+  
+  <div class="section">
+    <div class="section-header">
+      <h2>GCS Timeline</h2>
+    </div>
+    <div class="scroll-table-wrap">
+    <table class="evidence-table" style="min-width: 860px;">
+      <thead>
+        <tr>
+          <th style="white-space:nowrap;">Time (ms)</th>
+          <th>GCS</th>
+          <th style="white-space:nowrap;">ad_storage</th>
+          <th style="white-space:nowrap;">analytics_storage</th>
+          <th>GCD</th>
+          <th style="min-width:320px;">URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td style="white-space:nowrap;">1382</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://www.googleadservices.com/pagead/conversion/[id]
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">1382</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://www.googleadservices.com/ccm/conversion/[id]
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">1917</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://stats.g.doubleclick.net/g/collect
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">1918</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://www.google.com/measurement/conversion
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">1918</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://analytics.google.com/g/collect
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">1918</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://www.google.ca/ads/ga-audiences
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">1984</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://www.merchant-center-analytics.goog/mc/collect
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">2023</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://googleads.g.doubleclick.net/pagead/viewthroughconversion/[id]
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">34046</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://www.googleadservices.com/pagead/conversion/[id]
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">34046</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://www.googleadservices.com/ccm/conversion/[id]
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">34414</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://googleads.g.doubleclick.net/pagead/viewthroughconversion/[id]
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">34477</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://analytics.google.com/g/collect
+          </td>
+        </tr>
+        
+        <tr>
+          <td style="white-space:nowrap;">39512</td>
+          <td>
+            <code style="color:#15803d;">
+              G111
+            </code>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td>
+            <span style="color:#15803d;">
+              granted
+            </span>
+          </td>
+          <td style="white-space:nowrap;">13t3t3t3t5l1</td>
+          <td style="font-size:10px; font-family:monospace; word-break:break-all; max-width:400px;">
+            https://www.merchant-center-analytics.goog/mc/collect
+          </td>
+        </tr>
+        
+      </tbody>
+    </table>
+    </div>
+  </div>
+  
 
   <!-- REMEDIATION — derived per-finding fix steps -->
 
-
+  
   <div class="section">
     <div class="section-header">
       <h2>Remediation Steps</h2>
     </div>
     <div class="remediation" style="border-radius: 0; border: none; border-left: none; margin-bottom: 0;">
       <ol>
-
-        <li><strong>Snapchat (<code>X-AB</code>, <code>_scid</code>, <code>sc_at</code>, <code>_scid_r</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>LiveIntent (<code>_li_ss</code>, <code>_li_ss</code>, <code>lidid</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Dynatrace RUM (<code>rxVisitor</code>, <code>dtCookie</code>)</strong> is firing without consent. Either (a) gate the Dynatrace tag in GTM behind <code>functional_storage = granted</code>, or (b) call <code>dtrum.disable()</code> on page load when consent is denied.</li>
-
-        <li><strong>TikTok (<code>_ttp</code>, <code>_tt_enable_cookie</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Google Ads (<code>_gcl_au</code>, <code>receive-cookie-deprecation</code>)</strong> conversion linker fired despite opted-out. In GTM, open the Google Ads / Conversion Linker tag and enable <code>ads_data_redaction</code>. Confirm Additional Consent Settings require <code>ad_storage</code> + <code>ad_user_data</code> + <code>ad_personalization</code>.</li>
-
-        <li><strong>Microsoft / Bing (<code>MUID</code>, <code>MR</code>, <code>MR</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Pinterest (<code>_pin_unauth</code>, <code>_pinterest_ct_ua</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>DoubleClick/Google Marketing (<code>__gads</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Google AdSense (<code>__gpi</code>, <code>__eoi</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Tapad (<code>TapAd_TS</code>, <code>TapAd_DID</code>, <code>TapAd_3WAY_SYNCS</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Criteo (<code>uid</code>, <code>cto_bundle</code>, <code>cto_bundle</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Adobe Audience Manager (<code>demdex</code>, <code>dpm</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Xandr (<code>XANDR_PANID</code>, <code>uuid2</code>, <code>anj</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>openx.net (<code>i</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Casale Media (<code>CMID</code>, <code>CMPS</code>, <code>CMPRO</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>PubMatic (<code>KRTBCOOKIE_18</code>, <code>KADUSERCOOKIE</code>, <code>SPugT</code>, <code>KRTBCOOKIE_377</code>, <code>PugT</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Adobe Advertising (<code>everest_g_v2</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>bidswitch.net (<code>tuuid</code>, <code>c</code>, <code>tuuid_lu</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>The Trade Desk (<code>TDID</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Magnite (<code>khaos</code>, <code>khaos_p</code>, <code>tvid</code>, <code>tv_UICR</code>, <code>tv_UIRF</code>, <code>audit_p</code>, <code>audit</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Nativo (<code>visitor</code>, <code>status</code>, <code>ver</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Yahoo (<code>A3</code>, <code>IDSYNC</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Smartadserver (<code>pid</code>, <code>TestIfCookieP</code>, <code>csync</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Lotame (<code>_cc_dc</code>, <code>_cc_id</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>TripleLift (<code>tluid</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>1rx.io (<code>_rxuuid</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Taboola (<code>t_gid</code>, <code>t_pt_gid</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Federated Media Publishing (<code>ljt_reader</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Mediamath (<code>uuid</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Beeswax (<code>bito</code>, <code>bitoIsSecure</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Mediarithmics (<code>mics_vid</code>, <code>mics_uaid</code>, <code>mics_lts</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Reddit (<code>_rdt_uuid</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>The Tradedesk (<code>TDCPM</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
-        <li><strong>Rapleaf (<code>rlas3</code>, <code>pxrc</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
-
+        
+        <li><strong>Snapchat (<code>X-AB</code>, <code>_scid</code>, <code>_scid_r</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
+        
+        <li><strong>Microsoft Clarity (<code>CLID</code>, <code>_clck</code>, <code>SM</code>, <code>MUID</code>, <code>MR</code>, <code>ANONCHK</code>, <code>_clsk</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
+        
+        <li><strong>Klaviyo (<code>__kla_id</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
+        
+        <li><strong>Pinterest (<code>tst</code>, <code>_pin_unauth</code>, <code>_pinterest_ct_ua</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
+        
+        <li><strong>Meta Pixel (<code>fr</code>)</strong> fired despite GCS=G111. In GTM, open the Meta/Facebook Pixel tag and set its consent settings to require <code>ad_storage</code>, <code>analytics_storage</code>, <code>ad_user_data</code>, and <code>ad_personalization</code>. Verify the reject-all path in the CMP banner maps to those four denied signals.</li>
+        
+        <li><strong>Microsoft / Bing (<code>MUID</code>, <code>MR</code>)</strong> fired tracking despite GCS=G111. Verify the tag has consent settings configured in your tag manager and that the CMP reject-all path maps to denied consent for the appropriate storage categories.</li>
+        
+        <li><strong>Google Ads (<code>_gcl_au</code>)</strong> conversion linker fired despite opted-out. In GTM, open the Google Ads / Conversion Linker tag and enable <code>ads_data_redaction</code>. Confirm Additional Consent Settings require <code>ad_storage</code> + <code>ad_user_data</code> + <code>ad_personalization</code>.</li>
+        
       </ol>
     </div>
   </div>
-
+  
 
   <!-- OPEN GAPS — items requiring follow-up investigation -->
 
-
+  
   <div class="section">
     <div class="section-header">
       <h2>Open Gaps <span style="font-size:0.75rem;font-weight:400;color:var(--muted);margin-left:8px;">requires manual follow-up</span></h2>
     </div>
     <div style="padding: 16px 22px 18px;">
       <ul style="margin: 0; padding-left: 1.4em;">
-
-        <li style="margin-bottom: 10px; font-size: 0.9rem; line-height: 1.6; color: var(--text);"><strong>GPC signal not respected.</strong> 25 tracking pixels fired after <code>Sec-GPC: 1</code> was asserted. Under CCPA/CPRA, GPC is a legally binding opt-out signal. California's CPPA has stated GPC non-compliance is enforceable without prior notice.</li>
-
+        
+        <li style="margin-bottom: 10px; font-size: 0.9rem; line-height: 1.6; color: var(--text);"><strong>Server-side GTM</strong> detected at <code>www.retailer.example</code>. Client-side consent enforcement scripts cannot block server-to-server calls, and the GPC (<code>Sec-GPC: 1</code>) header is not forwarded to server-side containers. Audit the sGTM container directly and verify every server tag has explicit consent gating.</li>
+        
+        <li style="margin-bottom: 10px; font-size: 0.9rem; line-height: 1.6; color: var(--text);"><strong>GPC signal not respected.</strong> 4 tracking pixels fired after <code>Sec-GPC: 1</code> was asserted. Under CCPA/CPRA, GPC is a legally binding opt-out signal. California's CPPA has stated GPC non-compliance is enforceable without prior notice.</li>
+        
       </ul>
     </div>
   </div>
-
+  
 
   <!-- SECTION C — PIXEL ENDPOINT EVIDENCE -->
 
-
+  
   <div class="section">
     <div class="section-header">
       <h2>Pixel Endpoint Evidence <span style="font-size:0.75rem;font-weight:400;color:#6b7280;margin-left:8px;">network-level evidence</span></h2>
     </div>
-
+    
     <div style="padding: 10px 16px 4px; font-size:0.78rem; color:#6b7280; line-height:1.5;">
-
+      
       Pixel endpoints observed in network traffic after consent denial. The same evidentiary pattern that demand-letter plaintiffs (Swigart, Vivek Shah, et al.) source from auto-scans of business websites in CIPA/CCPA class actions, surfaced here defensively, on your side of the table.
-
+      
     </div>
     <div class="responsive-table-wrap">
       <table class="responsive-table">
@@ -3498,400 +2222,148 @@
           </tr>
         </thead>
         <tbody>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Bing Ads UET</td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google Ads</td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Exposure">
-
+              
                 <span class="badge badge-red">High</span>
-
+              
             </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">bat.bing.com/action</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">googleadservices.com/pagead/conversion</td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://bat.bing.com/action/0?ti=4025993&amp;Ver=2&amp;_rnd=0.52446465481837
+              https://www.googleadservices.com/pagead/conversion/[id]
             </td>
           </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Criteo</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">sslwidget.criteo.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://sslwidget.criteo.com/event?a=8463&amp;v=5.46.0&amp;uat=0&amp;p0=e%3Dce%26m%3D%255B%255D%26h%3Dsha256&amp;p1=e%3Dexd%26ci%3D2c33e…
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">DoubleClick/DV360</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">ad.doubleclick.net</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://ad.doubleclick.net/activity;src=14666520;type=ultasale;cat=131277289;rcb=5;ord=8625700733253;npa=0;auiddc=168044…
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">DoubleClick/DV360</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">doubleclick.net/activityi;</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://4728858.fls.doubleclick.net/activityi;src=4728858;type=21ulb1;cat=2022ubdu;EuPoliticalAdsDeclaration=DOES_NOT_CO…
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">DoubleClick/DV360</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">fls.doubleclick.net</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://4728858.fls.doubleclick.net/activityi;src=4728858;type=21ulb1;cat=2022ubdu;EuPoliticalAdsDeclaration=DOES_NOT_CO…
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">LinkedIn Insight Tag</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">px.ads.linkedin.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://px.ads.linkedin.com/db_sync?pid=16261&amp;puuid=bca961e8-6491-4f84-91a2-0c4cb207d3ec&amp;rand=1780546826
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">LiveRamp</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">launchpad.privacymanager.io</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://launchpad.privacymanager.io/latest/launchpad.bundle.js
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">LiveRamp</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">idsync.rlcdn.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://idsync.rlcdn.com/360947.gif?partner_uid=2020216318126327897
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">MediaMath</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">sync.mathtag.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://sync.mathtag.com/sync/img?mt_exid=10103&amp;redirect=https://partner.mediawallahscript.com/?account_id=2036&amp;partner_…
-            </td>
-          </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Meta Pixel</td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Exposure">
-
+              
                 <span class="badge badge-red">High</span>
-
+              
             </td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">connect.facebook.net/en_US/fbevents.js</td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
               https://connect.facebook.net/en_US/fbevents.js
             </td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Meta Pixel</td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Exposure">
-
+              
                 <span class="badge badge-red">High</span>
-
+              
             </td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">facebook.com/tr/</td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://www.facebook.com/tr/?id=558224355430197&amp;ev=PageView&amp;dl=https%3A%2F%2Fwww.ulta.com%2F&amp;rl=&amp;if=false&amp;ts=17805468253…
+              https://www.facebook.com/tr
             </td>
           </tr>
-
+          
+          <tr>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Microsoft Clarity</td>
+            <td data-label="Category"><span>Session recording</span></td>
+            <td data-label="Exposure">
+              
+                <span class="badge badge-red">High</span>
+              
+            </td>
+            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">clarity.ms/collect</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
+              https://n.clarity.ms/collect
+            </td>
+          </tr>
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Pinterest Tag</td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Exposure">
-
+              
                 <span class="badge badge-red">High</span>
-
+              
             </td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">ct.pinterest.com/user</td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://ct.pinterest.com/user/?tid=2620892613526&amp;ov=%7B%22page_name%22%3A%22Ulta%20Beauty%20%7C%20Makeup%2C%20Skin%20Car…
+              https://ct.pinterest.com/user
             </td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Pinterest Tag</td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Exposure">
-
+              
                 <span class="badge badge-red">High</span>
-
+              
             </td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">ct.pinterest.com/v3</td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://ct.pinterest.com/v3/?tid=2620892613526&amp;ov=%7B%22page_name%22%3A%22Ulta%20Beauty%20%7C%20Makeup%2C%20Skin%20Care%…
+              https://ct.pinterest.com/[id])%20AppleWebKit%2F537.36%20(KHTML%2C%20like%20Gecko)%20Chrome%2F136.0.0.0%20Safari%2F537.36…
             </td>
           </tr>
-
+          
           <tr>
             <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Snapchat Pixel</td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Exposure">
-
+              
                 <span class="badge badge-red">High</span>
-
+              
             </td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">tr.snapchat.com/p</td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
               https://tr.snapchat.com/p
             </td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">TikTok Pixel</td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Klaviyo</td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">analytics.tiktok.com/i18n/pixel</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=CQ2N213C77U8BDE394M0&amp;lib=ttq
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">TikTok Pixel</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">analytics.tiktok.com/api/v2/pixel</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://analytics.tiktok.com/api/v2/pixel
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">TradeDesk</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">js.adsrvr.org</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://js.adsrvr.org/up_loader.3.0.0.js
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">TradeDesk</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-red">High</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">match.adsrvr.org</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://match.adsrvr.org/track/cmf/generic?ttd_pid=vxsrv3i&amp;ttd_tpi=1
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">AppNexus/Xandr</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
+              
                 <span class="badge badge-yellow">Medium</span>
-
+              
             </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">secure.adnxs.com</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">static.klaviyo.com/onsite/js</td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://secure.adnxs.com/getuid?https://partner.mediawallahscript.com/?account_id=2016&amp;partner_id=2087&amp;uid=$UID&amp;tag_form…
+              https://static.klaviyo.com/onsite/js/XXXXXX/klaviyo.js
             </td>
           </tr>
-
+          
           <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Bidswitch</td>
+            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Klaviyo</td>
             <td data-label="Category"><span>Advertising</span></td>
             <td data-label="Exposure">
-
+              
                 <span class="badge badge-yellow">Medium</span>
-
+              
             </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">bidswitch.net</td>
+            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">a.klaviyo.com</td>
             <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://x.bidswitch.net/sync?dsp_id=119&amp;user_id=2020216318126327897&amp;expires=30&amp;gdpr=&amp;gdpr_consent=&amp;gdpr_pd={GDPR_PD}
+              https://fast.a.klaviyo.com/custom-fonts/api/[id]/company-fonts/onsite
             </td>
           </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Google Ads</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">googlesyndication.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://f9bfedf34305c9e280466e1905458236.safeframe.googlesyndication.com/safeframe/1-0-45/html/container.html
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Impact</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">d.impactradius-event.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://d.impactradius-event.com/A119822-1eb0-43de-95fe-3053aaab3d711.js
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Index Exchange</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">casalemedia.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://dsum-sec.casalemedia.com/rum?cm_dsp_id=57&amp;external_user_id=2020216318126327897&amp;forward=
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">Magnite/Rubicon</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">pixel.rubiconproject.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://pixel.rubiconproject.com/tap.php?v=6434&amp;nid=2149&amp;put=k-r6Gp5n2FsamVV9AK-crKQCKb8sZrfrJtCh6C_Q&amp;expires=30
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">PubMatic</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">image2.pubmatic.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://image2.pubmatic.com/AdServer/Pug?vcode=bz0yJnR5cGU9MSZjb2RlPTI3MzkmdGw9MTI5NjAw==&amp;piggybackCookie=20202163181263…
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">PubMatic</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">image4.pubmatic.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://simage4.pubmatic.com/AdServer/SPug?partnerID=167352&amp;partnerUID=uid:k-mw4opH2FsamVV9AK-crKQCKb8sacZLV7Mtjh_g
-            </td>
-          </tr>
-
-          <tr>
-            <td class="cell-vendor" style="font-weight: 600;" data-label="Vendor">PubMatic</td>
-            <td data-label="Category"><span>Advertising</span></td>
-            <td data-label="Exposure">
-
-                <span class="badge badge-yellow">Medium</span>
-
-            </td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace;" data-label="Endpoint Matched">image6.pubmatic.com</td>
-            <td class="cell-notes" style="font-size: 11px; font-family: monospace; overflow-wrap: anywhere;" data-label="Full URL">
-              https://image6.pubmatic.com/AdServer/UCookieSetPug?rd=https%3A%2F%2Fpartner.mediawallahscript.com%2F%3Faccount_id%3D2030…
-            </td>
-          </tr>
-
+          
         </tbody>
       </table>
     </div>
   </div>
-
+  
 
   <!-- REGULATORY BASIS -->
 
-
+  
   <div class="section">
     <div class="section-header">
       <h2>Regulatory Basis</h2>
     </div>
     <div style="padding: 16px 20px;">
-
+      
       <div class="reg-chunk">
         <div class="reg-source">US Privacy Enforcement Patterns, 2025-2026</div>
         <div class="reg-text-wrap">
@@ -3947,7 +2419,7 @@
 </table></div>
         </div>
       </div>
-
+      
       <div class="reg-chunk">
         <div class="reg-source">CCPA/CPRA — California Consumer Privacy Act</div>
         <div class="reg-text-wrap">
@@ -3972,7 +2444,7 @@ Opt-out rights now cover "sharing" — defined as disclosing personal informatio
 <p>If an advertising pixel fires after receiving <code>Sec-GPC: 1</code> from a California user → confirmed CPRA violation, per-consumer fine exposure.</p></div>
         </div>
       </div>
-
+      
       <div class="reg-chunk">
         <div class="reg-source">U.S. State Privacy Laws — 2026 Landscape</div>
         <div class="reg-text-wrap">
@@ -4038,7 +2510,7 @@ Opt-out rights now cover "sharing" — defined as disclosing personal informatio
 <p><strong>Audit rule:</strong> If <code>Sec-GPC: 1</code> is detected AND the user's IP resolves to any GPC-mandate state AND an advertising pixel fires → confirmed violation, per-consumer fine exposure.</p></div>
         </div>
       </div>
-
+      
       <div class="reg-chunk">
         <div class="reg-source">Global Privacy Control (GPC) Signal</div>
         <div class="reg-text-wrap">
@@ -4105,7 +2577,7 @@ Opt-out rights now cover "sharing" — defined as disclosing personal informatio
 </table></div>
         </div>
       </div>
-
+      
       <div class="reg-chunk">
         <div class="reg-source">U.S. Privacy Enforcement — Key Cases</div>
         <div class="reg-text-wrap">
@@ -4177,7 +2649,7 @@ Opt-out rights now cover "sharing" — defined as disclosing personal informatio
 <hr /></div>
         </div>
       </div>
-
+      
       <div class="reg-chunk">
         <div class="reg-source">US Privacy Enforcement — Live Database</div>
         <div class="reg-text-wrap">
@@ -4245,7 +2717,7 @@ Last refreshed: 2026-04-22.</p>
 <hr /></div>
         </div>
       </div>
-
+      
       <div class="reg-chunk">
         <div class="reg-source">CIPA and VPPA — Litigation Risk for Web Tracking</div>
         <div class="reg-text-wrap">
@@ -4272,54 +2744,54 @@ Last refreshed: 2026-04-22.</p>
 <hr /></div>
         </div>
       </div>
-
+      
     </div>
   </div>
-
+  
 
   <!-- SECTION D — MANUAL VALIDATION -->
 
-
+  
   <div class="section">
     <div class="section-header">
       <h2>Manual Validation Checklist</h2>
     </div>
     <div style="padding: 10px 16px 4px; font-size: 0.78rem; color: #6b7280; line-height: 1.5;">
-
+      
       Reproduce each finding in a browser to confirm audit accuracy. All steps assume incognito mode with a California VPN or geolocation override.
     </div>
     <div style="padding: 8px 20px 16px;">
-
+      
       <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;">
         <div style="font-size: 0.82rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
           1. CMP Banner Presence
         </div>
         <div style="font-size: 0.8rem; color: #374151; line-height: 1.5; margin-bottom: 6px;">
-          <strong>Check:</strong> Verify OneTrust appears for California visitors.
+          <strong>Check:</strong> Verify Shopify appears for California visitors.
         </div>
         <div style="font-size: 0.78rem; color: #4b5563; line-height: 1.5; margin-bottom: 6px;">
           <strong>Steps:</strong> Open an incognito window. Use a VPN set to a California location (or Chrome DevTools &gt; Sensors &gt; Location). Navigate to the site. The consent banner should appear on first visit.
         </div>
         <div style="font-size: 0.78rem; color: #374151; line-height: 1.5; background: #fff; border-radius: 4px; padding: 8px 10px; border: 1px solid #e5e7eb;">
-          <strong>Expected:</strong> Banner appears with Reject/Deny option.
+          <strong>Expected:</strong> Banner appears with Reject/Deny option. Our scan detected Shopify via cookie injection.
         </div>
       </div>
-
+      
       <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;">
         <div style="font-size: 0.82rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
           2. Cookie Persistence After Opt-Out
         </div>
         <div style="font-size: 0.8rem; color: #374151; line-height: 1.5; margin-bottom: 6px;">
-          <strong>Check:</strong> Confirm violating vendor cookies persist after clicking Reject All: Snapchat, LiveIntent, Dynatrace, TikTok, Google, Microsoft / Bing.
+          <strong>Check:</strong> Confirm violating vendor cookies persist after clicking Reject All: Snapchat, Microsoft Clarity, Klaviyo, Pinterest, Meta, Microsoft / Bing.
         </div>
         <div style="font-size: 0.78rem; color: #4b5563; line-height: 1.5; margin-bottom: 6px;">
-          <strong>Steps:</strong> In incognito (CA VPN): (1) Navigate to site, (2) Click &#39;Reject All&#39; or equivalent, (3) Open DevTools &gt; Application &gt; Cookies, (4) Search for: X-AB, _scid, _li_ss, _li_ss, rxVisitor, dtCookie. Reload the page and check again.
+          <strong>Steps:</strong> In incognito (CA VPN): (1) Navigate to site, (2) Click &#39;Reject All&#39; or equivalent, (3) Open DevTools &gt; Application &gt; Cookies, (4) Search for: X-AB, _scid, CLID, _clck, __kla_id, tst. Reload the page and check again.
         </div>
         <div style="font-size: 0.78rem; color: #374151; line-height: 1.5; background: #fff; border-radius: 4px; padding: 8px 10px; border: 1px solid #e5e7eb;">
           <strong>Expected:</strong> If cookies from these vendors are present after opt-out, the violation is confirmed. If cookies are cleared on reject but reappear after reload, the CMP clears cookies but tags re-fire them on the next page load (still a violation).
         </div>
       </div>
-
+      
       <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;">
         <div style="font-size: 0.82rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
           3. Consent Mode Integration (GCS=G111)
@@ -4334,25 +2806,55 @@ Last refreshed: 2026-04-22.</p>
           <strong>Expected:</strong> Our scan found GCS=G111 (both granted) AFTER opt-out. If you see the same, the CMP is not propagating consent denial to Google tags. Expected correct value after opt-out: G100 (both denied).
         </div>
       </div>
-
+      
       <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;">
         <div style="font-size: 0.82rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
           4. Network Pixel Firing Post-Denial
         </div>
         <div style="font-size: 0.8rem; color: #374151; line-height: 1.5; margin-bottom: 6px;">
-          <strong>Check:</strong> Verify tracking pixels fire after opt-out: Bing Ads UET, Criteo, DoubleClick/DV360, DoubleClick/DV360.
+          <strong>Check:</strong> Verify tracking pixels fire after opt-out: Meta Pixel, Meta Pixel, Microsoft Clarity, Pinterest Tag.
         </div>
         <div style="font-size: 0.78rem; color: #4b5563; line-height: 1.5; margin-bottom: 6px;">
-          <strong>Steps:</strong> In incognito (California VPN): (1) Navigate to site, (2) Open DevTools &gt; Network, (3) Click Reject All, (4) Reload page, (5) Filter network requests for: bat.bing.com/action, sslwidget.criteo.com, ad.doubleclick.net, doubleclick.net/activityi;. Look for outbound requests to these domains/paths.
+          <strong>Steps:</strong> In incognito (California VPN): (1) Navigate to site, (2) Open DevTools &gt; Network, (3) Click Reject All, (4) Reload page, (5) Filter network requests for: connect.facebook.net/en_US/fbevents.js, facebook.com/tr/, clarity.ms/collect, ct.pinterest.com/user. Look for outbound requests to these domains/paths.
         </div>
         <div style="font-size: 0.78rem; color: #374151; line-height: 1.5; background: #fff; border-radius: 4px; padding: 8px 10px; border: 1px solid #e5e7eb;">
           <strong>Expected:</strong> If these requests appear in network traffic after clicking Reject All, the pixels are firing despite consent denial. Each request is independent forensic evidence, the same pattern plaintiff law firms source for CIPA/CCPA claims.
         </div>
       </div>
-
+      
       <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;">
         <div style="font-size: 0.82rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
-          5. GPC Signal (Sec-GPC: 1)
+          5. ACM Cookieless Pings (Expected Behavior)
+        </div>
+        <div style="font-size: 0.8rem; color: #374151; line-height: 1.5; margin-bottom: 6px;">
+          <strong>Check:</strong> Verify Google pings are cookieless modeling pings, not violations.
+        </div>
+        <div style="font-size: 0.78rem; color: #4b5563; line-height: 1.5; margin-bottom: 6px;">
+          <strong>Steps:</strong> In DevTools &gt; Network, after opt-out, filter for google-analytics.com requests. Click on a request and check query parameters for: gcs=G100, npa=1. Also verify no _ga or _gid cookie values appear in the Cookie header.
+        </div>
+        <div style="font-size: 0.78rem; color: #374151; line-height: 1.5; background: #fff; border-radius: 4px; padding: 8px 10px; border: 1px solid #e5e7eb;">
+          <strong>Expected:</strong> Requests with gcs=G100 + npa=1 and NO cookie IDs = correct ACM behavior. Google uses these for cookieless conversion modeling. This is NOT a violation.
+        </div>
+      </div>
+      
+      <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;">
+        <div style="font-size: 0.82rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
+          6. sGTM (www.retailer.example)
+        </div>
+        <div style="font-size: 0.8rem; color: #374151; line-height: 1.5; margin-bottom: 6px;">
+          <strong>Check:</strong> Verify server-side container is proxying requests.
+        </div>
+        <div style="font-size: 0.78rem; color: #4b5563; line-height: 1.5; margin-bottom: 6px;">
+          <strong>Steps:</strong> In DevTools &gt; Network, look for requests to www.retailer.example. These may appear as first-party requests (same domain or subdomain). Check if the response sets cookies or forwards data to third parties. Also check: does the sGTM domain appear in DNS as a CNAME to googletagmanager.com?
+        </div>
+        <div style="font-size: 0.78rem; color: #374151; line-height: 1.5; background: #fff; border-radius: 4px; padding: 8px 10px; border: 1px solid #e5e7eb;">
+          <strong>Expected:</strong> sGTM containers cannot be blocked by client-side consent enforcement. If sGTM is forwarding user data to ad platforms post-opt-out, this is a consent bypass that requires server-side consent logic (not detectable from client-side).
+        </div>
+      </div>
+      
+      <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 14px 16px; margin-bottom: 12px;">
+        <div style="font-size: 0.82rem; font-weight: 700; color: #111827; margin-bottom: 6px;">
+          7. GPC Signal (Sec-GPC: 1)
         </div>
         <div style="font-size: 0.8rem; color: #374151; line-height: 1.5; margin-bottom: 6px;">
           <strong>Check:</strong> Verify the site respects the Global Privacy Control signal.
@@ -4364,18 +2866,18 @@ Last refreshed: 2026-04-22.</p>
           <strong>Expected:</strong> The CMP should auto-deny consent when GPC is detected. Under CCPA/CPRA, GPC is a legally binding opt-out signal. California&#39;s CPPA has stated GPC non-compliance is enforceable without prior notice.
         </div>
       </div>
-
+      
     </div>
   </div>
-
+  
 
   <div class="next-step">
     <div class="next-step-copy">
       <div class="next-step-eyebrow">Next step</div>
       <div class="next-step-title">
-
+        
           Want help turning these findings into a remediation plan?
-
+        
       </div>
       <div class="next-step-sub">Reach out to walk the findings with Kenneth.</div>
     </div>
@@ -4383,7 +2885,7 @@ Last refreshed: 2026-04-22.</p>
   </div>
 
   <footer>
-    Generated by consent-engine &nbsp;·&nbsp; Audit ID: b12339cc-f791-426a-ba09-d47f483b598d
+    Generated by consent-engine &nbsp;·&nbsp; Audit ID: 9ae07da0-c77c-4112-9a56-d064dc255b25
   </footer>
 
 </div>

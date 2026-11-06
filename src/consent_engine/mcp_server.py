@@ -4,14 +4,15 @@ Exposes the audit pipeline as Model Context Protocol tools so Claude Desktop
 (and any other MCP host) can run an audit, read the result, and query the
 captured evidence from a conversation.
 
-Built on the FastMCP API: tool schemas are generated from the type hints and
-docstrings below rather than hand-written JSON.
+Built on the MCP Python SDK 2.x `MCPServer` API (named `FastMCP` in SDK 1.x):
+tool schemas are generated from the type hints and docstrings below rather than
+hand-written JSON.
 
 Run standalone (the [mcp] extra is required):
     uvx --from 'consent-engine[mcp]' consent-engine-mcp
 
 Debug in the MCP Inspector (from a source clone):
-    uv run mcp dev src/consent_engine/mcp_server.py --with-editable .
+    uv run --extra mcp --with 'mcp[cli]' mcp dev src/consent_engine/mcp_server.py --with-editable .
 
 Register in Claude Desktop config:
     {
@@ -71,7 +72,7 @@ def _safe_audit_dir(audit_id: str) -> Path:
 # `pip install consent-engine[mcp]` we get it; otherwise we surface a clear
 # error rather than failing on import.
 try:
-    from mcp.server.fastmcp import FastMCP
+    from mcp.server.mcpserver import MCPServer
 except ImportError as e:                                          # pragma: no cover
     raise SystemExit(
         "MCP support requires the optional [mcp] extra. Install with one of:\n"
@@ -83,9 +84,9 @@ except ImportError as e:                                          # pragma: no c
 from pydantic import Field  # noqa: E402  - imported after the optional-extra guard
 
 # Named `mcp` because `mcp dev <file>` auto-discovers the server object by
-# looking for `mcp`, `server`, then `app`. Importing FastMCP by name (rather
+# looking for `mcp`, `server`, then `app`. Importing MCPServer by name (rather
 # than `import mcp`) means this assignment does not shadow the package.
-mcp = FastMCP("consent-engine")
+mcp = MCPServer("consent-engine")
 
 
 @mcp.tool()

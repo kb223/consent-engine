@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "consent-engine"
-version = "0.6.16"
+version = "0.6.17"
 description = "Forensic consent-compliance audit engine. Deterministic by design."
 readme = "README.md"
 license = { text = "MIT" }
@@ -47,7 +47,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-mcp = ["mcp>=1.0.0"]
+mcp = ["mcp>=2,<3"]
 
 [project.urls]
 Homepage = "https://github.com/kb223/consent-engine"
@@ -109,11 +109,11 @@ module = ["mcp", "mcp.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-# Without the [mcp] extra installed, `mcp.server.fastmcp` resolves to Any, so
+# Without the [mcp] extra installed, `mcp.server.mcpserver` resolves to Any, so
 # the `@mcp.tool()` decorator reads as untyped and the decorator-factory call
 # reads as an untyped call. The decorated functions themselves are properly
 # typed in our source. Disabling both codes keeps this clean in BOTH lanes: with
-# the extra installed (where FastMCP is typed and these simply never fire) and
+# the extra installed (where MCPServer is typed and these simply never fire) and
 # without it (where an inline `type: ignore` would itself be flagged as unused).
 module = ["consent_engine.mcp_server"]
 disable_error_code = ["untyped-decorator", "no-untyped-call"]

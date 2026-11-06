@@ -1,18 +1,23 @@
-# Sample audit - `ulta.com`
+# Sample audit - anonymized US fashion retailer
 
-> Captured 2026-06-04 from consent-engine v0.6.15 against `https://www.ulta.com`.
-> Committed here so cold readers can see what an audit bundle looks like before
-> running the tool themselves.
+> Captured 2026-11-05 from consent-engine v0.6.17 against a real US fashion
+> retailer's public site. Committed here so cold readers can see what an audit
+> bundle looks like before running the tool themselves.
 >
-> This is a point-in-time public-surface scan of a well-known US brand. It is
-> not an endorsement, customer reference, legal conclusion, or claim about the
-> brand's current production state. The audit result reports deterministic
-> technical findings observed during this specific run. Public websites and
-> consent configurations change frequently.
+> The site is anonymized. Its domain appears as `www.retailer.example`, and store,
+> account and pixel identifiers are removed. Query strings, first-party URL paths
+> and raw POST bodies are stripped from the evidence, so the evidence log shows
+> which hosts were contacted but can't be replayed. The report and deck were
+> regenerated from the anonymized data.
 >
-> This sample was selected because it exercises the strongest public-demo
-> surface: OneTrust detection, post-opt-out pixels, Google Consent Mode signal
-> analysis, GPC testing, tracking inventory, and enforcement-theme mapping.
+> This is a point-in-time technical scan, not a legal conclusion or a claim about
+> any company's current production state. It ran from outside the US, with the
+> opt-out state set by the scanner rather than by clicking a banner. Sites can
+> behave differently by location, and public sites change often.
+>
+> This sample shows the definitive `s3_consent_wiring_broken` path: Google Consent
+> Mode stayed in a `G111` granted state after opt-out, pixels fired, and GPC
+> testing, tracking inventory and enforcement-theme mapping are all populated.
 
 ## Files
 
@@ -23,7 +28,7 @@
 | [`deck.marp.md`](deck.marp.md) | Marp markdown source for the deck. |
 | [`audit_result.json`](audit_result.json) | Structured audit data. Pydantic-validated. |
 | [`evidence.jsonl`](evidence.jsonl) | Per-request forensic log. One JSON object per line: `{url, method, timestamp, status_code, request_type, initiator}`. |
-| [`executive_summary.md`](executive_summary.md) | Deterministic template summary (no LLM key set during sample run). |
+| [`executive_summary.md`](executive_summary.md) | Deterministic template summary (no LLM involved). |
 
 ## Live
 
@@ -33,32 +38,24 @@
 ## How this was generated
 
 ```sh
-uvx --refresh consent-engine audit https://www.ulta.com
+uvx --refresh consent-engine audit https://www.example.com
 ```
 
-The other bundle files are produced by the same command. The `deck.html` file
-is auto-rendered when `npx` is on PATH.
+The raw output was then anonymized as described above, and the report and deck
+were regenerated from the anonymized data. The `deck.html` file is auto-rendered
+when `npx` is on PATH.
 
 ## What this sample shows
 
 - Jurisdiction detection: `US`
-- CMP detection: `OneTrust`
+- CMP detection: `Shopify`
 - Methodology: `s3_consent_wiring_broken`
 - Google Consent Mode state after opt-out: `G111`
-- Findings: `37`
-- Confirmed technical findings: `34`
-- Pixel endpoints observed after opt-out: `27`
-- Tracking inventory rows: `55`
-- GPC result: not respected in this run; baseline pixel activity moved from `27` to `25`
-- sGTM: not detected
+- Findings: `10`
+- Confirmed technical findings: `7`
+- Pixel endpoints observed after opt-out: `8`
+- Tracking inventory rows: `18`
+- GPC result: not respected in this run; pixel activity moved from `9` to `4`
+- sGTM: detected
 
-Public websites change frequently. Re-running the command later may produce a
-different inventory, methodology result, or evidence set.
-
-## Try another public target
-
-Run your own scan when you need current evidence. Good comparison targets:
-
-- `https://onetrust.com` - CMP vendor baseline
-- `https://www.kohls.com` - OneTrust site with high inventory output in the June 2026 batch
-- `https://www.lowes.com` - TrustArc site with high pixel and inventory output in the June 2026 batch
+Run your own scan when you need current evidence. Results change as sites change.

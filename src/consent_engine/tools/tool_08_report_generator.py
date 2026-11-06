@@ -9,13 +9,15 @@ from __future__ import annotations
 
 import base64
 import html
+from enum import Enum
 from pathlib import Path
-from typing import Literal, cast
+from typing import Any, Literal, cast
 from urllib.parse import urlparse
 
 import markdown as md_lib
 from jinja2 import Environment, FileSystemLoader
 from markupsafe import Markup
+from pydantic import BaseModel
 
 from consent_engine.config import get_settings
 from consent_engine.llm.client import LLMClient
@@ -1281,6 +1283,34 @@ def _slide_summary(text: str, max_sentences: int = 2, max_vendors: int = 6) -> s
     return result
 
 
+def _escape_for_deck(value: Any) -> Any:
+    """Return `value` with every string HTML-escaped, leaving the input untouched.
+
+    The deck is raw f-string markdown rendered with `marp --html`, so anything
+    interpolated into it runs as HTML. Every string on AuditResult traces back
+    to the audited site (cookie names, request URLs, response bodies). Escaping
+    the whole model once at the top of `generate_marp_slides` covers all of its
+    sinks, including ones added later, instead of relying on each to remember.
+    Enums are left alone so status and methodology comparisons keep working.
+    """
+    if isinstance(value, Enum):
+        return value
+    if isinstance(value, str):
+        return html.escape(value)
+    if isinstance(value, list):
+        return [_escape_for_deck(item) for item in value]
+    if isinstance(value, dict):
+        return {_escape_for_deck(k): _escape_for_deck(v) for k, v in value.items()}
+    if isinstance(value, BaseModel):
+        return value.model_copy(
+            update={
+                name: _escape_for_deck(getattr(value, name))
+                for name in type(value).model_fields
+            }
+        )
+    return value
+
+
 def generate_marp_slides(
     audit_result: AuditResult,
     executive_summary: str,
@@ -1303,6 +1333,11 @@ def generate_marp_slides(
     Returns:
         Marp markdown string. Save as .md and open with Marp CLI or VS Code Marp extension.
     """
+    audit_result = _escape_for_deck(audit_result)
+    executive_summary = html.escape(executive_summary)
+    site_image_url = html.escape(site_image_url) if site_image_url else site_image_url
+    firm_name = html.escape(firm_name) if firm_name else firm_name
+
     violations = _confirmed_violations(audit_result)
     pixel_firings = audit_result.pixel_firings
     # Separate real violations from ACM pings — pings are expected behavior, not evidence
@@ -1461,10 +1496,10 @@ def generate_marp_slides(
             '<div style="display:grid;grid-template-columns:1.5fr 0.8fr 2fr 2fr;'
             'gap:14px;align-items:start;padding:10px 0;border-bottom:1px solid #e7e3d8;'
             'font-size:0.66em;">'
-            f'<div style="color:#14182b;font-weight:600;">{html.escape(label)}</div>'
+            f'<div style="color:#14182b;font-weight:600;">{label}</div>'
             f"<div>{_severity_tag(severity)}</div>"
-            f'<div style="color:#4b5563;line-height:1.45;">{html.escape(evidence)}</div>'
-            f'<div style="color:#6b7280;line-height:1.45;">{html.escape(action)}</div>'
+            f'<div style="color:#4b5563;line-height:1.45;">{evidence}</div>'
+            f'<div style="color:#6b7280;line-height:1.45;">{action}</div>'
             "</div>"
         )
 
@@ -1482,8 +1517,8 @@ def generate_marp_slides(
             '<div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;'
             'gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid #e7e3d8;'
             'font-size:0.65em;">'
-            f'<div style="color:#14182b;font-weight:600;">{html.escape(vendor)}</div>'
-            f'<div style="color:#4b5563;">{html.escape(evidence_type.replace("_", " ").title())}</div>'
+            f'<div style="color:#14182b;font-weight:600;">{vendor}</div>'
+            f'<div style="color:#4b5563;">{evidence_type.replace("_", " ").title()}</div>'
             f'<div>{_tag(risk.upper(), risk_color)}</div>'
             f'<div style="color:#6b7280;">{gpc_text}</div>'
             f'<div style="color:#6b7280;">{contract_text}</div>'
@@ -1837,16 +1872,16 @@ def generate_marp_slides(
         # On-brand "spec sheet": a navy-accented panel of label/value pairs in a
         # responsive grid, instead of a generic theme-styled <table> (which read
         # off-brand and left the slide half-empty). Brand palette: #345187 accent
-        # rail, #3d6abb kicker labels, #1e293b ink. Values are html.escape()d —
-        # they come from the audited site's CMP JS API, so raw interpolation into
-        # the deck HTML would be an injection sink (no Jinja autoescape here).
+        # rail, #3d6abb kicker labels, #1e293b ink. Values come from the audited
+        # site's CMP JS API. They're already escaped by _escape_for_deck at the top
+        # of this function, so don't escape them again here.
         _rc_cells_html = "\n".join(
             "  <div>"
             "<div style='font-size:0.32em;text-transform:uppercase;letter-spacing:0.12em;"
             "color:#3d6abb;font-weight:700;margin-bottom:5px;'>"
-            f"{html.escape(str(k))}</div>"
+            f"{k}</div>"
             "<div style='font-size:0.5em;color:#1e293b;font-weight:600;line-height:1.3;'>"
-            f"{html.escape(str(v))}</div>"
+            f"{v}</div>"
             "</div>"
             for k, v in _rc_rows
         )

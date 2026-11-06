@@ -758,8 +758,8 @@ async def run_audit(
     #     in section 2) as Open Gaps. These are cookies from a CMP OTHER
     #     than the one currently active — typically a prior CMP was
     #     uninstalled but its state cookies survived in returning users'
-    #     browsers. Audited on oreillyauto.com (Truyo) where legacy OneTrust
-    #     cookies still ship.
+    #     browsers. Seen on a Truyo site where legacy OneTrust cookies still
+    #     ship.
     if legacy_cmp_cookies and scan.detected_cmp:
         by_cmp: dict[str, list[str]] = {}
         for cmp_name, cookie_name in legacy_cmp_cookies:
