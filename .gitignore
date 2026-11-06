@@ -9,6 +9,9 @@ __pycache__/
 
 # Audit outputs (transient)
 out/
+
+# Eval fixtures hold real scan data; never commit
+evals/fixtures/
 .tmp/
 .planning/
 

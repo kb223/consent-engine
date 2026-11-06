@@ -1,0 +1,23 @@
+{
+  "Algolia": ["algolia.net"],
+  "Axeptio": ["axept.io", "axeptio.eu"],
+  "Blueconic.com": ["blueconic.net"],
+  "Braze": ["braze.com"],
+  "Chartbeat": ["chartbeat.com", "chartbeat.net"],
+  "Cloudflare": ["challenges.cloudflare.com", "cloudflareinsights.com"],
+  "Complianz": ["complianz.io"],
+  "Consentmanager.net": ["consentmanager.net"],
+  "Datadome": ["datadome.co"],
+  "DoubleClick/Google Marketing": ["doubleclick.net"],
+  "Google": ["googleadservices.com", "googleads.g.doubleclick.net"],
+  "Google AdSense": ["adtrafficquality.google", "googlesyndication.com"],
+  "Google Analytics": ["analytics.google.com", "google-analytics.com"],
+  "Hotjar": ["hotjar.com"],
+  "Intercom": ["intercom.io", "intercomcdn.com"],
+  "OneTrust": ["cookielaw.org", "onetrust.com", "onetrust.io"],
+  "Osano": ["osano.com"],
+  "Permutive": ["permutive.com"],
+  "Piano": ["piano.io"],
+  "Piwik": ["piwik.pro"],
+  "Shopify": ["shopify.com", "shopifysvc.com"]
+}

@@ -1145,11 +1145,9 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
             await _apply_geoip_spoofing(page2)
 
             network_requests2: list[str] = []
-
-            def _on_request2(req: Request) -> None:
-                network_requests2.append(req.url)
-
-            page2.on("request", _on_request2)
+            request_log2: list[NetworkRequest] = []
+            page2.on("request", lambda req: _capture_request(req, network_requests2, request_log2))
+            page2.on("response", lambda r: _capture_response_status(request_log2, r.url, r.status))
 
             _js_responses2: list[Any] = []
             page2.on(
@@ -1225,6 +1223,7 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
 
             # --- LAYER 7: Force consent denied if CMP geo-targeting left GCS granted ---
             network_requests = network_requests2
+            request_log = request_log2
             raw_cookies = await asyncio.wait_for(context2.cookies(), timeout=5.0)
             try:
                 page_html = await asyncio.wait_for(page2.content(), timeout=10.0)
@@ -1256,6 +1255,7 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
             # get a clean post-denial load (mirrors real returning-visitor behaviour).
             # Clear network_requests first so we only capture post-reload traffic.
             network_requests.clear()
+            request_log.clear()
             with contextlib.suppress(Exception):
                 await page.reload(wait_until="networkidle", timeout=20_000)
             with contextlib.suppress(Exception):
@@ -1274,6 +1274,7 @@ async def _scan_s3(url: str, opted_out: bool = True, proxy_url: str | None = Non
                 _ccpa_success = await _try_ccpa_optout(page, network_requests)
                 if _ccpa_success:
                     network_requests.clear()
+                    request_log.clear()
                     # Use domcontentloaded (not networkidle) for the post-CCPA reload.
                     # Sites like Bombas have continuous background polling that prevents
                     # networkidle from resolving after OneTrust.RejectAll() fires a redirect.

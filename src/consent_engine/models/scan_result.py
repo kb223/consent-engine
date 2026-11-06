@@ -63,6 +63,7 @@ class ScanResult(BaseModel):
     cookies: list[CookieSnapshot] = []
     network_requests: list[str] = []  # All request URLs observed during scan
     request_log: list[NetworkRequest] = []
+    request_log_complete: bool = True  # request_log matches the requests detected on
     # Structured per-request log — same set of requests as ``network_requests``
     # but with timestamp, method, status code, resource type, and initiator.
     # Powers the rich ``evidence.jsonl`` format. Stays parallel to

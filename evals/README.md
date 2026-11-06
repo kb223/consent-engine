@@ -78,3 +78,17 @@ and a roll-up that goes into the README badge.
 - [ ] 012 — Video-page tracking (VPPA)
 - [ ] 013 — Out-of-GTM pixel (hard-coded `<head>` script)
 - [ ] 014 — AI-browser request (`Sec-GPC: 1`, Arc / Comet / Perplexity UA)
+
+## Offline fixtures
+
+`freeze_fixture.py` turns saved audits into offline fixtures with stable request
+IDs. Fixtures hold real scan data, so `evals/fixtures/` is gitignored. Never
+commit it.
+
+```bash
+uv run python evals/freeze_fixture.py freeze --selection evals/fixtures/selection.tsv
+uv run python evals/freeze_fixture.py check
+uv run python evals/freeze_fixture.py labels --cap 9
+```
+
+`labels` won't overwrite an existing sheet, so hand labels stay safe.
