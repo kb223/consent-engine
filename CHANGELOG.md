@@ -5,6 +5,17 @@ All notable changes to consent-engine. Format loosely follows
 
 ## [Unreleased]
 
+### Fixed
+- **`evidence.jsonl` now matches the requests the engine detected on.** Requests
+  from the banner-click browser session were never logged, and first-load traffic
+  stayed in the log after a reload. Audits record this as `evidence_log_complete`.
+
+### Added
+- **Offline eval fixtures.** `evals/freeze_fixture.py` freezes saved audits into
+  fixtures with stable request IDs and builds a hand-label sheet.
+- **`vendor_request_domains()`** lists the domains a vendor's requests go to, for
+  citing evidence. It is separate from `Vendor.domains`, so attribution is unchanged.
+
 ### Changed
 - **Public sample audit is now anonymized.** `docs/sample-audit/` no longer names
   the audited site. Identifiers, query strings and raw POST bodies are removed,

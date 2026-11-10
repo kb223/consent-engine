@@ -243,6 +243,8 @@ class AuditResult(BaseModel):
     cmp_detection_confidence: str | None = None
     bot_detection_encountered: bool = False
     scan_mode_used: Literal["playwright", "stealthy"] = "playwright"
+    # False on audits saved before evidence.jsonl matched the detected requests.
+    evidence_log_complete: bool = False
     # Records whether the primary Chromium scan succeeded ("playwright") or the
     # Scrapling/Camoufox stealthy fallback had to be engaged ("stealthy") — set
     # when the primary scan hit a WAF/bot challenge.

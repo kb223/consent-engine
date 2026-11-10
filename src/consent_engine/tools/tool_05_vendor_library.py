@@ -13,6 +13,7 @@ from consent_engine.models.vendor import CookieCategory, LegalExposure, Vendor
 _VENDOR_DATA_PATH = (
     Path(__file__).parent.parent / "data" / "vendor_library" / "vendors.json"
 )
+_REQUEST_DOMAINS_PATH = _VENDOR_DATA_PATH.with_name("vendor_request_domains.json")
 
 _OCD_DATA_PATH = (
     Path(__file__).parent.parent
@@ -303,6 +304,22 @@ def lookup_vendor(query: str, cookie_domain: str | None = None) -> Vendor | None
         return result
 
     return None
+
+
+@lru_cache(maxsize=1)
+def _load_request_domains() -> dict[str, list[str]]:
+    with open(_REQUEST_DOMAINS_PATH) as f:
+        domains: dict[str, list[str]] = json.load(f)
+    return domains
+
+
+def vendor_request_domains(vendor_name: str) -> list[str]:
+    """Return domains a vendor's requests are sent to, for citing evidence.
+
+    Kept apart from ``Vendor.domains`` on purpose: those drive vendor attribution,
+    so adding them there could change which findings a scan produces.
+    """
+    return _load_request_domains().get(vendor_name, [])
 
 
 def lookup_tier(query: str) -> int | None:
