@@ -92,3 +92,26 @@ uv run python evals/freeze_fixture.py labels --cap 9
 ```
 
 `labels` won't overwrite an existing sheet, so hand labels stay safe.
+
+## Fixture tools
+
+`fixture_tools.py` gives an agent read-only access to one fixture. It holds the
+tool definitions (`TOOLS`) and the functions behind them, and it never calls a
+model.
+
+| Tool | Returns |
+|---|---|
+| `list_findings` | Finding IDs, vendors, engine status |
+| `get_finding` | One finding and its linked request IDs |
+| `query_evidence` | Saved requests matching a URL or host filter |
+| `get_request` | One request with its full URL |
+| `lookup_vendor` | Category, exposure, request domains |
+| `lookup_enforcement_pattern` | How a pattern was mapped for this audit |
+
+Every result has a `status`, so "nothing matched" (`no_match`) stays separate
+from `scan_failed`, `evidence_unavailable`, `not_checked` and `not_mapped`.
+
+```python
+fixture = load_fixture("fx-01")
+block = tool_result_block(fixture, tool_use.id, tool_use.name, tool_use.input)
+```

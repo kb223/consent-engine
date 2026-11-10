@@ -11,6 +11,9 @@ All notable changes to consent-engine. Format loosely follows
   stayed in the log after a reload. Audits record this as `evidence_log_complete`.
 
 ### Added
+- **Fixture tools for agents.** `evals/fixture_tools.py` exposes six read-only
+  tools over a frozen fixture. Results separate "nothing matched" from a failed
+  scan and from evidence that wasn't checked.
 - **Offline eval fixtures.** `evals/freeze_fixture.py` freezes saved audits into
   fixtures with stable request IDs and builds a hand-label sheet.
 - **`vendor_request_domains()`** lists the domains a vendor's requests go to, for
