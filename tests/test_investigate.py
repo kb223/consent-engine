@@ -229,7 +229,28 @@ def test_save_result_writes_under_the_model_folder(fixture: Any, tmp_path: Path)
     client = FakeClient([_response("end_turn", [_text(json.dumps(ANSWER))])])
     result = inv.investigate(client, fixture)
     path = inv.save_result(result, tmp_path / "runs")
-    assert path == tmp_path / "runs" / "claude-opus-5-5" / "fx-01.json"
+    assert path == tmp_path / "runs" / "claude-opus-5-5" / "fx-01.run1.json"
     saved = json.loads(path.read_text())
     assert saved["outcome"] == "completed"
     assert saved["output"] == ANSWER
+
+
+def test_transcript_and_served_model_are_recorded(fixture: Any) -> None:
+    first = _response("tool_use", [_tool_use("toolu_1", "list_findings", {})])
+    first.model = "claude-opus-5-5"
+    last = _response("end_turn", [_text(json.dumps(ANSWER))])
+    last.model = "claude-opus-5-5"
+    result = inv.investigate(FakeClient([first, last]), fixture, run=2)
+
+    assert result.run == 2
+    assert result.served_models == ["claude-opus-5-5"]
+    assert [m["role"] for m in result.transcript] == ["user", "assistant", "user", "assistant"]
+    assert result.transcript[1]["content"][0]["name"] == "list_findings"
+    # The transcript is plain data, so it saves as JSON.
+    json.dumps(result.transcript)
+
+
+def test_cut_off_turn_is_kept_in_the_transcript(fixture: Any) -> None:
+    result = inv.investigate(FakeClient([_response("max_tokens", [_text("partial")])]), fixture)
+    assert result.outcome == "max_tokens"
+    assert result.transcript[-1]["content"][0]["text"] == "partial"

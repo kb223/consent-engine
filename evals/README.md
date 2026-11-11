@@ -126,8 +126,28 @@ needs credentials and costs money.
 
 ```bash
 uv run python evals/investigate.py fx-01
-uv run python evals/investigate.py --all --model claude-sonnet-5-5
+uv run python evals/investigate.py --all --model claude-sonnet-5-5 --runs 3
 ```
 
-Results go to `out/investigator/<model>/`, which is gitignored. Each result
-records the outcome, the tool calls, token usage and an estimated cost.
+Results go to `out/investigator/<model>/<fixture>.run<n>.json`, which is
+gitignored. Each result records the outcome, the tool calls, the full
+transcript, token usage and an estimated cost.
+
+## Scorecard
+
+`score.py` scores saved runs. It is offline and free to run.
+
+```bash
+uv run python evals/score.py out/investigator/claude-opus-5-5
+```
+
+| Section | Needs labels | Fails the run |
+|---|---|---|
+| Evidence checks: coverage, real and returned citations, cited strong verdicts | No | Yes |
+| Reported checks: non-citable requests, unknown cookies, escalation, blocked wording | No | No |
+| Verdict stability across repeated runs | No | No |
+| Agreement, false positives, escalation accuracy | Yes | No |
+
+A run that didn't complete is counted as not scored. The command exits non-zero
+if any run failed an evidence check or didn't complete. Label metrics are
+skipped until `evals/fixtures/labels.csv` has verdicts in it.
