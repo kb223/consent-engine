@@ -115,3 +115,6 @@ from `scan_failed`, `evidence_unavailable`, `not_checked` and `not_mapped`.
 fixture = load_fixture("fx-01")
 block = tool_result_block(fixture, tool_use.id, tool_use.name, tool_use.input)
 ```
+
+`finding_schema.py` holds `FINDINGS_SCHEMA`, the JSON shape an agent returns. It
+guarantees shape only. Whether a cited request exists is an eval check.

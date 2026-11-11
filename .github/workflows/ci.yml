@@ -39,7 +39,14 @@ jobs:
         run: uv run consent-engine version
 
       - name: Install Playwright browsers
-        run: uv run playwright install chromium --with-deps
+        # apt mirrors are sometimes unreachable from the runner. The runner image
+        # already has Chromium's system libraries, so fall back to the browser
+        # alone and let the tests show whether anything is missing.
+        run: |
+          uv run playwright install chromium --with-deps || {
+            echo "::warning::System package install failed. Installing the browser only."
+            uv run playwright install chromium
+          }
 
       - name: Run tests
         run: uv run pytest tests/ -v --tb=short
