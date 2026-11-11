@@ -7,7 +7,7 @@ the shape of ``finding_schema.FINDINGS_SCHEMA``.
 Run it (this calls the API and costs money):
 
     uv run python evals/investigate.py fx-01
-    uv run python evals/investigate.py --all --model claude-sonnet-5-5
+    uv run python evals/investigate.py --all --model claude-sonnet-5-5 --runs 3
 
 Results are written to ``out/investigator/``, which is gitignored because
 fixtures hold real scan data.
@@ -87,7 +87,8 @@ class RunResult:
     fixture_id: str
     model: str
     effort: str
-    # completed, max_tokens, refusal, iteration_cap, invalid_output or unexpected_stop
+    # completed, max_tokens, refusal, iteration_cap, invalid_output, unexpected_stop
+    # or api_error
     outcome: str
     stop_reason: str | None
     output: dict[str, Any] | None
@@ -95,6 +96,11 @@ class RunResult:
     tool_calls: list[dict[str, Any]] = field(default_factory=list)
     usage: dict[str, int] = field(default_factory=dict)
     cost_usd: float | None = None
+    run: int = 1
+    # The model each response says it came from, to catch a silent substitution.
+    served_models: list[str] = field(default_factory=list)
+    # Every message sent and received, so a surprising score can be traced.
+    transcript: list[dict[str, Any]] = field(default_factory=list)
 
 
 def _add_usage(total: dict[str, int], usage: Any) -> None:
@@ -121,6 +127,23 @@ def estimate_cost(model: str, usage: dict[str, int]) -> float | None:
     return round(dollars, 6)
 
 
+def _plain_block(block: Any) -> Any:
+    if hasattr(block, "model_dump"):
+        return block.model_dump(mode="json")
+    return dict(vars(block)) if hasattr(block, "__dict__") else block
+
+
+def _plain_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Copy the conversation into plain JSON types for saving."""
+    plain = []
+    for message in messages:
+        content = message["content"]
+        if isinstance(content, list):
+            content = [_plain_block(block) for block in content]
+        plain.append({"role": message["role"], "content": content})
+    return plain
+
+
 def _final_json(content: list[Any]) -> dict[str, Any] | None:
     """Parse the final answer. The schema guarantees valid JSON on end_turn."""
     text = next((block.text for block in content if block.type == "text"), None)
@@ -140,6 +163,7 @@ def investigate(
     model: str = DEFAULT_MODEL,
     effort: str = DEFAULT_EFFORT,
     max_iterations: int = MAX_ITERATIONS,
+    run: int = 1,
 ) -> RunResult:
     """Run the agent on one fixture until it finishes or can't continue.
 
@@ -159,6 +183,7 @@ def investigate(
         stop_reason=None,
         output=None,
         iterations=0,
+        run=run,
     )
 
     for _ in range(max_iterations):
@@ -178,19 +203,22 @@ def investigate(
             messages=messages,
         )
         result.iterations += 1
+        served = getattr(response, "model", None)
+        if served and served not in result.served_models:
+            result.served_models.append(served)
         result.stop_reason = response.stop_reason
         _add_usage(result.usage, response.usage)
 
         # Check why the model stopped before reading what it wrote.
-        if response.stop_reason == "end_turn":
-            result.output = _final_json(response.content)
-            result.outcome = "completed" if result.output is not None else "invalid_output"
-            break
-        if response.stop_reason in ("max_tokens", "refusal"):
-            result.outcome = response.stop_reason
-            break
         if response.stop_reason != "tool_use":
-            result.outcome = "unexpected_stop"
+            messages.append({"role": "assistant", "content": response.content})
+            if response.stop_reason == "end_turn":
+                result.output = _final_json(response.content)
+                result.outcome = "completed" if result.output is not None else "invalid_output"
+            elif response.stop_reason in ("max_tokens", "refusal"):
+                result.outcome = response.stop_reason
+            else:
+                result.outcome = "unexpected_stop"
             break
 
         # Keep the whole assistant turn. It holds thinking blocks that must go
@@ -217,13 +245,14 @@ def investigate(
         messages.append({"role": "user", "content": tool_results})
 
     result.cost_usd = estimate_cost(model, result.usage)
+    result.transcript = _plain_messages(messages)
     return result
 
 
 def save_result(result: RunResult, runs_dir: Path = RUNS_DIR) -> Path:
     folder = runs_dir / result.model
     folder.mkdir(parents=True, exist_ok=True)
-    path = folder / f"{result.fixture_id}.json"
+    path = folder / f"{result.fixture_id}.run{result.run}.json"
     path.write_text(json.dumps(asdict(result), indent=2, sort_keys=True, default=str) + "\n")
     return path
 
@@ -235,6 +264,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--effort", default=DEFAULT_EFFORT)
     parser.add_argument("--max-iterations", type=int, default=MAX_ITERATIONS)
+    parser.add_argument("--runs", type=int, default=1, help="Repeat each fixture this many times.")
+    parser.add_argument("--runs-dir", type=Path, default=RUNS_DIR, help="Where to write results.")
     args = parser.parse_args(argv)
 
     fixture_ids = list_fixture_ids() if args.all else args.fixture_ids
@@ -253,23 +284,38 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{fixture_id}: {error}", file=sys.stderr)
             failures += 1
             continue
-        result = investigate(
-            client,
-            fixture,
-            model=args.model,
-            effort=args.effort,
-            max_iterations=args.max_iterations,
-        )
-        path = save_result(result)
-        total_cost += result.cost_usd or 0.0
-        failures += result.outcome != "completed"
-        findings = len((result.output or {}).get("findings", []))
-        cost = f"${result.cost_usd:.4f}" if result.cost_usd is not None else "cost unknown"
-        print(
-            f"{fixture_id}: {result.outcome}, {findings} finding(s), "
-            f"{result.iterations} turn(s), {len(result.tool_calls)} tool call(s), "
-            f"{cost} -> {path}"
-        )
+        for run in range(1, args.runs + 1):
+            try:
+                result = investigate(
+                    client,
+                    fixture,
+                    model=args.model,
+                    effort=args.effort,
+                    max_iterations=args.max_iterations,
+                    run=run,
+                )
+            except anthropic.APIError as error:
+                # An API failure is not a model failure. Record it and move on.
+                result = RunResult(
+                    fixture_id=fixture_id,
+                    model=args.model,
+                    effort=args.effort,
+                    outcome="api_error",
+                    stop_reason=type(error).__name__,
+                    output=None,
+                    iterations=0,
+                    run=run,
+                )
+            path = save_result(result, args.runs_dir)
+            total_cost += result.cost_usd or 0.0
+            failures += result.outcome != "completed"
+            findings = len((result.output or {}).get("findings", []))
+            cost = f"${result.cost_usd:.4f}" if result.cost_usd is not None else "cost unknown"
+            print(
+                f"{fixture_id} run {run}: {result.outcome}, {findings} finding(s), "
+                f"{result.iterations} turn(s), {len(result.tool_calls)} tool call(s), "
+                f"{cost} -> {path}"
+            )
     print(f"Estimated total: ${total_cost:.4f}")
     return 1 if failures else 0
 

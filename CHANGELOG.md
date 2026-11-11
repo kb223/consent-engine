@@ -11,6 +11,10 @@ All notable changes to consent-engine. Format loosely follows
   stayed in the log after a reload. Audits record this as `evidence_log_complete`.
 
 ### Added
+- **Scorecard for investigator runs.** `evals/score.py` checks saved runs offline:
+  cited requests must exist and have been returned by a tool, strong verdicts
+  need a citation, and every scanner finding must be covered. `investigate.py`
+  gains `--runs` for repeated runs and saves a full transcript per run.
 - **Investigator agent loop.** `evals/investigate.py` runs a tool-use loop over one
   fixture and returns an assessment per finding. Runs that are cut off, refused
   or hit the turn cap are recorded as their own outcomes with no findings.
