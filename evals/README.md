@@ -118,3 +118,16 @@ block = tool_result_block(fixture, tool_use.id, tool_use.name, tool_use.input)
 
 `finding_schema.py` holds `FINDINGS_SCHEMA`, the JSON shape an agent returns. It
 guarantees shape only. Whether a cited request exists is an eval check.
+
+## Investigator agent
+
+`investigate.py` runs the agent on a fixture. It calls the Claude API, so it
+needs credentials and costs money.
+
+```bash
+uv run python evals/investigate.py fx-01
+uv run python evals/investigate.py --all --model claude-sonnet-5-5
+```
+
+Results go to `out/investigator/<model>/`, which is gitignored. Each result
+records the outcome, the tool calls, token usage and an estimated cost.

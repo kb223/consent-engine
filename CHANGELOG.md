@@ -11,6 +11,9 @@ All notable changes to consent-engine. Format loosely follows
   stayed in the log after a reload. Audits record this as `evidence_log_complete`.
 
 ### Added
+- **Investigator agent loop.** `evals/investigate.py` runs a tool-use loop over one
+  fixture and returns an assessment per finding. Runs that are cut off, refused
+  or hit the turn cap are recorded as their own outcomes with no findings.
 - **Output schema for the investigator agent.** `evals/finding_schema.py` defines
   the JSON an agent returns for each finding, with verdicts in the engine's own
   status values.
