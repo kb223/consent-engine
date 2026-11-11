@@ -11,6 +11,9 @@ All notable changes to consent-engine. Format loosely follows
   stayed in the log after a reload. Audits record this as `evidence_log_complete`.
 
 ### Added
+- **Output schema for the investigator agent.** `evals/finding_schema.py` defines
+  the JSON an agent returns for each finding, with verdicts in the engine's own
+  status values.
 - **Fixture tools for agents.** `evals/fixture_tools.py` exposes six read-only
   tools over a frozen fixture. Results separate "nothing matched" from a failed
   scan and from evidence that wasn't checked.
